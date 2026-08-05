@@ -170,6 +170,26 @@ register.php
 
 
 
+\## 📸 Screenshots
+
+
+
+\### Login Page
+
+
+
+!\[Login](screenshots/login.png)
+
+
+
+\### Register Page
+
+
+
+!\[Register](screenshots/register.png)
+
+
+
 \## 📄 License
 
 
