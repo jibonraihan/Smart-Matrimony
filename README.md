@@ -12,7 +12,37 @@
 
 <p align="center">
 
-&#x20; Advanced Matrimony \& Wedding Event Management System built with PHP \& MySQL.
+&#x20; <strong>Advanced Matrimony \& Wedding Event Management System</strong>
+
+</p>
+
+
+
+<p align="center">
+
+&#x20; A modern PHP \& MySQL based web application for partner matching, profile verification, and wedding service management.
+
+</p>
+
+
+
+<p align="center">
+
+
+
+!\[PHP](https://img.shields.io/badge/PHP-8.x-777BB4?style=for-the-badge\&logo=php\&logoColor=white)
+
+!\[MySQL](https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge\&logo=mysql\&logoColor=white)
+
+!\[Bootstrap](https://img.shields.io/badge/Bootstrap-5-7952B3?style=for-the-badge\&logo=bootstrap\&logoColor=white)
+
+!\[JavaScript](https://img.shields.io/badge/JavaScript-ES6-F7DF1E?style=for-the-badge\&logo=javascript\&logoColor=black)
+
+!\[HTML5](https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge\&logo=html5\&logoColor=white)
+
+!\[CSS3](https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge\&logo=css3\&logoColor=white)
+
+
 
 </p>
 
@@ -22,11 +52,15 @@
 
 
 
-\## 📖 About
+\# 📖 About
 
 
 
-Smart Matrimony is a web-based matrimony platform that helps users create verified profiles, search for suitable partners, communicate through chat, and access wedding-related services through a modern and user-friendly interface.
+\*\*Smart Matrimony\*\* is a web-based Matrimony \& Wedding Event Management System developed using \*\*PHP\*\* and \*\*MySQL\*\*.
+
+
+
+The system allows users to create verified profiles, search for suitable partners, communicate through chat, and book wedding-related services from a single platform.
 
 
 
@@ -34,7 +68,7 @@ Smart Matrimony is a web-based matrimony platform that helps users create verifi
 
 
 
-\## ✨ Features
+\# ✨ Key Features
 
 
 
@@ -42,17 +76,17 @@ Smart Matrimony is a web-based matrimony platform that helps users create verifi
 
 \- 📝 Multi-Step Profile Creation
 
-\- ❤️ Partner Matching
+\- ❤️ Smart Partner Matching
 
-\- 🔍 Smart Search
+\- 🔎 Advanced Search
 
-\- ⭐ Bookmark/Favorites
+\- ⭐ Favorite / Bookmark Profiles
 
 \- 💬 Chat System
 
-\- 💍 Wedding Service Booking
-
 \- 🛡️ Profile Verification
+
+\- 💍 Wedding Service Booking
 
 \- 👨‍💼 Admin Panel
 
@@ -64,23 +98,27 @@ Smart Matrimony is a web-based matrimony platform that helps users create verifi
 
 
 
-\## 🛠️ Technologies Used
+\# 🛠️ Technologies Used
 
 
 
-\- PHP
+| Technology | Purpose |
 
-\- MySQL
+|------------|---------|
 
-\- HTML5
+| PHP | Backend |
 
-\- CSS3
+| MySQL | Database |
 
-\- JavaScript
+| HTML5 | Structure |
 
-\- Bootstrap
+| CSS3 | Styling |
 
-\- XAMPP
+| JavaScript | Client-side |
+
+| Bootstrap | Responsive UI |
+
+| XAMPP | Local Server |
 
 
 
@@ -88,11 +126,69 @@ Smart Matrimony is a web-based matrimony platform that helps users create verifi
 
 
 
-\## 🚀 Installation
+\# 📂 Project Structure
 
 
 
-\### Clone the repository
+```text
+
+smart\_matrimony/
+
+│
+
+├── admin/
+
+├── ajax/
+
+├── assets/
+
+├── auth/
+
+├── booking/
+
+├── chat/
+
+├── config/
+
+├── database/
+
+├── includes/
+
+├── matches/
+
+├── profile/
+
+├── search/
+
+├── uploads/
+
+├── screenshots/
+
+│
+
+├── index.php
+
+├── login.php
+
+├── register.php
+
+├── dashboard.php
+
+└── README.md
+
+```
+
+
+
+\---
+
+
+
+\# 🚀 Installation
+
+
+
+\### 1️⃣ Clone Repository
 
 
 
@@ -104,11 +200,11 @@ git clone https://github.com/jibonraihan/Smart-Matrimony.git
 
 
 
-\### Move the project
+\### 2️⃣ Move Project
 
 
 
-Copy the project into:
+Copy the project to:
 
 
 
@@ -120,7 +216,7 @@ xampp/htdocs/
 
 
 
-\### Import Database
+\### 3️⃣ Import Database
 
 
 
@@ -136,11 +232,21 @@ database/smart\_matrimony.sql
 
 
 
-\### Run
+\### 4️⃣ Run XAMPP
 
 
 
-Start \*\*Apache\*\* and \*\*MySQL\*\* from XAMPP, then open:
+Start:
+
+
+
+\- Apache
+
+\- MySQL
+
+
+
+\### 5️⃣ Open Browser
 
 
 
@@ -156,39 +262,15 @@ http://localhost/smart\_matrimony
 
 
 
-\## 📂 Project Structure
+\# 📸 Screenshots
 
 
 
-```text
+\## 🔐 Login Page
 
-admin/
 
-ajax/
 
-assets/
-
-auth/
-
-booking/
-
-chat/
-
-config/
-
-database/
-
-includes/
-
-matches/
-
-profile/
-
-search/
-
-uploads/
-
-```
+!\[Login](screenshots/login.png)
 
 
 
@@ -196,23 +278,11 @@ uploads/
 
 
 
-\## 📸 Screenshots
+\## 📝 Register Page
 
 
 
-\### Login Page
-
-
-
-!\[Login Page](screenshots/login.png)
-
-
-
-\### Register Page
-
-
-
-!\[Register Page](screenshots/register.png)
+!\[Register](screenshots/register.png)
 
 
 
@@ -220,7 +290,7 @@ uploads/
 
 
 
-\## 👨‍💻 Developer
+\# 👨‍💻 Developer
 
 
 
@@ -232,9 +302,21 @@ uploads/
 
 
 
-\## 📄 License
+\# 📄 License
 
 
 
-This project was developed for educational purposes.
+This project is developed for \*\*educational purposes\*\*.
+
+
+
+\---
+
+
+
+<p align="center">
+
+Made with ❤️ using PHP \& MySQL
+
+</p>
 
