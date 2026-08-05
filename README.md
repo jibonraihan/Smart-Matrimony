@@ -1,8 +1,32 @@
-\# 💍 Smart Matrimony
+<p align="center">
+
+&#x20; <img src="assets/images/logo/logo.png" alt="Smart Matrimony Logo" width="180">
+
+</p>
 
 
 
-An advanced Matrimony \& Wedding Event Management System developed using PHP and MySQL.
+<h1 align="center">💍 Smart Matrimony</h1>
+
+
+
+<p align="center">
+
+&#x20; Advanced Matrimony \& Wedding Event Management System built with PHP \& MySQL.
+
+</p>
+
+
+
+\---
+
+
+
+\## 📖 About
+
+
+
+Smart Matrimony is a web-based matrimony platform that helps users create verified profiles, search for suitable partners, communicate through chat, and access wedding-related services through a modern and user-friendly interface.
 
 
 
@@ -14,25 +38,25 @@ An advanced Matrimony \& Wedding Event Management System developed using PHP and
 
 
 
-\- User Registration \& Login
+\- 👤 User Registration \& Login
 
-\- Multi-Step Profile Creation
+\- 📝 Multi-Step Profile Creation
 
-\- Partner Matching
+\- ❤️ Partner Matching
 
-\- Search Profiles
+\- 🔍 Smart Search
 
-\- Bookmark/Favorites
+\- ⭐ Bookmark/Favorites
 
-\- Chat System
+\- 💬 Chat System
 
-\- Wedding Service Booking
+\- 💍 Wedding Service Booking
 
-\- Admin Panel
+\- 🛡️ Profile Verification
 
-\- Authenticator Panel
+\- 👨‍💼 Admin Panel
 
-\- Profile Verification
+\- ✅ Authenticator Panel
 
 
 
@@ -68,7 +92,7 @@ An advanced Matrimony \& Wedding Event Management System developed using PHP and
 
 
 
-1\. Clone the repository
+\### Clone the repository
 
 
 
@@ -80,11 +104,15 @@ git clone https://github.com/jibonraihan/Smart-Matrimony.git
 
 
 
-2\. Copy the project into:
+\### Move the project
 
 
 
-```
+Copy the project into:
+
+
+
+```text
 
 xampp/htdocs/
 
@@ -92,11 +120,15 @@ xampp/htdocs/
 
 
 
-3\. Import the database:
+\### Import Database
 
 
 
-```
+Import:
+
+
+
+```text
 
 database/smart\_matrimony.sql
 
@@ -104,15 +136,15 @@ database/smart\_matrimony.sql
 
 
 
-4\. Start Apache \& MySQL from XAMPP.
+\### Run
 
 
 
-5\. Open:
+Start \*\*Apache\*\* and \*\*MySQL\*\* from XAMPP, then open:
 
 
 
-```
+```text
 
 http://localhost/smart\_matrimony
 
@@ -128,11 +160,19 @@ http://localhost/smart\_matrimony
 
 
 
-```
+```text
 
 admin/
 
+ajax/
+
 assets/
+
+auth/
+
+booking/
+
+chat/
 
 config/
 
@@ -140,17 +180,39 @@ database/
 
 includes/
 
+matches/
+
 profile/
+
+search/
 
 uploads/
 
-index.php
-
-login.php
-
-register.php
-
 ```
+
+
+
+\---
+
+
+
+\## 📸 Screenshots
+
+
+
+\### Login Page
+
+
+
+!\[Login Page](screenshots/login.png)
+
+
+
+\### Register Page
+
+
+
+!\[Register Page](screenshots/register.png)
 
 
 
@@ -170,29 +232,9 @@ register.php
 
 
 
-\## 📸 Screenshots
-
-
-
-\### Login Page
-
-
-
-!\[Login](screenshots/login.png)
-
-
-
-\### Register Page
-
-
-
-!\[Register](screenshots/register.png)
-
-
-
 \## 📄 License
 
 
 
-This project is created for educational purposes.
+This project was developed for educational purposes.
 
