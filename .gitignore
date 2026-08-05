@@ -1,0 +1,16 @@
+# User uploads
+uploads/profile/*
+!uploads/profile/.gitkeep
+
+# Logs
+*.log
+
+# OS Files
+Thumbs.db
+.DS_Store
+
+# VS Code
+.vscode/
+
+# Environment
+.env
