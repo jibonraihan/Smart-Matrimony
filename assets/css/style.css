@@ -1,0 +1,241 @@
+/* Google Font */
+
+body{
+
+    font-family: 'Poppins', sans-serif;
+
+    background:#f8fafc;
+
+}
+
+/* Theme Color */
+
+:root{
+
+    --primary:#0F766E;
+
+    --secondary:#D4AF37;
+
+}
+
+/* Navbar */
+
+.navbar{
+
+    background:var(--primary);
+
+}
+
+.navbar-brand{
+
+    color:white!important;
+
+    font-weight:700;
+
+}
+
+/* Card */
+
+.card{
+
+    border:none;
+
+    border-radius:18px;
+
+    box-shadow:0 10px 30px rgba(0,0,0,.08);
+
+}
+
+/* Button */
+
+.btn-primary{
+
+    background:var(--primary);
+
+    border:none;
+
+}
+
+.btn-primary:hover{
+
+    background:#0c5d58;
+
+}
+
+/* Hero Section */
+
+.hero{
+
+    padding:80px 0;
+
+}
+/* Gradient Background */
+
+body{
+
+    background: linear-gradient(
+        135deg,
+        #f8fafc,
+        #eef8f6
+    );
+
+}
+
+/* Form Label */
+
+label{
+
+    font-weight:600;
+
+}
+
+/* Form Control */
+
+.form-control,
+.form-select{
+
+    border-radius:12px;
+
+    padding:12px;
+
+}
+
+/* Card */
+
+.card{
+
+    overflow:hidden;
+
+}
+
+/* Primary Button */
+
+.btn-primary{
+
+    border-radius:12px;
+
+    padding:12px;
+
+    font-weight:600;
+
+}
+
+/* Hero Icon */
+
+.hero-icon{
+
+    font-size:70px;
+
+    color:var(--secondary);
+
+}
+.navbar{
+
+    background:#0F766E !important;
+
+}
+
+.nav-link{
+
+    color:#fff !important;
+
+    font-weight:500;
+
+}
+
+.nav-link:hover{
+
+    color:#FFD700 !important;
+
+}
+
+.btn-warning{
+
+    background:#D4AF37;
+
+    border:none;
+
+    color:#fff;
+
+    font-weight:600;
+
+}
+
+.btn-warning:hover{
+
+    background:#b9931d;
+
+}
+
+#preview{
+
+transition:.3s;
+
+cursor:pointer;
+
+}
+
+#preview:hover{
+
+transform:scale(1.03);
+
+opacity:.9;
+
+box-shadow:0 0 20px rgba(25,135,84,.4);
+
+}
+
+#cameraIcon{
+
+transition:.3s;
+
+}
+
+#cameraIcon:hover{
+
+transform:scale(1.12);
+
+}
+
+/* Wizard Form */
+
+.card-body{
+
+    padding:2.2rem !important;
+
+}
+
+.form-label{
+
+    margin-bottom:4px;
+
+    font-size:15px;
+
+}
+
+.form-control,
+.form-select{
+
+    padding:10px 14px;
+
+}
+
+.alert{
+
+    padding:.75rem 1rem;
+
+    margin-bottom:20px;
+
+}
+
+textarea.form-control{
+
+    min-height:90px;
+
+}
+
+hr{
+
+    opacity:.15;
+
+}
