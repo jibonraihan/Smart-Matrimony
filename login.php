@@ -1,5 +1,5 @@
 <?php
-
+$page_css = "assets/css/login.css";
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
@@ -123,63 +123,149 @@ include 'includes/header.php';
 include 'includes/navbar.php';
 
 ?>
-<div class="container py-5">
+<div class="login-page">
 
-    <div class="row justify-content-center align-items-center">
+    <div class="container">
 
-        <!-- Left Side -->
+        <div class="row align-items-center gy-5">
 
-        <div class="col-lg-6 d-none d-lg-block">
+            <!-- Left Side -->
 
-            <div class="pe-lg-5">
+            <div class="col-lg-7">
 
-                <h1 class="display-4 fw-bold text-success mb-4">
+                <div class="login-left">
 
-                    Welcome Back 👋
+                    <div class="login-badge">
 
-                </h1>
+                        <i class="fa-solid fa-shield-heart"></i>
 
-                <p class="lead text-muted">
-
-                    Continue your halal journey and connect with your future life partner.
-
-                </p>
-
-                <div class="mt-5">
-
-                    <div class="mb-4">
-
-                        <h5>🔒 Secure Login</h5>
-
-                        <small class="text-muted">
-
-                            Your account is protected with encrypted passwords.
-
-                        </small>
+                        Trusted by thousands of Muslim families
 
                     </div>
 
-                    <div class="mb-4">
+                    <div class="login-heading-wrap">
 
-                        <h5>💍 Smart Matrimony</h5>
+    <h1 class="login-heading">
+        Welcome Back
+    </h1>
 
-                        <small class="text-muted">
+    <span class="login-wave">👋</span>
 
-                            Find compatible Muslim life partners.
+</div>
 
-                        </small>
+                    <p class="login-description">
+
+                        Find your compatible life partner in a secure,
+                        trusted and family-friendly environment built on
+                        Islamic values.
+
+                    </p>
+
+                    <div class="login-features">
+
+                        <div class="feature-item">
+
+                            <div class="feature-icon green">
+
+                                <i class="fa-solid fa-lock"></i>
+
+                            </div>
+
+                            <div>
+
+                                <h5>Secure & Private</h5>
+
+                                <p>Your personal information is encrypted and protected.</p>
+
+                            </div>
+
+                        </div>
+
+                        <div class="feature-item">
+
+                            <div class="feature-icon purple">
+
+                                <i class="fa-solid fa-user-check"></i>
+
+                            </div>
+
+                            <div>
+
+                                <h5>Verified Profiles</h5>
+
+                                <p>Every profile is verified for a safer matchmaking experience.</p>
+
+                            </div>
+
+                        </div>
+
+                        <div class="feature-item">
+
+                            <div class="feature-icon orange">
+
+                                <i class="fa-solid fa-heart"></i>
+
+                            </div>
+
+                            <div>
+
+                                <h5>Halal & Family Friendly</h5>
+
+                                <p>Built with Islamic values and respectful communication.</p>
+
+                            </div>
+
+                        </div>
 
                     </div>
+                                        <div class="login-stats">
 
-                    <div class="mb-4">
+    <div class="stats-logo">
 
-                        <h5>👨‍👩‍👧 Family Friendly</h5>
+        <img src="<?= BASE_URL ?>assets/images/logo/logo.png"
+             alt="Smart Matrimony">
 
-                        <small class="text-muted">
+    </div>
 
-                            Respectful communication with Islamic values.
+    <div class="stat-box">
 
-                        </small>
+        <i class="fa-solid fa-users"></i>
+
+        <h4>50K+</h4>
+
+        <span>Happy Members</span>
+
+    </div>
+
+                        <div class="stat-box">
+
+                            <i class="fa-solid fa-shield-halved"></i>
+
+                            <h4>100%</h4>
+
+                            <span>Verified Profiles</span>
+
+                        </div>
+
+                        <div class="stat-box">
+
+                            <i class="fa-solid fa-lock"></i>
+
+                            <h4>Secure</h4>
+
+                            <span>Data Protection</span>
+
+                        </div>
+
+                        <div class="stat-box">
+
+                            <i class="fa-solid fa-headset"></i>
+
+                            <h4>24/7</h4>
+
+                            <span>Support</span>
+
+                        </div>
 
                     </div>
 
@@ -187,210 +273,162 @@ include 'includes/navbar.php';
 
             </div>
 
+ <!-- Login Card -->
+<!-- Right Side -->
+
+<div class="col-lg-5">
+
+    <div class="login-card">
+
+    <div class="login-card-body">
+
+        <div class="login-card-header">
+            <h2>Login</h2>
+
+            <p>
+                Access your Smart Matrimony account
+            </p>
+
         </div>
 
-        <!-- Login Card -->
+        <?php if ($registered): ?>
 
-        <div class="col-lg-5">
+            <div class="alert alert-success">
+                Registration completed successfully. Please login.
+            </div>
 
-            <div class="card shadow-lg border-0 rounded-4">
+        <?php endif; ?>
 
-                <div class="card-body p-4 p-lg-5">
+        <?php if (!empty($error)): ?>
 
-                    <div class="text-center mb-4">
+            <div class="alert alert-danger">
+                <?= $error ?>
+            </div>
 
-                        <h2 class="fw-bold">
+        <?php endif; ?>
 
-                            Login
+        <form method="POST" class="login-form">
+            <div class="mb-3">
 
-                        </h2>
+    <label class="form-label">
 
-                        <p class="text-muted">
+        Email or Mobile
 
-                            Smart Matrimony
+    </label>
 
-                        </p>
+    <div class="login-input">
 
-                    </div>
+        <i class="fa-regular fa-user input-icon-left"></i>
 
-<?php if($registered){ ?>
+        <input
+            type="text"
+            name="email_mobile"
+            class="form-control"
+            placeholder="Enter your email or mobile number"
+            value="<?= htmlspecialchars($_POST['email_mobile'] ?? '') ?>"
+            required>
 
-<div class="alert alert-success">
-
-Registration completed successfully. Please login.
+    </div>
 
 </div>
-
-<?php } ?>
-
-<?php if($error!=""){ ?>
-
-<div class="alert alert-danger">
-
-<?= $error ?>
-
-</div>
-
-<?php } ?>
-
-<form method="POST">
-
 <div class="mb-3">
 
-<label class="form-label">
+    <label class="form-label">
 
-Email or Mobile
+        Password
 
-</label>
+    </label>
 
-<input
+    <div class="login-input password-wrapper">
 
-type="text"
+        <i class="fa-solid fa-lock input-icon-left"></i>
 
-name="email_mobile"
+        <input
+            type="password"
+            id="password"
+            name="password"
+            class="form-control"
+            placeholder="Enter your password"
+            required>
 
-class="form-control"
+        <i
+            id="togglePassword"
+            class="fa-regular fa-eye input-icon-right"></i>
 
-placeholder="Email or Mobile"
-
-value="<?= htmlspecialchars($_POST['login'] ?? '') ?>"
-
-required>
-
-</div>
-
-<div class="mb-3">
-
-<label class="form-label">
-
-Password
-
-</label>
-
-<input
-
-type="password"
-
-id="password"
-
-name="password"
-
-class="form-control"
-
-required>
+    </div>
 
 </div>
+<div class="d-flex justify-content-between align-items-center mb-4">
 
-<div class="d-flex justify-content-between mb-4">
+    <div class="form-check">
 
-<div class="form-check">
+        <input
+            class="form-check-input"
+            type="checkbox"
+            id="remember"
+            name="remember">
 
-<input
+        <label
+            class="form-check-label"
+            for="remember">
 
-class="form-check-input"
+            Remember Me
 
-type="checkbox"
+        </label>
 
-name="remember"
+    </div>
 
-id="remember">
+    <a href="forgot_password.php" class="forgot-link">
 
-<label class="form-check-label">
+        Forgot Password?
 
-Remember Me
-
-</label>
-
-</div>
-
-<a href="#">
-
-Forgot Password?
-
-</a>
+    </a>
 
 </div>
 
 <button
+    type="submit"
+    name="login"
+    class="login-btn">
 
-type="submit"
+    <i class="fa-solid fa-right-to-bracket me-2"></i>
 
-name="login"
-
-class="btn btn-success w-100 py-2">
-
-Login
+    Login
 
 </button>
 
 </form>
+<div class="login-divider">
 
-<hr>
-
-<div class="text-center">
-
-Don't have an account?
-
-<a href="register.php">
-
-Create Account
-
-</a>
+    <span>OR</span>
 
 </div>
 
-                </div>
+<p class="text-center mb-0">
 
-            </div>
+    Don't have an account?
 
-        </div>
+    <a href="register.php" class="register-link">
 
-    </div>
+        Create Account
+
+    </a>
+
+</p>
+</div>
+</div>
+</div>
+</div>
+
+</div>
+
+</div>
 
 </div>
 
 <!-- SweetAlert2 -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-<script>
-
-// Show / Hide Password
-
-const password = document.getElementById("password");
-
-password.insertAdjacentHTML(
-
-    "afterend",
-
-    '<button type="button" id="togglePassword" class="btn btn-sm btn-outline-secondary mt-2">Show Password</button>'
-
-);
-
-document
-
-.getElementById("togglePassword")
-
-.addEventListener("click",function(){
-
-    if(password.type==="password"){
-
-        password.type="text";
-
-        this.innerHTML="Hide Password";
-
-    }
-
-    else{
-
-        password.type="password";
-
-        this.innerHTML="Show Password";
-
-    }
-
-});
-
-</script>
 
 <?php if($registered){ ?>
 
@@ -431,6 +469,38 @@ confirmButtonColor:'#dc3545'
 </script>
 
 <?php } ?>
+
+<script>
+document.addEventListener("DOMContentLoaded",function(){
+
+const password=document.getElementById("password");
+
+const toggle=document.getElementById("togglePassword");
+
+if(password && toggle){
+
+toggle.addEventListener("click",function(){
+
+if(password.type==="password"){
+
+password.type="text";
+
+this.classList.replace("fa-eye","fa-eye-slash");
+
+}else{
+
+password.type="password";
+
+this.classList.replace("fa-eye-slash","fa-eye");
+
+}
+
+});
+
+}
+
+});
+</script>
 
 <?php
 

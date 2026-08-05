@@ -164,7 +164,7 @@ $user_professions = [
 
 $family_types = [
 
-    "Nuclear",
+    "Small",
     "Joint"
 
 ];
@@ -298,7 +298,7 @@ $complexions = [
     "Very Fair",
     "Fair",
     "Medium",
-    "Wheatish",
+    "Medium-Deep",
     "Dark"
 
 ];

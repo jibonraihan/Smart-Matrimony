@@ -119,7 +119,7 @@ $health_notes = clean_input($_POST['health_notes'] ?? '');
     );
 
     $stmt=mysqli_prepare($conn,"
-SELECT id
+SELECT user_id
 FROM health_profiles
 WHERE user_id=?
 LIMIT 1
