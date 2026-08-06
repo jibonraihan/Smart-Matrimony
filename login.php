@@ -9,6 +9,16 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+// session_start();
+
+// if (isset($_SESSION['user_id'])) {
+
+//     header("Location: dashboard.php");
+
+//     exit;
+
+// }
+
 $error = "";
 
 // Registration Success Message
@@ -85,21 +95,23 @@ if($_SERVER["REQUEST_METHOD"]=="POST"){
 
             }
 
-            elseif(password_verify($password,$user['password'])){
+         elseif(password_verify($password,$user['password'])){
 
-                $_SESSION['user_id'] = $user['user_id'];
+    session_regenerate_id(true);
 
-                $_SESSION['first_name'] = $user['first_name'];
+    $_SESSION['user_id'] = $user['user_id'];
 
-                $_SESSION['last_name'] = $user['last_name'];
+    $_SESSION['first_name'] = $user['first_name'];
 
-                $_SESSION['role'] = $user['role'];
+    $_SESSION['last_name'] = $user['last_name'];
 
-                header("Location: dashboard.php");
+    $_SESSION['role'] = $user['role'];
 
-                exit();
+    header("Location: dashboard.php");
 
-            }
+    exit();
+
+}
 
             else{
 
@@ -293,13 +305,15 @@ include 'includes/navbar.php';
 
         </div>
 
-        <?php if ($registered): ?>
+        <?php if($registered && empty($error)){ ?>
 
-            <div class="alert alert-success">
-                Registration completed successfully. Please login.
-            </div>
+<div class="alert alert-success">
 
-        <?php endif; ?>
+    Registration completed successfully. Please login.
+
+</div>
+
+<?php } ?>
 
         <?php if (!empty($error)): ?>
 

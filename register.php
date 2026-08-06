@@ -1,13 +1,17 @@
 <?php
+$page_css = "assets/css/register.css";
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 require_once 'config/db.php';
 require_once 'includes/functions.php';
 
 $error = "";
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
 $success = "";
 
-if(isset($_POST['register'])){
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+
 
     $first_name = trim($_POST['first_name']);
     $last_name  = trim($_POST['last_name']);
@@ -66,6 +70,12 @@ if(isset($_POST['register'])){
     elseif($password!=$confirm){
 
         $error="Passwords do not match.";
+
+    }
+
+    elseif(!isset($_POST['terms'])){
+
+    $error = "Please accept the Terms & Conditions.";
 
     }
 
@@ -167,7 +177,7 @@ if(isset($_POST['register'])){
 
             else{
 
-                $error="Registration failed.";
+                $error = "Registration failed.";
 
             }
 
@@ -187,102 +197,132 @@ include 'includes/navbar.php';
 
         <!-- Left Side -->
 
-        <div class="col-lg-6 d-none d-lg-block">
+        <div class="col-lg-6 register-left">
 
-            <div class="pe-lg-5">
+    <span class="trust-badge">
+        <i class="fa-solid fa-shield-heart"></i>
+        Trusted by thousands of Muslim families
+    </span>
 
-                <h1 class="display-4 fw-bold text-success mb-4">
+    <h1 class="register-heading">
+        Begin Your Halal Journey
+        <span class="wave-hand">💍</span>
+    </h1>
 
-                    Begin Your Halal Journey 💍
+    <p class="register-description">
+        Create your trusted matrimonial profile and connect with compatible
+        life partners in a safe, verified and family-friendly environment.
+    </p>
 
-                </h1>
-
-                <p class="lead text-muted">
-
-                    Find your compatible life partner while maintaining
-                    Islamic values, privacy and family traditions.
-
-                </p>
-
-                <div class="mt-5">
-
-                    <div class="mb-4">
-
-                        <h5>✅ Verified Profiles</h5>
-
-                        <small class="text-muted">
-
-                            Every profile goes through verification.
-
-                        </small>
-
-                    </div>
-
-                    <div class="mb-4">
-
-                        <h5>❤️ Smart Matching</h5>
-
-                        <small class="text-muted">
-
-                            Compatibility based partner suggestions.
-
-                        </small>
-
-                    </div>
-
-                    <div class="mb-4">
-
-                        <h5>🔒 Privacy Protected</h5>
-
-                        <small class="text-muted">
-
-                            Your personal information stays protected.
-
-                        </small>
-
-                    </div>
-
-                    <div>
-
-                        <h5>🤝 Family Friendly</h5>
-
-                        <small class="text-muted">
-
-                            Respectful communication before marriage.
-
-                        </small>
-
-                    </div>
-
-                </div>
-
-            </div>
-
+    <div class="feature-item">
+        <div class="feature-icon green">
+            <i class="fa-solid fa-circle-check"></i>
         </div>
+
+        <div>
+            <h5>Verified Profiles</h5>
+            <p>Every profile goes through verification.</p>
+        </div>
+    </div>
+
+    <div class="feature-item">
+        <div class="feature-icon pink">
+            <i class="fa-solid fa-heart"></i>
+        </div>
+
+        <div>
+            <h5>Smart Matching</h5>
+            <p>Compatibility based partner suggestions.</p>
+        </div>
+    </div>
+
+    <div class="feature-item">
+        <div class="feature-icon orange">
+            <i class="fa-solid fa-lock"></i>
+        </div>
+
+        <div>
+            <h5>Privacy Protected</h5>
+            <p>Your personal information stays protected.</p>
+        </div>
+    </div>
+
+    <div class="feature-item">
+        <div class="feature-icon blue">
+            <i class="fa-solid fa-handshake"></i>
+        </div>
+
+        <div>
+            <h5>Family Friendly</h5>
+            <p>Built with Islamic values and respect.</p>
+        </div>
+    </div>
+    <div class="stats-card">
+
+    <div class="stats-logo">
+
+        <img src="<?php echo BASE_URL; ?>assets/images/logo/logo.png" alt="Smart Matrimony Logo">
+
+    </div>
+
+    <div class="stats-item">
+
+        <i class="fa-solid fa-users"></i>
+
+        <h4>50K+</h4>
+
+        <p>Happy Members</p>
+
+    </div>
+
+    <div class="stats-item">
+
+        <i class="fa-solid fa-shield"></i>
+
+        <h4>100%</h4>
+
+        <p>Verified Profiles</p>
+
+    </div>
+
+    <div class="stats-item">
+
+        <i class="fa-solid fa-lock"></i>
+
+        <h4>Secure</h4>
+
+        <p>Data Protection</p>
+
+    </div>
+
+    <div class="stats-item">
+
+        <i class="fa-solid fa-headset"></i>
+
+        <h4>24/7</h4>
+
+        <p>Support</p>
+
+    </div>
+
+</div>
+</div>
 
         <!-- Registration Card -->
 
         <div class="col-lg-5">
 
-            <div class="card shadow-lg border-0 rounded-4">
+            <div class="register-card">
 
-                <div class="card-body p-4 p-lg-5">
+                <div class="register-card-body">
 
-                    <div class="text-center mb-4">
+                    <div class="register-card-header">
 
-                        <h2 class="fw-bold">
+    <h2>Create Account</h2>
 
-                            Create Account
+    <p>Join Smart Matrimony today</p>
 
-                        </h2>
-
-                        <p class="text-muted">
-
-                            Smart Matrimony
-
-                        </p>
-
-                    </div>
+</div>
 
 <?php if($error!=""){ ?>
 
@@ -294,7 +334,7 @@ include 'includes/navbar.php';
 
 <?php } ?>
 
-<form method="POST">
+<form id="registerForm" method="POST" class="register-form">
 
 <div class="row">
 
@@ -306,17 +346,22 @@ First Name
 
 </label>
 
-<input
+<div class="input-group input-icon-group">
 
-type="text"
+    <span class="input-group-text">
 
-name="first_name"
+        <i class="fa-regular fa-user"></i>
 
-class="form-control"
+    </span>
 
-value="<?= htmlspecialchars($_POST['first_name'] ?? '') ?>"
+    <input
+        type="text"
+        name="first_name"
+        class="form-control register-input"
+        placeholder="First Name"
+        value="<?php echo htmlspecialchars($first_name ?? ''); ?>">
 
-required>
+</div>
 
 </div>
 
@@ -328,17 +373,22 @@ Last Name
 
 </label>
 
-<input
+<div class="input-group input-icon-group">
 
-type="text"
+    <span class="input-group-text">
 
-name="last_name"
+        <i class="fa-regular fa-user"></i>
 
-class="form-control"
+    </span>
 
-value="<?= htmlspecialchars($_POST['last_name'] ?? '') ?>"
+    <input
+        type="text"
+        name="last_name"
+        class="form-control register-input"
+        placeholder="Last Name"
+        value="<?php echo htmlspecialchars($last_name ?? ''); ?>">
 
-required>
+</div>
 
 </div>
 
@@ -356,7 +406,7 @@ Gender
 
 name="gender"
 
-class="form-select"
+class="form-select register-input"
 
 required>
 
@@ -390,22 +440,21 @@ Mobile Number
 
 </label>
 
-<input
+<div class="input-group input-icon-group">
 
-type="text"
+    <span class="input-group-text">
 
-name="mobile"
+        <i class="fa-solid fa-phone"></i>
 
-maxlength="11"
+    </span>
 
-class="form-control"
+    <input
+        type="text"
+        name="mobile"
+        class="form-control register-input"
+        placeholder="01XXXXXXXXX">
 
-placeholder="01XXXXXXXXX"
-
-value="<?= htmlspecialchars($_POST['mobile'] ?? '') ?>"
-
-required>
-
+    </div>
 </div>
 
 <div class="mb-3">
@@ -416,87 +465,94 @@ Email Address
 
 </label>
 
-<input
+<div class="input-group input-icon-group">
 
-type="email"
+    <span class="input-group-text">
 
-name="email"
+        <i class="fa-regular fa-envelope"></i>
 
-class="form-control"
+    </span>
 
-placeholder="example@email.com"
+    <input
+        type="email"
+        name="email"
+        class="form-control register-input"
+        placeholder="example@email.com">
+    </div>
+</div>
 
-value="<?= htmlspecialchars($_POST['email'] ?? '') ?>"
+<div class="mb-3">
 
-required>
+    <label class="form-label">
+
+        Password
+
+    </label>
+
+    <div class="login-input">
+
+        <i class="fa-solid fa-lock input-icon-left"></i>
+
+        <input
+            type="password"
+            name="password"
+            id="password"
+            class="form-control register-input"
+            placeholder="Enter Password"
+            required>
+
+        <i class="fa-regular fa-eye input-icon-right toggle-password"
+           data-target="password"></i>
+
+    </div>
+
+    <div id="passwordStrength" class="password-strength mt-2"></div>
 
 </div>
 
 <div class="mb-3">
 
-<label class="form-label">
+    <label class="form-label">
 
-Password
+        Confirm Password
 
-</label>
+    </label>
 
-<input
+    <div class="login-input">
 
-type="password"
+        <i class="fa-solid fa-lock input-icon-left"></i>
 
-name="password"
+        <input
+            type="password"
+            name="confirm_password"
+            id="confirm_password"
+            class="form-control register-input"
+            placeholder="Confirm Password"
+            required>
 
-id="password"
+        <i class="fa-regular fa-eye input-icon-right toggle-password"
+           data-target="confirm_password"></i>
 
-class="form-control"
+    </div>
 
-required>
-
-</div>
-
-<div class="mb-3">
-
-<label class="form-label">
-
-Confirm Password
-
-</label>
-
-<input
-
-type="password"
-
-name="confirm_password"
-
-id="confirm_password"
-
-class="form-control"
-
-required>
+    <div id="passwordMatch" class="password-match mt-2"></div>
 
 </div>
 
-<div class="form-check mb-4">
+<div class="form-check terms-check">
 
-<input
+    <input
+        class="form-check-input"
+        type="checkbox"
+        id="terms"
+        name="terms">
 
-class="form-check-input"
+    <label class="form-check-label" for="terms">
 
-type="checkbox"
+        I agree to the
+        <a href="#">Terms & Conditions</a>
 
-required>
-
-<label class="form-check-label">
-
-I agree to the
-
-<a href="#">
-
-Terms & Conditions
-
-</a>
-
-</label>
+    </label>
 
 </div>
 
@@ -505,7 +561,7 @@ Terms & Conditions
 type="submit"
 
 name="register"
-
+id="registerBtn"
 class="btn btn-success w-100 py-2">
 
 Create Account
@@ -514,19 +570,23 @@ Create Account
 
 </form>
 
-<hr>
+<div class="register-divider">
 
-<div class="text-center">
-
-Already have an account?
-
-<a href="login.php">
-
-Login
-
-</a>
+    <span>OR</span>
 
 </div>
+
+<p class="text-center mb-0">
+
+    Already have an account?
+
+    <a href="login.php" class="login-link">
+
+        Login
+
+    </a>
+
+</p>
 
                 </div>
 
@@ -538,3 +598,125 @@ Login
 
 </div>
 
+<script>
+
+document.querySelectorAll(".toggle-password").forEach(function(icon){
+
+    icon.addEventListener("click", function(){
+
+        const input = document.getElementById(this.dataset.target);
+
+        if(input.type === "password"){
+
+            input.type = "text";
+
+            this.classList.remove("fa-eye");
+            this.classList.add("fa-eye-slash");
+
+        }else{
+
+            input.type = "password";
+
+            this.classList.remove("fa-eye-slash");
+            this.classList.add("fa-eye");
+
+        }
+
+    });
+
+});
+
+const password = document.getElementById("password");
+const confirm = document.getElementById("confirm_password");
+
+const strength = document.getElementById("passwordStrength");
+const match = document.getElementById("passwordMatch");
+
+password.addEventListener("input", function(){
+
+    const value = this.value;
+
+    let text = "";
+    let color = "";
+
+    if(value.length < 8){
+
+        text = "Weak";
+        color = "#dc2626";
+
+    }else if(
+        /[A-Z]/.test(value) &&
+        /[0-9]/.test(value)
+    ){
+
+        text = "Strong";
+        color = "#16a34a";
+
+    }else{
+
+        text = "Medium";
+        color = "#d97706";
+
+    }
+
+    strength.textContent = "Password Strength: " + text;
+    strength.style.color = color;
+
+});
+
+confirm.addEventListener("input", function(){
+
+    if(this.value === ""){
+
+        match.textContent = "";
+        return;
+
+    }
+
+    if(this.value === password.value){
+
+        match.textContent = "✓ Password Matched";
+        match.style.color = "#16a34a";
+
+    }else{
+
+        match.textContent = "✕ Password Not Matched";
+        match.style.color = "#dc2626";
+
+    }
+
+});
+
+const registerForm = document.getElementById("registerForm");
+const registerBtn = document.getElementById("registerBtn");
+
+registerForm.addEventListener("submit", function () {
+
+    registerBtn.disabled = true;
+
+    registerBtn.innerHTML = `
+        <span class="spinner-border spinner-border-sm me-2"></span>
+        Creating Account...
+    `;
+
+});
+
+window.addEventListener("pageshow", function () {
+
+    registerBtn.disabled = false;
+
+    registerBtn.innerHTML = "Create Account";
+
+});
+
+</script>
+
+<?php
+if (!empty($error)) {
+    echo "<pre style='background:#fee;padding:10px;border:1px solid red'>";
+    echo "ERROR = " . $error;
+    echo "</pre>";
+}
+?>
+
+<?php include 'includes/footer.php'; ?>
