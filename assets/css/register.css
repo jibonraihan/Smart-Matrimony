@@ -529,3 +529,36 @@
 .form-check-input{
     margin-top:0.22rem;
 }
+
+/* ==========================
+   Mobile Responsive
+========================== */
+
+@media (max-width: 991.98px){
+
+    /* Left Section Hide */
+
+    .register-left{
+        display:none !important;
+    }
+
+    /* Registration Card Full Width */
+
+    .register-right{
+        width:100%;
+        max-width:600px;
+        margin:0 auto;
+    }
+
+    /* Remove extra top spacing */
+
+    .register-section{
+        padding:40px 0;
+        min-height:auto;
+    }
+
+    .register-card{
+        margin:0 auto;
+    }
+
+}

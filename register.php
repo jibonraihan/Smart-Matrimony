@@ -310,7 +310,7 @@ include 'includes/navbar.php';
 
         <!-- Registration Card -->
 
-        <div class="col-lg-5">
+        <div class="col-lg-6 register-right">
 
             <div class="register-card">
 
@@ -320,7 +320,7 @@ include 'includes/navbar.php';
 
     <h2>Create Account</h2>
 
-    <p>Join Smart Matrimony today</p>
+    <p>Join Smart Matrimony community</p>
 
 </div>
 
