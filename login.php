@@ -119,6 +119,8 @@ if($_SERVER["REQUEST_METHOD"]=="POST"){
 
 }
 
+
+
 include 'includes/header.php';
 include 'includes/navbar.php';
 
@@ -307,7 +309,7 @@ include 'includes/navbar.php';
 
         <?php endif; ?>
 
-        <form method="POST" class="login-form">
+        <form id="loginForm" method="POST" class="login-form">
             <div class="mb-3">
 
     <label class="form-label">
@@ -389,11 +391,12 @@ include 'includes/navbar.php';
 <button
     type="submit"
     name="login"
-    class="login-btn">
+    class="login-btn"
+    id="loginBtn">
 
     <i class="fa-solid fa-right-to-bracket me-2"></i>
 
-    Login
+    <span>Login</span>
 
 </button>
 
@@ -501,7 +504,35 @@ this.classList.replace("fa-eye-slash","fa-eye");
 
 });
 </script>
+<script>
 
+const loginForm = document.getElementById("loginForm");
+const loginBtn  = document.getElementById("loginBtn");
+
+loginForm.addEventListener("submit", function () {
+
+    loginBtn.disabled = true;
+
+    loginBtn.innerHTML = `
+        <span class="spinner-border spinner-border-sm me-2"></span>
+        Signing in...
+    `;
+
+});
+
+// Reset button when page is restored from browser cache (Back button)
+window.addEventListener("pageshow", function () {
+
+    loginBtn.disabled = false;
+
+    loginBtn.innerHTML = `
+        <i class="fa-solid fa-right-to-bracket me-2"></i>
+        <span>Login</span>
+    `;
+
+});
+
+</script>
 <?php
 
 include 'includes/footer.php';
