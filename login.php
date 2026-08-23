@@ -95,23 +95,23 @@ if($_SERVER["REQUEST_METHOD"]=="POST"){
 
             }
 
-         elseif(password_verify($password,$user['password'])){
+            elseif(password_verify($password,$user['password'])){
 
-    session_regenerate_id(true);
+                session_regenerate_id(true);
 
-    $_SESSION['user_id'] = $user['user_id'];
+                $_SESSION['user_id'] = $user['user_id'];
 
-    $_SESSION['first_name'] = $user['first_name'];
+                $_SESSION['first_name'] = $user['first_name'];
 
-    $_SESSION['last_name'] = $user['last_name'];
+                $_SESSION['last_name'] = $user['last_name'];
 
-    $_SESSION['role'] = $user['role'];
+                $_SESSION['role'] = $user['role'];
 
-    header("Location: dashboard.php");
+                header("Location: dashboard.php");
 
-    exit();
+                exit();
 
-}
+            }
 
             else{
 
