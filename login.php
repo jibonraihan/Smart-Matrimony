@@ -1,56 +1,62 @@
 <?php
-$page_css = "assets/css/login.css";
+
+$page_css = 'assets/css/login.css';
+
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
 require_once 'config/db.php';
 require_once 'includes/functions.php';
+
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// session_start();
+$error = '';
 
-// if (isset($_SESSION['user_id'])) {
+$registered = isset($_GET['registered']);
 
-//     header("Location: dashboard.php");
+/* =========================
+   TOTAL MEMBERS COUNT
+========================= */
 
-//     exit;
+$member_count = 0;
 
-// }
+$count_result = mysqli_query(
+    $conn,
+    "SELECT COUNT(*) AS total_members FROM users"
+);
 
-$error = "";
+if ($count_result) {
 
-// Registration Success Message
+    $count_data = mysqli_fetch_assoc($count_result);
 
-$registered = false;
-
-if(isset($_GET['registered'])){
-
-    $registered = true;
-
+    $member_count = (int) ($count_data['total_members'] ?? 0);
 }
 
-// Login
-if($_SERVER["REQUEST_METHOD"]=="POST"){
+if (!empty($_SESSION['oauth_error'])) {
+    $error = $_SESSION['oauth_error'];
+    unset($_SESSION['oauth_error']);
+}
 
 
-    $login = trim($_POST['email_mobile']);
+/* =========================
+   NORMAL LOGIN
+========================= */
 
-    $password = $_POST['password'];
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
-    if(empty($login) || empty($password)){
+    $login = trim($_POST['email_mobile'] ?? '');
+    $password = $_POST['password'] ?? '';
 
-        $error = "Please enter Email/Mobile and Password.";
+    if ($login === '' || $password === '') {
 
-    }
+        $error = 'Please enter your Email/Mobile and Password.';
 
-    else{
+    } else {
 
         $stmt = mysqli_prepare(
-
             $conn,
-
             "SELECT
                 user_id,
                 first_name,
@@ -61,89 +67,92 @@ if($_SERVER["REQUEST_METHOD"]=="POST"){
                 role,
                 account_status
 
-            FROM users
+             FROM users
 
-            WHERE email=?
+             WHERE email=? OR mobile=?
 
-            OR mobile=?"
-
+             LIMIT 1"
         );
 
         mysqli_stmt_bind_param(
-
             $stmt,
-
-            "ss",
-
+            'ss',
             $login,
-
             $login
-
         );
 
         mysqli_stmt_execute($stmt);
 
         $result = mysqli_stmt_get_result($stmt);
 
-        if(mysqli_num_rows($result)==1){
+        if (
+            $result &&
+            mysqli_num_rows($result) === 1
+        ) {
 
             $user = mysqli_fetch_assoc($result);
-           
-            if($user['account_status']!="Active"){
 
-                $error="Your account is inactive.";
+            if ($user['account_status'] !== 'Active') {
 
-            }
+                $error =
+                    'Your account is not active. Please contact support.';
 
-            elseif(password_verify($password,$user['password'])){
+            } elseif (
+                password_verify(
+                    $password,
+                    $user['password']
+                )
+            ) {
 
                 session_regenerate_id(true);
 
-                $_SESSION['user_id'] = $user['user_id'];
+                $_SESSION['user_id'] =
+                    $user['user_id'];
 
-                $_SESSION['first_name'] = $user['first_name'];
+                $_SESSION['first_name'] =
+                    $user['first_name'];
 
-                $_SESSION['last_name'] = $user['last_name'];
+                $_SESSION['last_name'] =
+                    $user['last_name'];
 
-                $_SESSION['role'] = $user['role'];
+                $_SESSION['role'] =
+                    $user['role'];
 
-                header("Location: dashboard.php");
+                header('Location: home.php');
+                exit;
 
-                exit();
+            } else {
 
+                $error =
+                    'Incorrect password. Please try again.';
             }
 
-            else{
+        } else {
 
-                $error="Incorrect password.";
-
-            }
-
+            $error =
+                'No account was found with that Email/Mobile.';
         }
 
-        else{
-
-            $error="Account not found.";
-
-        }
-
+        mysqli_stmt_close($stmt);
     }
-
 }
-
 
 
 include 'includes/header.php';
 include 'includes/navbar.php';
 
 ?>
+
 <div class="login-page">
 
     <div class="container">
 
         <div class="row align-items-center gy-5">
 
-            <!-- Left Side -->
+
+            <!-- =========================
+                 LEFT SIDE
+            ========================== -->
 
             <div class="col-lg-7">
 
@@ -157,15 +166,19 @@ include 'includes/navbar.php';
 
                     </div>
 
+
                     <div class="login-heading-wrap">
 
-    <h1 class="login-heading">
-        Welcome Back
-    </h1>
+                        <h1 class="login-heading">
+                            Welcome Back
+                        </h1>
 
-    <span class="login-wave">👋</span>
+                        <span class="login-wave">
+                            👋
+                        </span>
 
-</div>
+                    </div>
+
 
                     <p class="login-description">
 
@@ -175,7 +188,9 @@ include 'includes/navbar.php';
 
                     </p>
 
+
                     <div class="login-features">
+
 
                         <div class="feature-item">
 
@@ -187,13 +202,19 @@ include 'includes/navbar.php';
 
                             <div>
 
-                                <h5>Secure & Private</h5>
+                                <h5>
+                                    Secure &amp; Private
+                                </h5>
 
-                                <p>Your personal information is encrypted and protected.</p>
+                                <p>
+                                    Your personal information is protected
+                                    with secure authentication.
+                                </p>
 
                             </div>
 
                         </div>
+
 
                         <div class="feature-item">
 
@@ -205,13 +226,19 @@ include 'includes/navbar.php';
 
                             <div>
 
-                                <h5>Verified Profiles</h5>
+                                <h5>
+                                    Verified Profiles
+                                </h5>
 
-                                <p>Every profile is verified for a safer matchmaking experience.</p>
+                                <p>
+                                    Authentic members help create a safer
+                                    matchmaking experience.
+                                </p>
 
                             </div>
 
                         </div>
+
 
                         <div class="feature-item">
 
@@ -223,33 +250,46 @@ include 'includes/navbar.php';
 
                             <div>
 
-                                <h5>Halal & Family Friendly</h5>
+                                <h5>
+                                    Halal &amp; Family Friendly
+                                </h5>
 
-                                <p>Built with Islamic values and respectful communication.</p>
+                                <p>
+                                    Built around Islamic values, privacy
+                                    and respectful communication.
+                                </p>
 
                             </div>
 
                         </div>
 
+
                     </div>
-                                        <div class="login-stats">
 
-    <div class="stats-logo">
 
-        <img src="<?= BASE_URL ?>assets/images/logo/logo.png"
-             alt="Smart Matrimony">
+                    <div class="login-stats">
 
-    </div>
+                        <div class="stats-logo">
 
-    <div class="stat-box">
+                            <img
+                                src="<?= BASE_URL ?>assets/images/logo/logo.png"
+                                alt="Smart Matrimony">
 
-        <i class="fa-solid fa-users"></i>
+                        </div>
 
-        <h4>50K+</h4>
 
-        <span>Happy Members</span>
+                        <div class="stat-box">
 
-    </div>
+                            <i class="fa-solid fa-users"></i>
+
+                            <h4><?= number_format($member_count); ?>+</h4>
+
+                            <span>
+                                Happy Members
+                            </span>
+
+                        </div>
+
 
                         <div class="stat-box">
 
@@ -257,9 +297,12 @@ include 'includes/navbar.php';
 
                             <h4>100%</h4>
 
-                            <span>Verified Profiles</span>
+                            <span>
+                                Verified Profiles
+                            </span>
 
                         </div>
+
 
                         <div class="stat-box">
 
@@ -267,9 +310,12 @@ include 'includes/navbar.php';
 
                             <h4>Secure</h4>
 
-                            <span>Data Protection</span>
+                            <span>
+                                Data Protection
+                            </span>
 
                         </div>
+
 
                         <div class="stat-box">
 
@@ -277,7 +323,9 @@ include 'includes/navbar.php';
 
                             <h4>24/7</h4>
 
-                            <span>Support</span>
+                            <span>
+                                Support
+                            </span>
 
                         </div>
 
@@ -287,266 +335,366 @@ include 'includes/navbar.php';
 
             </div>
 
- <!-- Login Card -->
-<!-- Right Side -->
 
-<div class="col-lg-5">
 
-    <div class="login-card">
+            <!-- =========================
+                 LOGIN CARD
+            ========================== -->
 
-    <div class="login-card-body">
+            <div class="col-lg-5 col-xl-4">
 
-        <div class="login-card-header">
-            <h2>Login</h2>
+                <div class="login-card">
 
-            <p>
-                Access your Smart Matrimony account
-            </p>
+                    <div class="login-card-body">
+
+
+                        <div class="login-card-header text-center">
+
+                            <h2>
+                                Login
+                            </h2>
+
+                            <p>
+                                Access your Smart Matrimony account
+                            </p>
+
+                        </div>
+
+
+                        <?php if (
+                            $registered &&
+                            empty($error)
+                        ): ?>
+
+                            <div class="alert alert-success login-alert">
+
+                                Registration completed successfully.
+                                Please login.
+
+                            </div>
+
+                        <?php endif; ?>
+
+
+                        <?php if (!empty($error)): ?>
+
+                            <div class="alert alert-danger login-alert">
+
+                                <?= htmlspecialchars($error) ?>
+
+                            </div>
+
+                        <?php endif; ?>
+
+
+                        <!-- NORMAL LOGIN -->
+
+                        <form
+                            id="loginForm"
+                            method="POST"
+                            class="login-form"
+                            novalidate>
+
+
+                            <div class="mb-3">
+
+                                <label
+                                    class="form-label"
+                                    for="email_mobile">
+
+                                    Email or Mobile
+
+                                </label>
+
+
+                                <div class="login-input">
+
+                                    <i
+                                        class="fa-regular fa-user input-icon-left">
+                                    </i>
+
+
+                                    <input
+                                        type="text"
+                                        id="email_mobile"
+                                        name="email_mobile"
+                                        class="form-control"
+                                        placeholder="Enter your email or mobile number"
+                                        value="<?= htmlspecialchars(
+                                            $_POST['email_mobile'] ?? ''
+                                        ) ?>"
+                                        autocomplete="username"
+                                        required>
+
+                                </div>
+
+                            </div>
+
+
+
+                            <div class="mb-3">
+
+                                <label
+                                    class="form-label"
+                                    for="password">
+
+                                    Password
+
+                                </label>
+
+
+                                <div class="login-input password-wrapper">
+
+                                    <i
+                                        class="fa-solid fa-lock input-icon-left">
+                                    </i>
+
+
+                                    <input
+                                        type="password"
+                                        id="password"
+                                        name="password"
+                                        class="form-control"
+                                        placeholder="Enter your password"
+                                        autocomplete="current-password"
+                                        required>
+
+
+                                    <button
+                                        type="button"
+                                        class="password-toggle"
+                                        id="togglePassword"
+                                        aria-label="Show password">
+
+                                        <i class="fa-regular fa-eye"></i>
+
+                                    </button>
+
+                                </div>
+
+                            </div>
+
+
+
+                            <button
+                                type="submit"
+                                name="login"
+                                class="login-btn"
+                                id="loginBtn">
+
+                                <i
+                                    class="fa-solid fa-right-to-bracket me-2">
+                                </i>
+
+                                <span>
+                                    Login
+                                </span>
+
+                            </button>
+
+                        </form>
+
+
+
+                        <!-- SOCIAL DIVIDER -->
+
+                        <div class="login-divider">
+
+                            <span>
+                                OR CONTINUE WITH
+                            </span>
+
+                        </div>
+
+
+
+                        <!-- GOOGLE + FACEBOOK -->
+
+                        <div class="social-login-buttons">
+
+
+                            <a href="social_login.php?provider=google"
+   class="social-btn google-btn icon-only"
+   title="Continue with Google"
+   aria-label="Continue with Google">
+    <span class="social-icon google-icon">
+        <i class="fab fa-google"></i>
+    </span>
+</a>
+
+<a href="social_login.php?provider=facebook"
+   class="social-btn facebook-btn icon-only"
+   title="Continue with Facebook"
+   aria-label="Continue with Facebook">
+    <span class="social-icon facebook-icon">
+        <i class="fab fa-facebook-f"></i>
+    </span>
+</a>
+
+
+                        </div>
+
+
+                        <p class="social-note">
+
+                            Use your verified Google or Facebook account
+                            to sign in.
+
+                        </p>
+
+
+                        <!-- REGISTER -->
+
+                        <div class="register-prompt">
+
+                            Don't have an account?
+
+                            <a
+                                href="register.php"
+                                class="register-link">
+
+                                Create Account
+
+                            </a>
+
+                        </div>
+
+
+                    </div>
+
+                </div>
+
+            </div>
 
         </div>
 
-        <?php if($registered && empty($error)){ ?>
-
-<div class="alert alert-success">
-
-    Registration completed successfully. Please login.
-
-</div>
-
-<?php } ?>
-
-        <?php if (!empty($error)): ?>
-
-            <div class="alert alert-danger">
-                <?= $error ?>
-            </div>
-
-        <?php endif; ?>
-
-        <form id="loginForm" method="POST" class="login-form">
-            <div class="mb-3">
-
-    <label class="form-label">
-
-        Email or Mobile
-
-    </label>
-
-    <div class="login-input">
-
-        <i class="fa-regular fa-user input-icon-left"></i>
-
-        <input
-            type="text"
-            name="email_mobile"
-            class="form-control"
-            placeholder="Enter your email or mobile number"
-            value="<?= htmlspecialchars($_POST['email_mobile'] ?? '') ?>"
-            required>
-
     </div>
 
 </div>
-<div class="mb-3">
-
-    <label class="form-label">
-
-        Password
-
-    </label>
-
-    <div class="login-input password-wrapper">
-
-        <i class="fa-solid fa-lock input-icon-left"></i>
-
-        <input
-            type="password"
-            id="password"
-            name="password"
-            class="form-control"
-            placeholder="Enter your password"
-            required>
-
-        <i
-            id="togglePassword"
-            class="fa-regular fa-eye input-icon-right"></i>
-
-    </div>
-
-</div>
-<div class="d-flex justify-content-between align-items-center mb-4">
-
-    <div class="form-check">
-
-        <input
-            class="form-check-input"
-            type="checkbox"
-            id="remember"
-            name="remember">
-
-        <label
-            class="form-check-label"
-            for="remember">
-
-            Remember Me
-
-        </label>
-
-    </div>
-
-    <a href="forgot_password.php" class="forgot-link">
-
-        Forgot Password?
-
-    </a>
-
-</div>
-
-<button
-    type="submit"
-    name="login"
-    class="login-btn"
-    id="loginBtn">
-
-    <i class="fa-solid fa-right-to-bracket me-2"></i>
-
-    <span>Login</span>
-
-</button>
-
-</form>
-<div class="login-divider">
-
-    <span>OR</span>
-
-</div>
-
-<p class="text-center mb-0">
-
-    Don't have an account?
-
-    <a href="register.php" class="register-link">
-
-        Create Account
-
-    </a>
-
-</p>
-</div>
-</div>
-</div>
-</div>
-
-</div>
-
-</div>
-
-</div>
-
-<!-- SweetAlert2 -->
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 
-<?php if($registered){ ?>
 
 <script>
 
-Swal.fire({
+document.addEventListener(
+    'DOMContentLoaded',
+    function () {
 
-icon:'success',
 
-title:'Registration Successful',
+        /* PASSWORD TOGGLE */
 
-text:'Please login to continue.',
+        const password =
+            document.getElementById('password');
 
-confirmButtonColor:'#198754'
+        const togglePassword =
+            document.getElementById('togglePassword');
 
-});
+
+        if (
+            password &&
+            togglePassword
+        ) {
+
+            togglePassword.addEventListener(
+                'click',
+                function () {
+
+                    const icon =
+                        this.querySelector('i');
+
+                    const isPassword =
+                        password.type === 'password';
+
+
+                    password.type =
+                        isPassword
+                            ? 'text'
+                            : 'password';
+
+
+                    icon.classList.toggle(
+                        'fa-eye',
+                        !isPassword
+                    );
+
+                    icon.classList.toggle(
+                        'fa-eye-slash',
+                        isPassword
+                    );
+
+
+                    this.setAttribute(
+                        'aria-label',
+                        isPassword
+                            ? 'Hide password'
+                            : 'Show password'
+                    );
+
+                }
+            );
+
+        }
+
+
+
+        /* LOGIN LOADING STATE */
+
+        const loginForm =
+            document.getElementById('loginForm');
+
+        const loginBtn =
+            document.getElementById('loginBtn');
+
+
+        if (
+            loginForm &&
+            loginBtn
+        ) {
+
+            loginForm.addEventListener(
+                'submit',
+                function () {
+
+                    if (
+                        !loginForm.checkValidity()
+                    ) {
+                        return;
+                    }
+
+
+                    loginBtn.disabled = true;
+
+
+                    loginBtn.innerHTML =
+                        '<span class="spinner-border spinner-border-sm me-2"></span>' +
+                        '<span>Signing in...</span>';
+
+                }
+            );
+
+
+            window.addEventListener(
+                'pageshow',
+                function () {
+
+                    loginBtn.disabled = false;
+
+
+                    loginBtn.innerHTML =
+                        '<i class="fa-solid fa-right-to-bracket me-2"></i>' +
+                        '<span>Login</span>';
+
+                }
+            );
+
+        }
+
+    }
+);
 
 </script>
 
-<?php } ?>
 
-<?php if($error!=""){ ?>
-
-<script>
-
-Swal.fire({
-
-icon:'error',
-
-title:'Login Failed',
-
-text:'<?= addslashes($error); ?>',
-
-confirmButtonColor:'#dc3545'
-
-});
-
-</script>
-
-<?php } ?>
-
-<script>
-document.addEventListener("DOMContentLoaded",function(){
-
-const password=document.getElementById("password");
-
-const toggle=document.getElementById("togglePassword");
-
-if(password && toggle){
-
-toggle.addEventListener("click",function(){
-
-if(password.type==="password"){
-
-password.type="text";
-
-this.classList.replace("fa-eye","fa-eye-slash");
-
-}else{
-
-password.type="password";
-
-this.classList.replace("fa-eye-slash","fa-eye");
-
-}
-
-});
-
-}
-
-});
-</script>
-<script>
-
-const loginForm = document.getElementById("loginForm");
-const loginBtn  = document.getElementById("loginBtn");
-
-loginForm.addEventListener("submit", function () {
-
-    loginBtn.disabled = true;
-
-    loginBtn.innerHTML = `
-        <span class="spinner-border spinner-border-sm me-2"></span>
-        Signing in...
-    `;
-
-});
-
-// Reset button when page is restored from browser cache (Back button)
-window.addEventListener("pageshow", function () {
-
-    loginBtn.disabled = false;
-
-    loginBtn.innerHTML = `
-        <i class="fa-solid fa-right-to-bracket me-2"></i>
-        <span>Login</span>
-    `;
-
-});
-
-</script>
 <?php
 
 include 'includes/footer.php';
