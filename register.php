@@ -1,25 +1,114 @@
 <?php
 $page_css = "assets/css/register.css";
+
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
+
 require_once 'config/db.php';
 require_once 'includes/functions.php';
 
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 $error = "";
-ini_set('display_errors', 1);
-error_reporting(E_ALL);
 $success = "";
+
+/*
+ * Dynamic member count for the registration page.
+ * It counts all records currently present in the users table.
+ */
+$memberCount = 0;
+
+$countResult = mysqli_query(
+    $conn,
+    "SELECT COUNT(*) AS total_users FROM users"
+);
+
+if ($countResult) {
+    $countRow = mysqli_fetch_assoc($countResult);
+    $memberCount = (int)($countRow['total_users'] ?? 0);
+}
+
+/*
+ * Social registration data is stored server-side in the session.
+ * It is created only after Google/Facebook authentication succeeds.
+ */
+$socialRegistration = $_SESSION['social_registration'] ?? null;
+
+if (
+    $socialRegistration &&
+    (
+        !is_array($socialRegistration) ||
+        empty($socialRegistration['provider']) ||
+        empty($socialRegistration['provider_id']) ||
+        empty($socialRegistration['email']) ||
+        empty($socialRegistration['created_at']) ||
+        (time() - (int)$socialRegistration['created_at']) > 600
+    )
+) {
+    unset($_SESSION['social_registration']);
+    $socialRegistration = null;
+}
+
+/*
+ * A normal visit to register.php starts a fresh registration.
+ * Social registration is preserved only when ?social=1 is present.
+ */
+if (
+    $_SERVER['REQUEST_METHOD'] === 'GET' &&
+    !isset($_GET['social'])
+) {
+    unset($_SESSION['social_registration']);
+
+    $socialRegistration = null;
+}
+
+$isSocialRegistration = is_array($socialRegistration);
+
+/*
+ * Load Google/Facebook profile data
+ * for the registration form.
+ */
+$first_name = '';
+$last_name  = '';
+$email      = '';
+
+if ($isSocialRegistration) {
+
+    $first_name = trim(
+        $socialRegistration['first_name'] ?? ''
+    );
+
+    $last_name = trim(
+        $socialRegistration['last_name'] ?? ''
+    );
+
+    $email = strtolower(
+        trim($socialRegistration['email'] ?? '')
+    );
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 
-    $first_name = trim($_POST['first_name']);
-    $last_name  = trim($_POST['last_name']);
-    $gender     = trim($_POST['gender']);
-    $mobile     = trim($_POST['mobile']);
-    $email      = trim($_POST['email']);
-    $password   = $_POST['password'];
-    $confirm    = $_POST['confirm_password'];
+    $first_name = trim($_POST['first_name'] ?? '');
+    $last_name  = trim($_POST['last_name'] ?? '');
+    $gender     = trim($_POST['gender'] ?? '');
+    $mobile     = trim($_POST['mobile'] ?? '');
+    $email      = trim($_POST['email'] ?? '');
+    $password   = $_POST['password'] ?? '';
+    $confirm    = $_POST['confirm_password'] ?? '';
+
+    /*
+     * For social registration, name/email come only from the
+     * authenticated provider session, never from the browser.
+     */
+    if ($isSocialRegistration) {
+        $first_name = trim($socialRegistration['first_name'] ?? '');
+        $last_name  = trim($socialRegistration['last_name'] ?? '');
+        $email      = strtolower(trim($socialRegistration['email']));
+    }
 
     // Required Fields
 
@@ -67,6 +156,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     }
 
+    elseif(!preg_match("/[A-Z]/", $password)){
+
+        $error="Password must contain at least one uppercase letter.";
+
+    }
+
+    elseif(!preg_match("/[a-z]/", $password)){
+
+        $error="Password must contain at least one lowercase letter.";
+
+    }
+
+    elseif(!preg_match("/[^A-Za-z0-9]/", $password)){
+
+        $error="Password must contain at least one special character.";
+
+    }
+
     elseif($password!=$confirm){
 
         $error="Passwords do not match.";
@@ -81,40 +188,74 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     else{
 
+        $duplicate = false;
+
         $check = mysqli_prepare(
-
             $conn,
-
             "SELECT user_id
              FROM users
              WHERE email=?
-             OR mobile=?"
-
+             OR mobile=?
+             LIMIT 1"
         );
 
         mysqli_stmt_bind_param(
-
             $check,
-
             "ss",
-
             $email,
-
             $mobile
-
         );
 
         mysqli_stmt_execute($check);
-
         mysqli_stmt_store_result($check);
 
-        if(mysqli_stmt_num_rows($check)>0){
-
-            $error="Email or Mobile already exists.";
-
+        if (mysqli_stmt_num_rows($check) > 0) {
+            $duplicate = true;
         }
 
-        else{
+        mysqli_stmt_close($check);
+
+        /*
+         * Also protect the provider ID from being linked twice.
+         */
+        if (!$duplicate && $isSocialRegistration) {
+
+            $providerColumn =
+                $socialRegistration['provider'] === 'google'
+                    ? 'google_id'
+                    : 'facebook_id';
+
+            $providerId = $socialRegistration['provider_id'];
+
+            $providerCheck = mysqli_prepare(
+                $conn,
+                "SELECT user_id
+                 FROM users
+                 WHERE {$providerColumn}=?
+                 LIMIT 1"
+            );
+
+            mysqli_stmt_bind_param(
+                $providerCheck,
+                "s",
+                $providerId
+            );
+
+            mysqli_stmt_execute($providerCheck);
+            mysqli_stmt_store_result($providerCheck);
+
+            if (mysqli_stmt_num_rows($providerCheck) > 0) {
+                $duplicate = true;
+            }
+
+            mysqli_stmt_close($providerCheck);
+        }
+
+        if ($duplicate) {
+
+            $error = "Email or Mobile already exists.";
+
+        } else {
 
             $hash=password_hash(
 
@@ -124,62 +265,83 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             );
 
-            $insert=mysqli_prepare(
+            if ($isSocialRegistration) {
 
-                $conn,
+                $providerColumn =
+                    $socialRegistration['provider'] === 'google'
+                        ? 'google_id'
+                        : 'facebook_id';
 
-                "INSERT INTO users(
+                $providerId = $socialRegistration['provider_id'];
 
-                    first_name,
-                    last_name,
-                    gender,
-                    mobile,
-                    email,
-                    password
+                $sql = "
+                    INSERT INTO users(
+                        first_name,
+                        last_name,
+                        gender,
+                        mobile,
+                        email,
+                        {$providerColumn},
+                        password
+                    )
+                    VALUES(?,?,?,?,?,?,?)
+                ";
 
-                )
+                $insert = mysqli_prepare($conn, $sql);
 
-                VALUES(
+                mysqli_stmt_bind_param(
+                    $insert,
+                    "sssssss",
+                    $first_name,
+                    $last_name,
+                    $gender,
+                    $mobile,
+                    $email,
+                    $providerId,
+                    $hash
+                );
 
-                    ?,
-                    ?,
-                    ?,
-                    ?,
-                    ?,
-                    ?
+            } else {
 
-                )"
+                $insert = mysqli_prepare(
+                    $conn,
+                    "INSERT INTO users(
+                        first_name,
+                        last_name,
+                        gender,
+                        mobile,
+                        email,
+                        password
+                    )
+                    VALUES(?,?,?,?,?,?)"
+                );
 
-            );
-
-            mysqli_stmt_bind_param(
-
-                $insert,
-
-                "ssssss",
-
-                $first_name,
-                $last_name,
-                $gender,
-                $mobile,
-                $email,
-                $hash
-
-            );
-
-            if(mysqli_stmt_execute($insert)){
-
-                header("Location: login.php?registered=1");
-
-                exit();
-
+                mysqli_stmt_bind_param(
+                    $insert,
+                    "ssssss",
+                    $first_name,
+                    $last_name,
+                    $gender,
+                    $mobile,
+                    $email,
+                    $hash
+                );
             }
 
-            else{
+            if (mysqli_stmt_execute($insert)) {
+
+                unset($_SESSION['social_registration']);
+
+                header("Location: login.php?registered=1");
+                exit();
+
+            } else {
 
                 $error = "Registration failed.";
 
             }
+
+            mysqli_stmt_close($insert);
 
         }
 
@@ -269,7 +431,7 @@ include 'includes/navbar.php';
 
         <i class="fa-solid fa-users"></i>
 
-        <h4>50K+</h4>
+        <h4><?= number_format($memberCount) ?>+</h4>
 
         <p>Happy Members</p>
 
@@ -324,6 +486,23 @@ include 'includes/navbar.php';
 
 </div>
 
+<?php if ($isSocialRegistration): ?>
+
+<div class="social-registration-status">
+
+    <i class="fa-solid fa-circle-check"></i>
+
+    <div>
+        <strong><?= ucfirst(htmlspecialchars($socialRegistration['provider'])) ?> account verified</strong>
+        <small>
+            Complete the remaining details below to create your Smart Matrimony account.
+        </small>
+    </div>
+
+</div>
+
+<?php endif; ?>
+
 <?php if($error!=""){ ?>
 
 <div class="alert alert-danger">
@@ -359,7 +538,8 @@ First Name
         name="first_name"
         class="form-control register-input"
         placeholder="First Name"
-        value="<?php echo htmlspecialchars($first_name ?? ''); ?>">
+        value="<?php echo htmlspecialchars($first_name ?? ''); ?>"
+        <?php if($isSocialRegistration) echo 'readonly'; ?>>
 
 </div>
 
@@ -386,7 +566,8 @@ Last Name
         name="last_name"
         class="form-control register-input"
         placeholder="Last Name"
-        value="<?php echo htmlspecialchars($last_name ?? ''); ?>">
+        value="<?php echo htmlspecialchars($last_name ?? ''); ?>"
+        <?php if($isSocialRegistration) echo 'readonly'; ?>>
 
 </div>
 
@@ -394,7 +575,9 @@ Last Name
 
 </div>
 
-<div class="mb-3">
+<div class="row register-gender-mobile">
+
+<div class="col-md-6 mb-3">
 
 <label class="form-label">
 
@@ -432,7 +615,7 @@ Female
 
 </div>
 
-<div class="mb-3">
+<div class="col-md-6 mb-3">
 
 <label class="form-label">
 
@@ -452,9 +635,12 @@ Mobile Number
         type="text"
         name="mobile"
         class="form-control register-input"
-        placeholder="01XXXXXXXXX">
+        placeholder="01XXXXXXXXX"
+        value="<?= htmlspecialchars($_POST['mobile'] ?? '') ?>">
 
     </div>
+</div>
+
 </div>
 
 <div class="mb-3">
@@ -477,7 +663,9 @@ Email Address
         type="email"
         name="email"
         class="form-control register-input"
-        placeholder="example@email.com">
+        placeholder="example@email.com"
+        value="<?php echo htmlspecialchars($email ?? ''); ?>"
+        <?php if($isSocialRegistration) echo 'readonly'; ?>>
     </div>
 </div>
 
@@ -507,6 +695,30 @@ Email Address
     </div>
 
     <div id="passwordStrength" class="password-strength mt-2"></div>
+
+    <div class="password-requirements" id="passwordRequirements">
+
+        <div class="password-requirement" data-rule="length">
+            <i class="fa-solid fa-circle-xmark"></i>
+            <span>At least 8 characters</span>
+        </div>
+
+        <div class="password-requirement" data-rule="upper">
+            <i class="fa-solid fa-circle-xmark"></i>
+            <span>One uppercase letter (A-Z)</span>
+        </div>
+
+        <div class="password-requirement" data-rule="lower">
+            <i class="fa-solid fa-circle-xmark"></i>
+            <span>One lowercase letter (a-z)</span>
+        </div>
+
+        <div class="password-requirement" data-rule="special">
+            <i class="fa-solid fa-circle-xmark"></i>
+            <span>One special character (!@#$...)</span>
+        </div>
+
+    </div>
 
 </div>
 
@@ -556,6 +768,21 @@ Email Address
 
 </div>
 
+<?php if ($isSocialRegistration): ?>
+
+<div class="social-password-note">
+
+    <i class="fa-solid fa-shield-halved"></i>
+
+    <span>
+        Your <?= ucfirst(htmlspecialchars($socialRegistration['provider'])) ?> account is verified.
+        Set a password so you can also use normal email/password login.
+    </span>
+
+</div>
+
+<?php endif; ?>
+
 <button
 
 type="submit"
@@ -570,14 +797,49 @@ Create Account
 
 </form>
 
+<?php if (!$isSocialRegistration): ?>
+
 <div class="register-divider">
 
     <span>OR</span>
 
 </div>
 
-<p class="text-center mb-0">
+<div class="register-social-section">
 
+    <p class="register-social-title">
+        Sign up with
+    </p>
+
+    <div class="register-social-buttons">
+
+        <a
+            href="social_login.php?provider=google&mode=register"
+            class="register-social-btn google"
+            title="Sign up with Google"
+            aria-label="Sign up with Google">
+
+            <i class="fab fa-google"></i>
+
+        </a>
+
+        <a
+            href="social_login.php?provider=facebook&mode=register"
+            class="register-social-btn facebook"
+            title="Sign up with Facebook"
+            aria-label="Sign up with Facebook">
+
+            <i class="fab fa-facebook-f"></i>
+
+        </a>
+
+    </div>
+
+</div>
+
+<?php endif; ?>
+
+<p class="text-center mb-0">
     Already have an account?
 
     <a href="login.php" class="login-link">
@@ -632,48 +894,83 @@ const confirm = document.getElementById("confirm_password");
 const strength = document.getElementById("passwordStrength");
 const match = document.getElementById("passwordMatch");
 
-password.addEventListener("input", function(){
+const requirementElements = {
+    length: document.querySelector('[data-rule="length"]'),
+    upper: document.querySelector('[data-rule="upper"]'),
+    lower: document.querySelector('[data-rule="lower"]'),
+    special: document.querySelector('[data-rule="special"]')
+};
 
-    const value = this.value;
+function updateRequirement(element, fulfilled) {
 
-    let text = "";
-    let color = "";
+    const icon = element.querySelector("i");
 
-    if(value.length < 8){
+    element.classList.toggle("fulfilled", fulfilled);
 
-        text = "Weak";
-        color = "#dc2626";
+    icon.classList.toggle("fa-circle-check", fulfilled);
+    icon.classList.toggle("fa-circle-xmark", !fulfilled);
 
-    }else if(
-        /[A-Z]/.test(value) &&
-        /[0-9]/.test(value)
-    ){
+}
 
-        text = "Strong";
-        color = "#16a34a";
+function updatePasswordStatus() {
+
+    const value = password.value;
+
+    const rules = {
+        length: value.length >= 8,
+        upper: /[A-Z]/.test(value),
+        lower: /[a-z]/.test(value),
+        special: /[^A-Za-z0-9]/.test(value)
+    };
+
+    Object.keys(rules).forEach(function(rule){
+
+        updateRequirement(
+            requirementElements[rule],
+            rules[rule]
+        );
+
+    });
+
+    const fulfilled = Object.values(rules).filter(Boolean).length;
+
+    if(value === ""){
+
+        strength.textContent = "";
+
+    }else if(fulfilled === 4){
+
+        strength.textContent = "Password Strength: Strong";
+        strength.style.color = "#16a34a";
+
+    }else if(fulfilled >= 2){
+
+        strength.textContent = "Password Strength: Medium";
+        strength.style.color = "#d97706";
 
     }else{
 
-        text = "Medium";
-        color = "#d97706";
+        strength.textContent = "Password Strength: Weak";
+        strength.style.color = "#dc2626";
 
     }
 
-    strength.textContent = "Password Strength: " + text;
-    strength.style.color = color;
+    updatePasswordMatch();
 
-});
+}
 
-confirm.addEventListener("input", function(){
+function updatePasswordMatch() {
 
-    if(this.value === ""){
+    if(confirm.value === ""){
 
         match.textContent = "";
+        match.style.color = "";
+
         return;
 
     }
 
-    if(this.value === password.value){
+    if(confirm.value === password.value){
 
         match.textContent = "✓ Password Matched";
         match.style.color = "#16a34a";
@@ -685,7 +982,10 @@ confirm.addEventListener("input", function(){
 
     }
 
-});
+}
+
+password.addEventListener("input", updatePasswordStatus);
+confirm.addEventListener("input", updatePasswordMatch);
 
 const registerForm = document.getElementById("registerForm");
 const registerBtn = document.getElementById("registerBtn");
@@ -710,13 +1010,5 @@ window.addEventListener("pageshow", function () {
 });
 
 </script>
-
-<?php
-if (!empty($error)) {
-    echo "<pre style='background:#fee;padding:10px;border:1px solid red'>";
-    echo "ERROR = " . $error;
-    echo "</pre>";
-}
-?>
 
 <?php include 'includes/footer.php'; ?>

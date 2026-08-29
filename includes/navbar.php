@@ -3,7 +3,7 @@
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
-
+$currentPage = basename($_SERVER['PHP_SELF']);
 ?>
 
 <nav class="navbar navbar-expand-lg navbar-dark shadow-sm">
@@ -121,9 +121,31 @@ if (session_status() === PHP_SESSION_NONE) {
 
                 <?php else: ?>
 
+    <?php if ($currentPage === 'register.php'): ?>
 
-    <?php if (basename($_SERVER['PHP_SELF']) !== 'login.php'): ?>
+        <!-- Register page: only Login -->
+        <a
+            href="<?= BASE_URL; ?>login.php"
+            class="btn btn-outline-light">
 
+            Login
+
+        </a>
+
+    <?php elseif ($currentPage === 'login.php'): ?>
+
+        <!-- Login page: only Register -->
+        <a
+            href="<?= BASE_URL; ?>register.php"
+            class="btn btn-warning">
+
+            Register
+
+        </a>
+
+    <?php else: ?>
+
+        <!-- Other public pages: Login + Register -->
         <a
             href="<?= BASE_URL; ?>login.php"
             class="btn btn-outline-light me-2">
@@ -132,17 +154,15 @@ if (session_status() === PHP_SESSION_NONE) {
 
         </a>
 
+        <a
+            href="<?= BASE_URL; ?>register.php"
+            class="btn btn-warning">
+
+            Register
+
+        </a>
+
     <?php endif; ?>
-
-
-    <a
-        href="<?= BASE_URL; ?>register.php"
-        class="btn btn-warning">
-
-        Register
-
-    </a>
-
 
 <?php endif; ?>
 
