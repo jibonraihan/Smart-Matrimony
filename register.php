@@ -6,6 +6,7 @@ ini_set('display_errors', 1);
 
 require_once 'config/db.php';
 require_once 'includes/functions.php';
+require_once 'config/mail.php';
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -16,7 +17,6 @@ $success = "";
 
 /*
  * Dynamic member count for the registration page.
- * It counts all records currently present in the users table.
  */
 $memberCount = 0;
 
@@ -32,7 +32,6 @@ if ($countResult) {
 
 /*
  * Social registration data is stored server-side in the session.
- * It is created only after Google/Facebook authentication succeeds.
  */
 $socialRegistration = $_SESSION['social_registration'] ?? null;
 
@@ -60,37 +59,38 @@ if (
     !isset($_GET['social'])
 ) {
     unset($_SESSION['social_registration']);
-
     $socialRegistration = null;
 }
 
 $isSocialRegistration = is_array($socialRegistration);
 
 /*
- * Load Google/Facebook profile data
- * for the registration form.
+ * Load Google/Facebook profile data for the registration form.
  */
 $first_name = '';
 $last_name  = '';
 $email      = '';
 
 if ($isSocialRegistration) {
+    $first_name = trim($socialRegistration['first_name'] ?? '');
+    $last_name  = trim($socialRegistration['last_name'] ?? '');
+    $email      = strtolower(trim($socialRegistration['email'] ?? ''));
+}
 
-    $first_name = trim(
-        $socialRegistration['first_name'] ?? ''
-    );
-
-    $last_name = trim(
-        $socialRegistration['last_name'] ?? ''
-    );
-
-    $email = strtolower(
-        trim($socialRegistration['email'] ?? '')
+/*
+ * Generate a cryptographically secure 6-digit verification code.
+ */
+function generate_verification_code()
+{
+    return str_pad(
+        (string) random_int(0, 999999),
+        6,
+        '0',
+        STR_PAD_LEFT
     );
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-
 
     $first_name = trim($_POST['first_name'] ?? '');
     $last_name  = trim($_POST['last_name'] ?? '');
@@ -107,12 +107,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($isSocialRegistration) {
         $first_name = trim($socialRegistration['first_name'] ?? '');
         $last_name  = trim($socialRegistration['last_name'] ?? '');
-        $email      = strtolower(trim($socialRegistration['email']));
+        $email      = strtolower(trim($socialRegistration['email'] ?? ''));
     }
 
     // Required Fields
-
-    if(
+    if (
         empty($first_name) ||
         empty($last_name) ||
         empty($gender) ||
@@ -120,73 +119,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         empty($email) ||
         empty($password) ||
         empty($confirm)
-    ){
-
+    ) {
         $error = "Please fill all required fields.";
-
     }
-
-    elseif(!preg_match("/^[A-Za-z ]+$/",$first_name)){
-
-        $error="Invalid first name.";
-
+    elseif (!preg_match("/^[A-Za-z ]+$/", $first_name)) {
+        $error = "Invalid first name.";
     }
-
-    elseif(!preg_match("/^[A-Za-z ]+$/",$last_name)){
-
-        $error="Invalid last name.";
-
+    elseif (!preg_match("/^[A-Za-z ]+$/", $last_name)) {
+        $error = "Invalid last name.";
     }
-
-    elseif(!filter_var($email,FILTER_VALIDATE_EMAIL)){
-
-        $error="Invalid email address.";
-
+    elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $error = "Invalid email address.";
     }
-
-    elseif(!preg_match("/^01[3-9][0-9]{8}$/",$mobile)){
-
-        $error="Invalid mobile number.";
-
+    elseif (!preg_match("/^01[3-9][0-9]{8}$/", $mobile)) {
+        $error = "Invalid mobile number.";
     }
-
-    elseif(strlen($password)<8){
-
-        $error="Password must be at least 8 characters.";
-
+    elseif (strlen($password) < 8) {
+        $error = "Password must be at least 8 characters.";
     }
-
-    elseif(!preg_match("/[A-Z]/", $password)){
-
-        $error="Password must contain at least one uppercase letter.";
-
+    elseif (!preg_match("/[A-Z]/", $password)) {
+        $error = "Password must contain at least one uppercase letter.";
     }
-
-    elseif(!preg_match("/[a-z]/", $password)){
-
-        $error="Password must contain at least one lowercase letter.";
-
+    elseif (!preg_match("/[a-z]/", $password)) {
+        $error = "Password must contain at least one lowercase letter.";
     }
-
-    elseif(!preg_match("/[^A-Za-z0-9]/", $password)){
-
-        $error="Password must contain at least one special character.";
-
+    elseif (!preg_match("/[^A-Za-z0-9]/", $password)) {
+        $error = "Password must contain at least one special character.";
     }
-
-    elseif($password!=$confirm){
-
-        $error="Passwords do not match.";
-
+    elseif ($password !== $confirm) {
+        $error = "Passwords do not match.";
     }
-
-    elseif(!isset($_POST['terms'])){
-
-    $error = "Please accept the Terms & Conditions.";
-
+    elseif (!isset($_POST['terms'])) {
+        $error = "Please accept the Terms & Conditions.";
     }
-
-    else{
+    else {
 
         $duplicate = false;
 
@@ -252,17 +218,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         if ($duplicate) {
-
             $error = "Email or Mobile already exists.";
+        }
+        else {
 
-        } else {
-
-            $hash=password_hash(
-
+            $hash = password_hash(
                 $password,
-
                 PASSWORD_DEFAULT
-
             );
 
             if ($isSocialRegistration) {
@@ -282,9 +244,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         mobile,
                         email,
                         {$providerColumn},
-                        password
+                        password,
+                        account_status
                     )
-                    VALUES(?,?,?,?,?,?,?)
+                    VALUES(?,?,?,?,?,?,?,'Inactive')
                 ";
 
                 $insert = mysqli_prepare($conn, $sql);
@@ -311,10 +274,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         gender,
                         mobile,
                         email,
-                        password
+                        password,
+                        account_status
                     )
-                    VALUES(?,?,?,?,?,?)"
+                    VALUES(?,?,?,?,?,?, 'Inactive')"
                 );
+
+                $accountStatus = 'Inactive';
 
                 mysqli_stmt_bind_param(
                     $insert,
@@ -325,34 +291,159 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $mobile,
                     $email,
                     $hash
+                    
                 );
             }
 
+            /*
+             * The account status is explicitly set to Inactive until
+             * the email address is verified.
+             */
             if (mysqli_stmt_execute($insert)) {
 
-                unset($_SESSION['social_registration']);
+                $user_id = mysqli_insert_id($conn);
 
-                header("Location: login.php?registered=1");
-                exit();
+                /*
+                 * Generate and hash the 6-digit verification code.
+                 * The code is valid for 2 minutes.
+                 */
+                $verification_code = generate_verification_code();
+
+                $code_hash = password_hash(
+                    $verification_code,
+                    PASSWORD_DEFAULT
+                );
+
+                $expires_at = date(
+                    'Y-m-d H:i:s',
+                    time() + 120
+                );
+
+                $last_sent_at = date('Y-m-d H:i:s');
+
+                /*
+                 * Store verification information.
+                 */
+                $verification_stmt = mysqli_prepare(
+                    $conn,
+                    "INSERT INTO email_verifications
+                    (
+                        user_id,
+                        email,
+                        code_hash,
+                        expires_at,
+                        last_sent_at
+                    )
+                    VALUES (?, ?, ?, ?, ?)"
+                );
+
+                mysqli_stmt_bind_param(
+                    $verification_stmt,
+                    "issss",
+                    $user_id,
+                    $email,
+                    $code_hash,
+                    $expires_at,
+                    $last_sent_at
+                );
+
+                if (mysqli_stmt_execute($verification_stmt)) {
+
+                    mysqli_stmt_close($verification_stmt);
+
+                    /*
+                     * Send the verification email through PHPMailer.
+                     */
+                    if (
+                        send_verification_email(
+                            $email,
+                            $first_name,
+                            $verification_code
+                        )
+                    ) {
+
+                        $_SESSION['pending_verification_user_id'] = $user_id;
+
+                        header("Location: verify_email.php");
+                        exit();
+
+                    } else {
+
+                        /*
+                         * If email sending fails, remove both the
+                         * verification record and the newly created user.
+                         */
+                        $deleteVerification = mysqli_prepare(
+                            $conn,
+                            "DELETE FROM email_verifications WHERE user_id=?"
+                        );
+
+                        mysqli_stmt_bind_param(
+                            $deleteVerification,
+                            "i",
+                            $user_id
+                        );
+
+                        mysqli_stmt_execute($deleteVerification);
+                        mysqli_stmt_close($deleteVerification);
+
+                        $deleteUser = mysqli_prepare(
+                            $conn,
+                            "DELETE FROM users WHERE user_id=?"
+                        );
+
+                        mysqli_stmt_bind_param(
+                            $deleteUser,
+                            "i",
+                            $user_id
+                        );
+
+                        mysqli_stmt_execute($deleteUser);
+                        mysqli_stmt_close($deleteUser);
+
+                        $error =
+                            "We could not send the verification email. Please try again.";
+                    }
+
+                } else {
+
+                    mysqli_stmt_close($verification_stmt);
+
+                    /*
+                     * Roll back the newly created account manually because
+                     * this flow does not currently use a DB transaction.
+                     */
+                    $deleteUser = mysqli_prepare(
+                        $conn,
+                        "DELETE FROM users WHERE user_id=?"
+                    );
+
+                    mysqli_stmt_bind_param(
+                        $deleteUser,
+                        "i",
+                        $user_id
+                    );
+
+                    mysqli_stmt_execute($deleteUser);
+                    mysqli_stmt_close($deleteUser);
+
+                    $error = "Registration could not be completed.";
+                }
 
             } else {
-
                 $error = "Registration failed.";
-
             }
 
             mysqli_stmt_close($insert);
-
         }
-
     }
-
 }
 
 include 'includes/header.php';
 include 'includes/navbar.php';
 
 ?>
+
 <div class="container py-5">
 
     <div class="row justify-content-center align-items-center">

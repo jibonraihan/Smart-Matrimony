@@ -118,7 +118,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['role'] =
                     $user['role'];
 
-                header('Location: home.php');
+                header('Location: dashboard.php');
                 exit;
 
             } else {
