@@ -239,3 +239,378 @@ hr{
     opacity:.15;
 
 }
+
+/* =========================================================
+   SMART MATRIMONY — COMPACT PROFESSIONAL FOOTER
+========================================================= */
+
+.site-footer {
+    position: relative;
+    width: 100%;
+    padding: 38px 0 0;
+    background: #102f35;
+    color: #ffffff;
+}
+
+
+/* =========================
+   MAIN FOOTER
+========================= */
+
+.footer-main {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: 50px;
+    padding-bottom: 27px;
+}
+
+
+/* =========================
+   BRAND
+========================= */
+
+.footer-brand-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+
+    text-decoration: none;
+    color: #ffffff;
+}
+
+.footer-brand-link:hover {
+    color: #ffffff;
+}
+
+
+.footer-logo {
+    width: 32px !important;
+    height: 32px !important;
+
+    object-fit: contain;
+    border-radius: 8px;
+    background: #ffffff;
+}
+
+
+.footer-brand-link span {
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+}
+
+
+/* =========================
+   DESCRIPTION
+========================= */
+
+.footer-description {
+    max-width: 430px;
+
+    margin: 12px 0 14px;
+
+    color: #b6c8ca;
+
+    font-size: 11px;
+    line-height: 1.65;
+}
+
+
+/* =========================
+   BRAND VALUES
+========================= */
+
+.footer-values {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 13px;
+}
+
+
+.footer-values span {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+
+    color: #d5e1e2;
+
+    font-size: 9px;
+    font-weight: 600;
+}
+
+
+.footer-values i {
+    color: #4fb8ad;
+    font-size: 10px;
+}
+
+
+/* =========================
+   FOOTER LINKS
+========================= */
+
+.footer-links {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+
+.footer-links h3 {
+    margin: 2px 0 13px;
+
+    color: #ffffff;
+
+    font-size: 12px;
+    font-weight: 700;
+}
+
+
+.footer-links a,
+.footer-static-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+
+    margin-bottom: 7px;
+
+    color: #b6c8ca;
+
+    text-decoration: none;
+
+    font-size: 10px;
+    line-height: 1.5;
+
+    transition:
+        color .2s ease,
+        transform .2s ease;
+}
+
+
+.footer-links a:hover {
+    color: #ffffff;
+    transform: translateX(2px);
+}
+
+
+.footer-static-link {
+    color: #8fa9ac;
+}
+
+
+/* =========================
+   TRUST BAR
+========================= */
+
+.footer-trust {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 18px;
+
+    padding: 12px 0;
+
+    border-top: 1px solid rgba(255,255,255,.08);
+    border-bottom: 1px solid rgba(255,255,255,.08);
+}
+
+
+.footer-trust-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+
+    color: #c8d8da;
+
+    font-size: 9px;
+    font-weight: 600;
+}
+
+
+.footer-trust-item i {
+    color: #4fb8ad;
+    font-size: 10px;
+}
+
+
+.footer-trust-divider {
+    width: 1px;
+    height: 13px;
+
+    background: rgba(255,255,255,.12);
+}
+
+
+/* =========================
+   BOTTOM BAR
+========================= */
+
+.footer-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 20px;
+
+    padding: 13px 0;
+}
+
+
+.footer-bottom span {
+    color: #819a9d;
+
+    font-size: 8.5px;
+    line-height: 1.5;
+}
+
+
+/* =========================
+   TABLET
+========================= */
+
+@media (max-width: 991.98px) {
+
+    .footer-main {
+        grid-template-columns: 1.5fr 1fr 1fr;
+        gap: 30px;
+    }
+
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 576px) {
+
+    .site-footer {
+        padding-top: 30px;
+    }
+
+
+    /* Main layout */
+
+    .footer-main {
+        grid-template-columns: 1fr 1fr;
+
+        gap: 22px 18px;
+
+        padding-bottom: 22px;
+    }
+
+
+    .footer-brand {
+        grid-column: 1 / -1;
+    }
+
+
+    /* Brand */
+
+    .footer-logo {
+        width: 34px !important;
+        height: 34px !important;
+    }
+
+
+    .footer-brand-link span {
+        font-size: 18px;
+    }
+
+
+    /* Description */
+
+    .footer-description {
+        max-width: 100%;
+
+        margin: 11px 0 13px;
+
+        font-size: 10px;
+        line-height: 1.65;
+    }
+
+
+    /* Values */
+
+    .footer-values {
+        gap: 8px;
+    }
+
+
+    .footer-values span {
+        font-size: 8.5px;
+    }
+
+
+    .footer-values i {
+        font-size: 9px;
+    }
+
+
+    /* Links */
+
+    .footer-links h3 {
+        margin-bottom: 10px;
+
+        font-size: 11px;
+    }
+
+
+    .footer-links a,
+    .footer-static-link {
+        margin-bottom: 6px;
+
+        font-size: 9px;
+        line-height: 1.45;
+    }
+
+
+    /* Trust */
+
+    .footer-trust {
+        flex-direction: column;
+
+        gap: 7px;
+
+        padding: 11px 0;
+    }
+
+
+    .footer-trust-divider {
+        width: 25px;
+        height: 1px;
+    }
+
+
+    .footer-trust-item {
+        font-size: 8.5px;
+    }
+
+
+    .footer-trust-item i {
+        font-size: 9px;
+    }
+
+
+    /* Bottom */
+
+    .footer-bottom {
+        flex-direction: column;
+
+        justify-content: center;
+
+        gap: 4px;
+
+        padding: 11px 0;
+
+        text-align: center;
+    }
+
+
+    .footer-bottom span {
+        font-size: 8px;
+    }
+
+}
