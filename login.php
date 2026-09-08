@@ -14,6 +14,19 @@ if (session_status() === PHP_SESSION_NONE) {
 
 $error = '';
 
+/* Manager -> User Dashboard always requires a fresh regular-user login. */
+if (isset($_GET['manager_reauth']) && $_GET['manager_reauth'] === '1') {
+    $_SESSION = [];
+
+    if (ini_get('session.use_cookies')) {
+        $params = session_get_cookie_params();
+        setcookie(session_name(), '', time() - 42000, $params['path'], $params['domain'], $params['secure'], $params['httponly']);
+    }
+
+    session_destroy();
+    session_start();
+}
+
 $registered = isset($_GET['registered']);
 
 /* =========================
@@ -118,7 +131,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['role'] =
                     $user['role'];
 
-                header('Location: dashboard.php');
+                header('Location: home.php');
                 exit;
 
             } else {

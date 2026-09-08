@@ -16,3 +16,4 @@ Thumbs.db
 .env
 
 /config/oauth.php
+/config/mail.php

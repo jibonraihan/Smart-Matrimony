@@ -2,6 +2,20 @@
 
 /*
 |--------------------------------------------------------------------------
+| Religion
+|--------------------------------------------------------------------------
+*/
+
+$religions = [
+    "Islam",
+    "Hinduism",
+    "Christianity",
+    "Buddhism",
+    "Other"
+];
+
+/*
+|--------------------------------------------------------------------------
 | Father Profession
 |--------------------------------------------------------------------------
 */
@@ -186,6 +200,21 @@ $family_statuses = [
 
 /*
 |--------------------------------------------------------------------------
+| Overall Family Religious Lifestyle
+|--------------------------------------------------------------------------
+*/
+
+$family_religious_lifestyle_options = [
+
+    "Fully Islamic",
+    "Mixed",
+    "Modern",
+    "Normal"
+
+];
+
+/*
+|--------------------------------------------------------------------------
 | Guardian Relation
 |--------------------------------------------------------------------------
 */
@@ -228,7 +257,7 @@ $hijab_statuses = [
     "Orna",
     "Hijab (Face Open)",
     "Hijab (Face Covered)",
-    "Hijab (Hands, Feet & Face Covered)",
+    "Hijab (Hand, Foot, Face Covered)",
     "Hijab + Niqab (Fully Covered)",
     "Modern",
     "Not Maintained"
@@ -400,4 +429,126 @@ $chronic_diseases = [
 
     "Other"
 
+];/*
+|--------------------------------------------------------------------------
+| Step 3 - Islamic Lifestyle
+|--------------------------------------------------------------------------
+*/
+
+$quran_reading_options = [
+    "Daily",
+    "Often",
+    "Sometimes",
+    "Rarely",
+    "Never"
+];
+
+$fasting_options = [
+    "Regularly",
+    "Sometimes",
+    "Rarely",
+    "Never"
+];
+
+$religious_practice_options = [
+    "Practicing",
+    "Moderately Practicing",
+    "Properly Practicing",
+    "Learning",
+    "Prefer not to say"
+];
+
+$islamic_knowledge_levels = [
+    "Basic",
+    "Moderate",
+    "Good",
+    "Advanced"
+];
+
+$halal_lifestyle_options = [
+    "Strict",
+    "Mostly",
+    "Prefer not to say"
+];
+
+$tea_coffee_options = [
+    "Never",
+    "Occasionally",
+    "Regularly"
+];
+
+$diet_preferences = [
+    "Vegetarian",
+    "Non-vegetarian",
+    "Halal only",
+    "No specific preference"
+];
+
+$sleep_patterns = [
+    "Early sleeper",
+    "Normal",
+    "Night owl"
+];
+
+$personality_types = [
+    "Introvert",
+    "Extrovert",
+    "Ambivert"
+];
+
+$social_natures = [
+    "Very social",
+    "Moderately social",
+    "Prefer small circle",
+    "Private"
+];
+
+$free_time_interest_options = [
+    "Reading",
+    "Travelling",
+    "Sports",
+    "Photography",
+    "Cooking",
+    "Gaming",
+    "Writing",
+    "Gardening",
+    "Volunteering",
+    "Islamic learning",
+    "Offline Chatting",
+    "Riding",
+    "Housework",
+    "Social Media",
+    "Sleeping"
+];
+
+$travel_interest_options = [
+    "Love travelling",
+    "Occasionally",
+    "Prefer staying home"
+];
+
+$spending_style_options = [
+    "Saver",
+    "Balanced",
+    "Spender"
+];
+
+$pet_options = [
+    "Comfortable with pets",
+    "Prefer no pets",
+    "Allergic",
+    "Have pets"
+];
+
+
+/*
+|--------------------------------------------------------------------------
+| Living With Family
+|--------------------------------------------------------------------------
+*/
+
+$living_with_family_options = [
+    "Yes",
+    "No",
+    "Immigrant (প্রবাসী)"
 ];

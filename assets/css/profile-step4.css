@@ -1,0 +1,632 @@
+.profile-step4-page {
+    --step4-border: #d9e7e6;
+    --step4-soft: #f7fbfa;
+    --step4-muted: #6b8290;
+    --step4-green: #148b5d;
+    --step4-dark: #062c4a;
+}
+
+.profile-step4-page .step4-shell {
+    background: #fff;
+    border: 1px solid var(--step4-border);
+    border-radius: 28px;
+    padding: clamp(16px, 2.5vw, 30px);
+    box-shadow: 0 16px 40px rgba(7, 55, 67, .08);
+}
+
+.profile-step4-page .step4-wizard-head {
+    background: #fff;
+    border: 1px solid var(--step4-border);
+    border-radius: 24px;
+    padding: 28px 30px 25px;
+    margin-bottom: 22px;
+}
+
+.profile-step4-page .step4-heading-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+}
+
+.profile-step4-page .step4-kicker {
+    display: block;
+    color: #168b5a;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+.profile-step4-page .step4-heading-row h1 {
+    margin: 5px 0 0;
+    color: var(--step4-dark);
+    font-size: clamp(32px, 4vw, 48px);
+    line-height: 1.05;
+    font-weight: 800;
+    letter-spacing: -.04em;
+}
+
+.profile-step4-page .step4-heading-row p {
+    margin: 5px 0 0;
+    color: var(--step4-muted);
+    font-size: 16px;
+}
+
+.profile-step4-page .step4-logo {
+    width: 104px;
+    height: 78px;
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    border-radius: 18px;
+    background: #f3faf7;
+    border: 1px solid #dcece5;
+    text-decoration: none;
+    transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+}
+
+.profile-step4-page .step4-logo:hover {
+    transform: translateY(-2px);
+    border-color: #a9d3c3;
+    box-shadow: 0 10px 24px rgba(23, 139, 90, .12);
+}
+
+.profile-step4-page .step4-logo img {
+    width: 78px;
+    max-height: 62px;
+    object-fit: contain;
+}
+
+.profile-step4-page .step4-step-nav {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 28px;
+}
+
+.profile-step4-page .step4-step {
+    min-width: 0;
+    padding: 5px 3px 3px;
+    color: #687f8d;
+    text-decoration: none;
+    text-align: center;
+    border-radius: 16px;
+    transition: transform .2s ease, background .2s ease, color .2s ease;
+}
+
+.profile-step4-page .step4-step:hover {
+    color: #0b7952;
+    background: #f5faf8;
+    transform: translateY(-2px);
+}
+
+.profile-step4-page .step4-step-icon {
+    width: 48px;
+    height: 48px;
+    margin: 0 auto;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: #f7f9fa;
+    border: 1px solid #d9e3e6;
+    color: #6b7f8b;
+    font-size: 18px;
+    transition: all .2s ease;
+}
+
+.profile-step4-page .step4-step:hover .step4-step-icon {
+    border-color: #9fcbbc;
+    color: #0b7952;
+}
+
+.profile-step4-page .step4-step.is-completed .step4-step-icon,
+.profile-step4-page .step4-step.is-current .step4-step-icon {
+    background: var(--step4-green);
+    border-color: var(--step4-green);
+    color: #fff;
+}
+
+.profile-step4-page .step4-step.is-current .step4-step-icon {
+    box-shadow: 0 9px 18px rgba(20, 139, 93, .2);
+}
+
+.profile-step4-page .step4-step-label {
+    display: block;
+    margin-top: 8px;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.profile-step4-page .step4-step.is-current .step4-step-label,
+.profile-step4-page .step4-step.is-completed .step4-step-label {
+    color: #073e5d;
+    font-weight: 700;
+}
+
+.profile-step4-page .step4-progress-wrap {
+    margin-top: 22px;
+}
+
+.profile-step4-page .step4-progress-track {
+    height: 10px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: #e7edef;
+}
+
+.profile-step4-page .step4-progress-fill {
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #148b5d, #22a978);
+    transition: width .35s ease;
+}
+
+.profile-step4-page .step4-progress-meta {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    margin-top: 8px;
+    color: var(--step4-muted);
+    font-size: 13px;
+}
+
+.profile-step4-page .step4-progress-meta strong {
+    color: var(--step4-green);
+}
+
+.profile-step4-page .step4-alert {
+    border-radius: 14px;
+    margin: 0 0 20px;
+}
+
+.profile-step4-page .step4-form {
+    margin-top: 0;
+}
+
+.profile-step4-page .step4-section {
+    background: linear-gradient(180deg, #fbfdfd 0%, #f7faf9 100%);
+    border: 1px solid var(--step4-border);
+    border-radius: 22px;
+    padding: clamp(18px, 2.4vw, 28px);
+    margin-bottom: 22px;
+}
+
+.profile-step4-page .section-heading {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 24px;
+}
+
+.profile-step4-page .section-icon {
+    width: 46px;
+    height: 46px;
+    flex: 0 0 46px;
+    border-radius: 14px;
+    display: grid;
+    place-items: center;
+    background: #e8f7f2;
+    color: var(--step4-green);
+    font-size: 1.25rem;
+}
+
+.profile-step4-page .section-heading h2 {
+    margin: 0;
+    color: var(--step4-dark);
+    font-size: clamp(1.25rem, 2vw, 1.55rem);
+    font-weight: 700;
+}
+
+.profile-step4-page .section-heading p {
+    margin: 3px 0 0;
+    color: var(--step4-muted);
+    font-size: .9rem;
+}
+
+.profile-step4-page .form-label {
+    color: #092d4c;
+    font-weight: 600;
+    margin-bottom: 9px;
+}
+
+.profile-step4-page .required {
+    color: #e23a4f;
+    font-weight: 700;
+}
+
+.profile-step4-page .optional {
+    color: var(--step4-muted);
+    font-weight: 400;
+}
+
+.profile-step4-page .form-control,
+.profile-step4-page .form-select {
+    min-height: 52px;
+    border: 1px solid #cfe0e2;
+    border-radius: 14px;
+    color: #17334d;
+    background-color: #fff;
+    box-shadow: none;
+    transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease;
+}
+
+.profile-step4-page .form-control:focus,
+.profile-step4-page .form-select:focus {
+    border-color: #149a76;
+    box-shadow: 0 0 0 4px rgba(20, 154, 118, .10);
+}
+
+.profile-step4-page .form-control[readonly] {
+    background: #f3f7f7;
+    color: #526c78;
+    cursor: not-allowed;
+}
+
+.profile-step4-page .step4-privacy-note {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 16px;
+    margin-bottom: 20px;
+    border: 1px solid #dcebe5;
+    border-radius: 15px;
+    background: #f4faf7;
+    color: #4e6d78;
+}
+
+.profile-step4-page .step4-privacy-note > i {
+    color: var(--step4-green);
+    font-size: 1.2rem;
+    margin-top: 1px;
+}
+
+.profile-step4-page .step4-privacy-note strong,
+.profile-step4-page .step4-privacy-note span {
+    display: block;
+}
+
+.profile-step4-page .step4-privacy-note strong {
+    color: #0a6748;
+    font-size: .9rem;
+}
+
+.profile-step4-page .step4-privacy-note span {
+    margin-top: 2px;
+    font-size: .82rem;
+}
+
+.profile-step4-page .step4-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    border-top: 1px solid var(--step4-border);
+    padding-top: 24px;
+    margin-top: 6px;
+}
+
+.profile-step4-page .step4-actions .btn {
+    min-height: 50px;
+    border-radius: 13px;
+    padding: 11px 22px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.profile-step4-page .step4-back {
+    color: #527080;
+    border: 1px solid #90a6b0;
+    background: #fff;
+}
+
+.profile-step4-page .step4-back:hover {
+    color: #0b7952;
+    border-color: #74b49f;
+    background: #f5faf8;
+}
+
+.profile-step4-page .step4-save {
+    min-width: 190px;
+    color: #fff;
+    background: var(--step4-green);
+    border: 1px solid var(--step4-green);
+    box-shadow: 0 8px 18px rgba(20, 139, 93, .15);
+}
+
+.profile-step4-page .step4-save:hover {
+    color: #fff;
+    background: #0f7d54;
+    border-color: #0f7d54;
+    transform: translateY(-1px);
+}
+
+@media (max-width: 767.98px) {
+    .profile-step4-page {
+        padding-left: 8px !important;
+        padding-right: 8px !important;
+    }
+
+    .profile-step4-page .step4-shell {
+        border-radius: 20px;
+        padding: 10px;
+    }
+
+    .profile-step4-page .step4-wizard-head {
+        border-radius: 19px;
+        padding: 20px 16px 18px;
+    }
+
+    .profile-step4-page .step4-heading-row {
+        align-items: flex-start;
+    }
+
+    .profile-step4-page .step4-logo {
+        width: 76px;
+        height: 60px;
+        border-radius: 14px;
+    }
+
+    .profile-step4-page .step4-logo img {
+        width: 58px;
+        max-height: 48px;
+    }
+
+    .profile-step4-page .step4-step-nav {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 7px;
+        margin-top: 20px;
+    }
+
+    .profile-step4-page .step4-step {
+        padding: 6px 2px;
+    }
+
+    .profile-step4-page .step4-step-icon {
+        width: 43px;
+        height: 43px;
+        font-size: 16px;
+    }
+
+    .profile-step4-page .step4-step-label {
+        font-size: 12px;
+        margin-top: 6px;
+    }
+
+    .profile-step4-page .step4-progress-wrap {
+        margin-top: 17px;
+    }
+
+    .profile-step4-page .step4-progress-meta {
+        font-size: 12px;
+    }
+
+    .profile-step4-page .step4-section {
+        border-radius: 17px;
+        padding: 16px;
+        margin-bottom: 16px;
+    }
+
+    .profile-step4-page .section-heading {
+        align-items: flex-start;
+        margin-bottom: 19px;
+    }
+
+    .profile-step4-page .section-icon {
+        width: 40px;
+        height: 40px;
+        flex-basis: 40px;
+        border-radius: 12px;
+        font-size: 1.05rem;
+    }
+
+    .profile-step4-page .form-control,
+    .profile-step4-page .form-select {
+        min-height: 50px;
+    }
+
+    .profile-step4-page .step4-actions {
+        flex-direction: column-reverse;
+        align-items: stretch;
+    }
+
+    .profile-step4-page .step4-actions .btn,
+    .profile-step4-page .step4-save {
+        width: 100%;
+        min-width: 0;
+    }
+}
+
+@media (max-width: 420px) {
+    .profile-step4-page .step4-heading-row h1 {
+        font-size: 32px;
+    }
+
+    .profile-step4-page .step4-logo {
+        width: 68px;
+        height: 56px;
+    }
+
+    .profile-step4-page .step4-logo img {
+        width: 52px;
+    }
+}
+
+/* Step 4 Part 2: dependent-location and validation UX */
+.profile-step4-page .location-select.is-loading {
+    opacity: .72;
+    cursor: wait;
+}
+
+.profile-step4-page .location-select:disabled {
+    background-color: #f3f7f7;
+    color: #78909c;
+    cursor: not-allowed;
+}
+
+.profile-step4-page .step4-field-hint {
+    display: block;
+    margin-top: 6px;
+    color: var(--step4-muted);
+    font-size: .78rem;
+}
+
+.profile-step4-page .form-control.is-invalid,
+.profile-step4-page .form-select.is-invalid {
+    border-color: #e23a4f;
+    box-shadow: 0 0 0 3px rgba(226, 58, 79, .08);
+}
+
+@media (max-width: 575.98px) {
+    .profile-step4-page .step4-section {
+        border-radius: 18px;
+        padding: 17px 14px;
+    }
+
+    .profile-step4-page .section-heading {
+        align-items: flex-start;
+        gap: 10px;
+        margin-bottom: 19px;
+    }
+
+    .profile-step4-page .section-icon {
+        width: 42px;
+        height: 42px;
+        flex-basis: 42px;
+    }
+}
+
+/* Step 4 Part 3: compact location review */
+.profile-step4-page .step4-location-preview {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    padding: 14px 16px;
+    margin: 0 0 18px;
+    border: 1px solid #dcebe5;
+    border-radius: 15px;
+    background: linear-gradient(90deg, #f2faf7 0%, #f8fbfb 100%);
+}
+
+.profile-step4-page .step4-location-preview-icon {
+    width: 42px;
+    height: 42px;
+    flex: 0 0 42px;
+    display: grid;
+    place-items: center;
+    border-radius: 12px;
+    background: #e4f5ef;
+    color: var(--step4-green);
+    font-size: 1.05rem;
+}
+
+.profile-step4-page .step4-location-preview-kicker {
+    display: block;
+    margin-bottom: 2px;
+    color: #168b5a;
+    font-size: .68rem;
+    font-weight: 800;
+    letter-spacing: 1.4px;
+}
+
+.profile-step4-page .step4-location-preview-content strong {
+    display: block;
+    color: #17334d;
+    font-size: .88rem;
+    font-weight: 600;
+    line-height: 1.45;
+}
+
+@media (max-width: 575.98px) {
+    .profile-step4-page .step4-location-preview {
+        align-items: flex-start;
+        padding: 13px 14px;
+    }
+
+    .profile-step4-page .step4-location-preview-icon {
+        width: 38px;
+        height: 38px;
+        flex-basis: 38px;
+    }
+}
+
+/* =========================================================
+   Actual completion wizard — Phase 7 foundation
+   Desktop: six icons in one row.
+   Mobile: icons in 3 x 2 rows.
+   The connector remains ONE continuous horizontal line per row.
+   ========================================================= */
+.profile-step4-page .step4-step-nav {
+    position: relative;
+    overflow: visible;
+}
+.profile-step4-page .step4-step {
+    position: relative;
+    z-index: 1;
+}
+.profile-step4-page .step4-step::after {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    top: 29px;
+    left: calc(50% + 24px);
+    width: calc(100% - 38px);
+    height: 4px;
+    border-radius: 999px;
+    background: #e0e8e7;
+    pointer-events: none;
+}
+.profile-step4-page .step4-step.is-completed::after {
+    background: #148b5d;
+}
+.profile-step4-page .step4-step:last-child::after {
+    display: none;
+}
+
+/* The old thick progress bar is replaced visually by the icon connector. */
+.profile-step4-page .step4-progress-wrap {
+    margin-top: 16px;
+}
+.profile-step4-page .step4-progress-track {
+    display: none;
+}
+.profile-step4-page .step4-progress-meta {
+    justify-content: flex-end;
+    margin-top: 0;
+}
+.profile-step4-page .step4-progress-meta span {
+    display: none;
+}
+.profile-step4-page .step4-progress-meta strong {
+    font-size: 13px;
+    font-weight: 800;
+}
+
+@media (max-width: 800px) {
+    .profile-step4-page .step4-step::after {
+        top: 25px;
+        left: calc(50% + 21px);
+        width: calc(100% - 41px);
+        height: 4px;
+    }
+    .profile-step4-page .step4-step:nth-child(3n)::after {
+        display: none;
+    }
+}
+
+@media (max-width: 520px) {
+    .profile-step4-page .step4-step::after {
+        top: 26px;
+        left: calc(50% + 21px);
+        width: calc(100% - 41px);
+    }
+    .profile-step4-page .step4-progress-wrap {
+        margin-top: 12px;
+    }
+    .profile-step4-page .step4-progress-meta strong {
+        font-size: 11px;
+    }
+}

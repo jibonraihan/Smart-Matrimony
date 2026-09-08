@@ -1,0 +1,712 @@
+.step1-page {
+    --step1-green: #178b5a;
+    --step1-green-dark: #0f6f49;
+    --step1-ink: #10233f;
+    --step1-muted: #68809a;
+    --step1-line: #dbe7e6;
+    --step1-soft: #f3f9f7;
+    --step1-gold: #d9a51b;
+    background: linear-gradient(145deg, #f4fbf9 0%, #ffffff 48%, #fffdf6 100%);
+    min-height: calc(100vh - 70px);
+    padding: 34px 18px 54px;
+    font-family: 'Poppins', sans-serif;
+}
+
+.step1-shell {
+    width: min(1080px, 100%);
+    margin: 0 auto;
+}
+
+.step1-wizard-head,
+.step1-basic-card,
+.step1-form-card {
+    background: rgba(255, 255, 255, .96);
+    border: 1px solid var(--step1-line);
+    border-radius: 24px;
+    box-shadow: 0 18px 45px rgba(16, 35, 63, .07);
+}
+
+.step1-wizard-head {
+    padding: 28px 30px 25px;
+    margin-bottom: 22px;
+}
+
+.step1-heading-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+}
+
+.step1-kicker,
+.step1-section-kicker {
+    display: block;
+    color: var(--step1-green-dark);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+.step1-heading-row h1 {
+    margin: 5px 0 0;
+    color: var(--step1-ink);
+    font-size: clamp(32px, 4vw, 48px);
+    line-height: 1.05;
+    font-weight: 800;
+}
+
+.step1-heading-row p {
+    margin: 5px 0 0;
+    color: var(--step1-muted);
+    font-size: 16px;
+}
+
+.step1-logo {
+    width: 104px;
+    height: 78px;
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    border-radius: 18px;
+    background: #f3faf7;
+    border: 1px solid #dcece5;
+    transition: transform .2s ease, box-shadow .2s ease;
+}
+
+.step1-logo:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 24px rgba(23, 139, 90, .12);
+}
+
+.step1-logo img {
+    width: 78px;
+    max-height: 62px;
+    object-fit: contain;
+}
+
+.step1-step-nav {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 28px;
+}
+
+.step1-step {
+    min-width: 0;
+    padding: 5px 3px 3px;
+    color: var(--step1-muted);
+    text-decoration: none;
+    text-align: center;
+    border-radius: 16px;
+    transition: transform .2s ease, background .2s ease, color .2s ease;
+}
+
+.step1-step:hover {
+    color: var(--step1-green-dark);
+    background: #f5faf8;
+    transform: translateY(-2px);
+}
+
+.step1-step-icon {
+    width: 48px;
+    height: 48px;
+    margin: 0 auto;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: #f7f9fa;
+    border: 1px solid #d9e3e6;
+    font-size: 18px;
+    transition: all .2s ease;
+}
+
+.step1-step.is-current {
+    color: var(--step1-ink);
+}
+
+.step1-step.is-current .step1-step-icon {
+    color: #fff;
+    background: var(--step1-green);
+    border-color: var(--step1-green);
+    box-shadow: 0 9px 20px rgba(23, 139, 90, .22);
+}
+
+.step1-step-label {
+    display: block;
+    margin-top: 8px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.step1-progress-wrap {
+    margin-top: 22px;
+}
+
+.step1-progress-track {
+    width: 100%;
+    height: 10px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: #e7edef;
+}
+
+.step1-progress-fill {
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, var(--step1-green-dark), #20a86e);
+}
+
+.step1-progress-meta {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    margin-top: 8px;
+    color: var(--step1-muted);
+    font-size: 12px;
+}
+
+.step1-progress-meta strong {
+    color: var(--step1-green-dark);
+}
+
+.step1-alert {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 18px;
+    padding: 13px 16px;
+    border-radius: 14px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.step1-alert-error {
+    color: #a9283c;
+    background: #fff2f3;
+    border: 1px solid #f3cdd3;
+}
+
+.step1-basic-card,
+.step1-form-card {
+    padding: 27px 30px;
+}
+
+.step1-form-card {
+    margin-top: 20px;
+}
+
+.step1-section-heading {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 22px;
+}
+
+.step1-section-icon {
+    width: 42px;
+    height: 42px;
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    color: var(--step1-green-dark);
+    background: #eaf7f2;
+    border-radius: 13px;
+    font-size: 18px;
+}
+
+.step1-section-heading h2 {
+    margin: 2px 0 0;
+    color: var(--step1-ink);
+    font-size: 21px;
+    font-weight: 750;
+}
+
+.step1-basic-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px 28px;
+}
+
+.step1-basic-grid > div {
+    min-width: 0;
+    padding: 14px 16px;
+    background: #f8fbfa;
+    border: 1px solid #e5eeec;
+    border-radius: 13px;
+}
+
+.step1-basic-grid span,
+.step1-basic-grid strong {
+    display: block;
+}
+
+.step1-basic-grid span {
+    margin-bottom: 3px;
+    color: var(--step1-muted);
+    font-size: 11px;
+}
+
+.step1-basic-grid strong {
+    overflow: hidden;
+    color: var(--step1-ink);
+    font-size: 14px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.step1-locked-note {
+    display: flex;
+    gap: 9px;
+    align-items: flex-start;
+    margin-top: 18px;
+    padding-top: 16px;
+    color: #d04452;
+    border-top: 1px solid #e5ecec;
+    font-size: 12px;
+}
+
+.step1-field-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px 22px;
+}
+
+.step1-field {
+    min-width: 0;
+}
+
+/* Personal details: three identity fields share the first desktop row;
+   the remaining fields keep the existing two-column layout. */
+.step1-personal-grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+.step1-personal-grid > .step1-field:nth-child(-n + 3) {
+    grid-column: span 2;
+}
+
+.step1-personal-grid > .step1-field:nth-child(n + 4) {
+    grid-column: span 3;
+}
+
+.step1-field label {
+    display: block;
+    margin-bottom: 7px;
+    color: var(--step1-ink);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.step1-field label em {
+    color: #dc3545;
+    font-style: normal;
+}
+
+.step1-field input,
+.step1-field select,
+.step1-field textarea {
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid #cfdedf;
+    border-radius: 12px;
+    background: #fff;
+    color: var(--step1-ink);
+    font: inherit;
+    font-size: 13px;
+    outline: none;
+    transition: border-color .18s ease, box-shadow .18s ease;
+}
+
+.step1-field input,
+.step1-field select {
+    height: 48px;
+    padding: 0 13px;
+}
+
+.step1-field textarea {
+    min-height: 118px;
+    padding: 12px 13px;
+    resize: vertical;
+}
+
+.step1-field input:focus,
+.step1-field select:focus,
+.step1-field textarea:focus {
+    border-color: #38a57a;
+    box-shadow: 0 0 0 4px rgba(23, 139, 90, .10);
+}
+
+.step1-field input[readonly] {
+    color: #587087;
+    background: #f4f7f8;
+    cursor: not-allowed;
+}
+
+.step1-field small {
+    display: block;
+    margin-top: 6px;
+    color: #8496a7;
+    font-size: 10px;
+}
+
+.step1-height-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.step1-bio-field {
+    grid-column: 1 / -1;
+}
+
+.step1-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-top: 22px;
+}
+
+.step1-btn {
+    min-height: 48px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    padding: 0 20px;
+    border-radius: 12px;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 750;
+    text-decoration: none;
+    cursor: pointer;
+    transition: transform .2s ease, box-shadow .2s ease, background .2s ease;
+}
+
+.step1-btn:hover {
+    transform: translateY(-2px);
+}
+
+.step1-btn-primary {
+    color: #fff;
+    background: var(--step1-green);
+    border: 1px solid var(--step1-green);
+    box-shadow: 0 10px 22px rgba(23, 139, 90, .18);
+}
+
+.step1-btn-primary:hover {
+    color: #fff;
+    background: var(--step1-green-dark);
+}
+
+.step1-btn-secondary {
+    color: #3f596e;
+    background: #f1f6f5;
+    border: 1px solid #dce8e5;
+}
+
+.step1-btn-secondary:hover {
+    color: var(--step1-green-dark);
+    background: #e8f3ef;
+}
+
+@media (max-width: 800px) {
+    .step1-page {
+        padding: 20px 12px 40px;
+    }
+
+    .step1-wizard-head,
+    .step1-basic-card,
+    .step1-form-card {
+        padding: 22px 18px;
+        border-radius: 19px;
+    }
+
+    .step1-step-nav {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 7px;
+    }
+
+    .step1-step-label {
+        font-size: 11px;
+    }
+
+    .step1-field-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .step1-personal-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .step1-personal-grid > .step1-field {
+        grid-column: span 1;
+    }
+
+    .step1-personal-grid > .step1-field:nth-child(n + 4) {
+        grid-column: 1 / -1;
+    }
+
+    .step1-bio-field {
+        grid-column: auto;
+    }
+}
+
+@media (max-width: 520px) {
+    .step1-heading-row {
+        align-items: flex-start;
+    }
+
+    .step1-logo {
+        width: 76px;
+        height: 62px;
+        border-radius: 14px;
+    }
+
+    .step1-logo img {
+        width: 58px;
+        max-height: 48px;
+    }
+
+    .step1-heading-row h1 {
+        font-size: 34px;
+    }
+
+    .step1-heading-row p {
+        font-size: 13px;
+    }
+
+    .step1-step-nav {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 7px;
+    }
+
+    .step1-step {
+        padding: 7px 3px;
+    }
+
+    .step1-step-icon {
+        width: 42px;
+        height: 42px;
+    }
+
+    .step1-progress-track {
+        height: 9px;
+    }
+
+    .step1-progress-meta {
+        font-size: 10px;
+    }
+
+    .step1-basic-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .step1-actions {
+        flex-direction: column-reverse;
+        align-items: stretch;
+    }
+
+    .step1-btn {
+        width: 100%;
+    }
+}
+
+/* Date picker: user-facing dd/mm/yyyy field with a native calendar trigger. */
+.step1-date-control {
+    position: relative;
+    display: flex;
+    align-items: stretch;
+}
+
+.step1-date-control > input[type="text"] {
+    padding-right: 52px;
+}
+
+.step1-calendar-btn {
+    position: absolute;
+    top: 50%;
+    right: 6px;
+    width: 38px;
+    height: 38px;
+    display: grid;
+    place-items: center;
+    transform: translateY(-50%);
+    border: 0;
+    border-radius: 9px;
+    color: var(--step1-green-dark);
+    background: #eef8f4;
+    cursor: pointer;
+    transition: background .18s ease, transform .18s ease;
+}
+
+.step1-calendar-btn:hover {
+    background: #e0f2eb;
+    transform: translateY(-50%) scale(1.03);
+}
+
+.step1-hidden-date {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+
+/* =========================================================
+   CAREER & FINANCIAL INFORMATION
+========================================================= */
+.step1-career-card {
+    margin-top: 1.25rem;
+}
+
+.step1-income-control {
+    position: relative;
+    display: flex;
+    align-items: stretch;
+}
+
+.step1-income-prefix {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 48px;
+    padding: 0 12px;
+    border: 1px solid #cfdde5;
+    border-right: 0;
+    border-radius: 12px 0 0 12px;
+    background: #f4faf7;
+    color: #11895d;
+    font-size: 1.05rem;
+    font-weight: 700;
+}
+
+.step1-income-control input {
+    min-width: 0;
+    flex: 1;
+    border-radius: 0 12px 12px 0;
+}
+
+.step1-field small {
+    display: block;
+}
+
+@media (max-width: 575.98px) {
+    .step1-income-prefix {
+        min-width: 44px;
+    }
+}
+
+/* =========================================================
+   Wizard visual parity — match Step 3/4/5
+   Desktop: six icons in one row.
+   Mobile: three columns x two rows.
+   The connector stays horizontal.
+   ========================================================= */
+.step1-step-nav {
+    position: relative !important;
+    overflow: visible !important;
+}
+.step1-step {
+    position: relative !important;
+    z-index: 2 !important;
+}
+.step1-step::after {
+    content: "" !important;
+    position: absolute !important;
+    z-index: 0 !important;
+    top: 29px !important;
+    left: calc(50% + 24px) !important;
+    width: calc(100% - 38px) !important;
+    height: 4px !important;
+    border-radius: 999px !important;
+    background: #e0e8e7 !important;
+    pointer-events: none !important;
+}
+.step1-step.is-completed::after {
+    background: #148b5d !important;
+}
+.step1-step:last-child::after {
+    display: none !important;
+}
+.step1-step-icon,
+.step1-step-label {
+    position: relative;
+    z-index: 2;
+}
+
+/* Hide the old thick progress track; keep the percentage text. */
+.step1-progress-wrap {
+    margin-top: 16px !important;
+}
+.step1-progress-track {
+    display: none !important;
+}
+.step1-progress-meta {
+    justify-content: flex-end !important;
+    margin-top: 0 !important;
+}
+.step1-progress-meta span {
+    display: none !important;
+}
+.step1-progress-meta strong {
+    font-size: 13px !important;
+    font-weight: 800 !important;
+}
+
+@media (max-width: 800px) {
+    .step1-step-nav {
+        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+        row-gap: 10px !important;
+        column-gap: 7px !important;
+    }
+    .step1-step::after {
+        top: 25px !important;
+        left: calc(50% + 21px) !important;
+        width: calc(100% - 41px) !important;
+        height: 4px !important;
+    }
+    .step1-step:nth-child(3n)::after {
+        display: none !important;
+    }
+}
+
+@media (max-width: 520px) {
+    .step1-step-nav {
+        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    }
+    .step1-step::after {
+        top: 26px !important;
+        left: calc(50% + 21px) !important;
+        width: calc(100% - 41px) !important;
+    }
+    .step1-progress-wrap {
+        margin-top: 12px !important;
+    }
+    .step1-progress-meta strong {
+        font-size: 11px !important;
+    }
+}
+
+.step1-step.is-completed .step1-step-icon {
+    color: #fff !important;
+    background: var(--step1-green) !important;
+    border-color: var(--step1-green) !important;
+    box-shadow: 0 9px 20px rgba(23, 139, 90, .18) !important;
+}
+.step1-step.is-completed .step1-step-icon i {
+    font-weight: 800 !important;
+}
+.step1-step.is-completed .step1-step-label {
+    color: var(--step1-ink) !important;
+    font-weight: 800 !important;
+}

@@ -1,0 +1,125 @@
+.step6-page{max-width:1180px;margin:0 auto;padding:28px 16px 60px;color:#082f4a}.step6-shell{background:#fff;border:1px solid #d9e7e6;border-radius:28px;padding:clamp(16px,2.5vw,30px);box-shadow:0 16px 40px rgba(7,55,67,.08)}
+.step6-wizard-head{background:#fff;border:1px solid #d9e7e6;border-radius:24px;padding:28px 30px 25px;margin-bottom:22px}.step6-heading-row{display:flex;align-items:center;justify-content:space-between;gap:24px}.step6-kicker{display:block;color:#168b5a;font-size:11px;font-weight:800;letter-spacing:2px;text-transform:uppercase}.step6-heading-row h1{margin:5px 0 0;font-size:clamp(32px,4vw,48px);line-height:1.05;font-weight:800;letter-spacing:-.04em}.step6-heading-row p{margin:5px 0 0;color:#6b8290;font-size:16px}.step6-logo{width:104px;height:78px;display:grid;place-items:center;flex:0 0 auto;border-radius:18px;background:#f3faf7;border:1px solid #dcece5;text-decoration:none;transition:.2s}.step6-logo:hover{transform:translateY(-2px);border-color:#a9d3c3;box-shadow:0 10px 24px rgba(23,139,90,.12)}.step6-logo img{width:78px;max-height:62px;object-fit:contain}
+.step6-step-nav{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;margin-top:28px}.step6-step{min-width:0;padding:5px 3px 3px;color:#687f8d;text-decoration:none;text-align:center;border-radius:16px;transition:.2s}.step6-step:hover{color:#0b7952;background:#f5faf8;transform:translateY(-2px)}.step6-step-icon{width:48px;height:48px;margin:0 auto;display:grid;place-items:center;border-radius:50%;background:#f7f9fa;border:1px solid #d9e3e6;color:#6b7f8b;font-size:18px}.step6-step.is-completed .step6-step-icon,.step6-step.is-current .step6-step-icon{background:#148b5d;border-color:#148b5d;color:#fff;font-weight:800}.step6-step.is-completed .step6-step-icon i,.step6-step.is-current .step6-step-icon i{font-weight:800}.step6-step.is-current .step6-step-icon{box-shadow:0 9px 18px rgba(20,139,93,.2)}.step6-step-label{display:block;margin-top:7px;font-size:12px;font-weight:700}.step6-step.is-current .step6-step-label,.step6-step.is-completed .step6-step-label{color:#073e5d;font-weight:700}
+.step6-progress-wrap{margin-top:22px}.step6-progress-track{height:8px;background:#edf3f2;border-radius:999px;overflow:hidden}.step6-progress-fill{height:100%;background:#148b5d;border-radius:999px}.step6-progress-meta{display:flex;justify-content:space-between;margin-top:8px;color:#708694;font-size:12px}.step6-progress-meta strong{color:#148b5d}
+.step6-form{display:grid;gap:18px}.step6-section{border:1px solid #d9e7e6;border-radius:22px;padding:26px;background:#fff}.step6-section-heading{display:flex;align-items:flex-start;gap:14px;margin-bottom:22px}.step6-section-icon{width:48px;height:48px;display:grid;place-items:center;flex:0 0 auto;border-radius:15px;background:#e8f7f1;color:#138b5d;font-size:20px}.step6-section-heading h2{margin:0;color:#082f4a;font-size:21px;font-weight:800}.step6-section-heading p{margin:5px 0 0;color:#6b8290;font-size:14px}.step6-grid{display:grid;gap:18px}.step6-grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}.step6-grid-3{grid-template-columns:repeat(3,minmax(0,1fr))}.step6-field label{display:block;margin-bottom:8px;font-weight:700;font-size:14px;color:#082f4a}.step6-field label em,.step6-question-title-row label em{color:#d6334c;font-style:normal}.step6-field input,.step6-field select{width:100%;height:52px;border:1px solid #cbdfe2;border-radius:14px;background:#fff;padding:0 15px;color:#123b55;font-size:15px;outline:none;transition:.2s}.step6-field input:focus,.step6-field select:focus{border-color:#14905f;box-shadow:0 0 0 4px rgba(20,144,95,.1)}.step6-field small{display:block;margin-top:7px;color:#728795;font-size:12px}.step6-unit-input,.step6-income-control{display:flex;align-items:center;border:1px solid #cbdfe2;border-radius:14px;overflow:hidden;background:#fff}.step6-unit-input input,.step6-income-control input{border:0;border-radius:0;box-shadow:none}.step6-unit-input span{padding:0 15px;color:#607a87;font-size:13px;font-weight:700}.step6-income-row{max-width:50%;margin-top:14px}.step6-income-control>span{padding:0 14px;color:#138b5d;font-size:20px;font-weight:700}.step6-income-control input{flex:1}.step6-info-note{display:flex;gap:13px;align-items:flex-start;padding:16px 18px;border:1px solid #dcebe6;border-left:4px solid #148b5d;border-radius:16px;background:#f5fbf8}.step6-info-note>i{color:#148b5d;font-size:20px;margin-top:2px}.step6-info-note strong{display:block;font-size:14px}.step6-info-note p{margin:3px 0 0;color:#657f8c;font-size:13px;line-height:1.55}.step6-alert{padding:13px 16px;border-radius:14px;margin-bottom:18px}.step6-alert-danger{background:#fff0f1;border:1px solid #f2b7bd;color:#a52835}.step6-alert i{margin-right:8px}.step6-actions{display:flex;justify-content:space-between;align-items:center;gap:16px;border-top:1px solid #d9e7e6;padding-top:24px;margin-top:6px}.step6-btn{min-height:50px;border-radius:13px;padding:11px 22px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:8px;font-size:16px;text-decoration:none;transition:.2s}.step6-btn-secondary{color:#527080;border:1px solid #90a6b0;background:#fff}.step6-btn-secondary:hover{color:#0b7952;border-color:#74b49f;background:#f5faf8}.step6-btn-primary{min-width:190px;color:#fff;background:#148b5d;border:1px solid #148b5d;box-shadow:0 8px 18px rgba(20,139,93,.15);cursor:pointer}.step6-btn-primary:hover{color:#fff;background:#0f7d54;border-color:#0f7d54;transform:translateY(-1px)}
+@media(max-width:850px){.step6-grid-3{grid-template-columns:repeat(2,minmax(0,1fr))}.step6-income-row{max-width:none}}@media(max-width:640px){.step6-page{padding:12px 8px 35px}.step6-shell{padding:10px;border-radius:20px}.step6-wizard-head{padding:20px 16px 18px;border-radius:18px}.step6-heading-row{align-items:flex-start}.step6-logo{width:72px;height:58px}.step6-logo img{width:58px}.step6-heading-row h1{font-size:34px}.step6-heading-row p{font-size:14px}.step6-step-nav{gap:2px;margin-top:20px}.step6-step-icon{width:39px;height:39px;font-size:15px}.step6-step-label{font-size:10px}.step6-section{padding:20px 15px;border-radius:18px}.step6-section-heading{gap:11px}.step6-section-icon{width:42px;height:42px;border-radius:13px;font-size:18px}.step6-section-heading h2{font-size:18px}.step6-section-heading p{font-size:13px}.step6-grid-2,.step6-grid-3{grid-template-columns:1fr}.step6-actions{flex-direction:column-reverse}.step6-btn{width:100%}}
+
+.step6-height-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.step6-height-grid select{width:100%;height:52px;border:1px solid #cbdfe2;border-radius:14px;background:#fff;padding:0 15px;color:#123b55;font-size:15px;outline:none;transition:.2s}.step6-height-grid select:focus{border-color:#14905f;box-shadow:0 0 0 4px rgba(20,144,95,.1)}
+
+.step6-location-note{margin-top:18px}.step6-location-note p{margin-top:3px}.step6-field select:disabled{background:#f3f7f7;color:#8b9da4;cursor:not-allowed;opacity:1}.step6-field.is-loading select{background:#f7faf9}.step6-load-note{font-size:12px;color:#148b5d;margin-top:7px}
+
+/* Step 6 wizard: keep the six steps in two rows on narrow screens. */
+@media (max-width: 640px) {
+  .step6-step-nav {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    row-gap: 10px;
+    column-gap: 4px;
+  }
+}
+
+/* Mobile wizard layout: force the six steps into a 3 x 2 grid. */
+@media (max-width: 640px) {
+  .step6-wizard-head .step6-step-nav {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    grid-auto-flow: row;
+    row-gap: 10px;
+    column-gap: 4px;
+  }
+}
+
+.step6-questions-section .step6-section-heading{margin-bottom:20px}
+.step6-questions-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.step6-question-card{border:1px solid #d9e7e6;border-radius:16px;padding:16px;background:#fbfdfc;transition:.2s}
+.step6-question-card:hover{border-color:#b8d9ce;background:#fff}
+.step6-question-title-row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px}
+.step6-question-title-row label{margin:0;color:#082f4a;font-size:14px;font-weight:700;line-height:1.45}
+.step6-question-type{flex:0 0 auto;padding:4px 8px;border-radius:999px;background:#e8f7f1;color:#148b5d;font-size:10px;font-weight:800;line-height:1;text-transform:uppercase}
+.step6-question-card input,.step6-question-card select{width:100%;height:48px;border:1px solid #cbdfe2;border-radius:12px;background:#fff;padding:0 13px;color:#123b55;font-size:14px;outline:none;transition:.2s}
+.step6-question-card input:focus,.step6-question-card select:focus{border-color:#14905f;box-shadow:0 0 0 4px rgba(20,144,95,.1)}
+.step6-question-note{margin-top:18px}
+.step6-additional-preferences{margin-top:20px}
+.step6-field textarea{width:100%;min-height:125px;resize:vertical;border:1px solid #cbdfe2;border-radius:14px;background:#fff;padding:14px 15px;color:#123b55;font-size:15px;line-height:1.5;outline:none;transition:.2s}
+.step6-field textarea:focus{border-color:#14905f;box-shadow:0 0 0 4px rgba(20,144,95,.1)}
+.step6-empty-state{display:flex;align-items:center;gap:10px;padding:15px 16px;border:1px dashed #cbdfe2;border-radius:14px;background:#f8fbfa;color:#647f8c;font-size:13px}
+.step6-empty-state i{color:#148b5d;font-size:18px}.step6-empty-state p{margin:0}
+@media(max-width:850px){.step6-questions-grid{grid-template-columns:1fr}}
+
+/* =========================================================
+   Actual completion wizard — Phase 7 foundation
+   Desktop: six icons in one row.
+   Mobile: icons in 3 x 2 rows.
+   The connector remains ONE continuous horizontal line per row.
+   ========================================================= */
+.step6-page .step6-step-nav {
+    position: relative;
+    overflow: visible;
+}
+.step6-page .step6-step {
+    position: relative;
+    z-index: 1;
+}
+.step6-page .step6-step::after {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    top: 29px;
+    left: calc(50% + 24px);
+    width: calc(100% - 38px);
+    height: 4px;
+    border-radius: 999px;
+    background: #e0e8e7;
+    pointer-events: none;
+}
+.step6-page .step6-step.is-completed::after {
+    background: #148b5d;
+}
+.step6-page .step6-step:last-child::after {
+    display: none;
+}
+
+/* The old thick progress bar is replaced visually by the icon connector. */
+.step6-page .step6-progress-wrap {
+    margin-top: 16px;
+}
+.step6-page .step6-progress-track {
+    display: none;
+}
+.step6-page .step6-progress-meta {
+    justify-content: flex-end;
+    margin-top: 0;
+}
+.step6-page .step6-progress-meta span {
+    display: none;
+}
+.step6-page .step6-progress-meta strong {
+    font-size: 13px;
+    font-weight: 800;
+}
+
+@media (max-width: 800px) {
+    .step6-page .step6-step::after {
+        top: 25px;
+        left: calc(50% + 21px);
+        width: calc(100% - 41px);
+        height: 4px;
+    }
+    .step6-page .step6-step:nth-child(3n)::after {
+        display: none;
+    }
+}
+
+@media (max-width: 520px) {
+    .step6-page .step6-step::after {
+        top: 26px;
+        left: calc(50% + 21px);
+        width: calc(100% - 41px);
+    }
+    .step6-page .step6-progress-wrap {
+        margin-top: 12px;
+    }
+    .step6-page .step6-progress-meta strong {
+        font-size: 11px;
+    }
+}

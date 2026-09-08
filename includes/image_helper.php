@@ -12,6 +12,41 @@ function resizeAndSaveImage($tmpFile,$userId){
 
     }
 
+    // Graceful fallback when PHP GD is not enabled.
+    // Keep the validated original image instead of crashing during Step 5 save.
+    $gdReady = function_exists('imagecreatefromjpeg')
+        && function_exists('imagecreatefrompng')
+        && function_exists('imagecreatefromwebp')
+        && function_exists('imagecreatetruecolor')
+        && function_exists('imagecopyresampled')
+        && function_exists('imagewebp');
+
+    if(!$gdReady){
+
+        $extensionMap = [
+            'image/jpeg' => 'jpg',
+            'image/png'  => 'png',
+            'image/webp' => 'webp'
+        ];
+
+        if(!isset($extensionMap[$info['mime']])){
+            return false;
+        }
+
+        $fileName = 'USR_' . $userId . '_' . bin2hex(random_bytes(8)) . '.' . $extensionMap[$info['mime']];
+        $uploadDir = __DIR__ . '/../uploads/profile/';
+
+        if(!is_dir($uploadDir) && !mkdir($uploadDir,0777,true)){
+            return false;
+        }
+
+        if(!copy($tmpFile, $uploadDir . $fileName)){
+            return false;
+        }
+
+        return $fileName;
+    }
+
     switch($info['mime']){
 
         case 'image/jpeg':

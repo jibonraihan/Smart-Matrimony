@@ -110,10 +110,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $booking_id = mysqli_insert_id($conn);
             mysqli_stmt_close($stmt);
 
-            $stmt = mysqli_prepare($conn, 'INSERT INTO booking_details (booking_id, provider_id, event_date, special_instruction) VALUES (?, ?, ?, ?)');
+            $stmt = mysqli_prepare($conn, 'INSERT INTO booking_details (booking_id, provider_id, quantity, event_date, special_instruction) VALUES (?, ?, ?, ?, ?)');
             foreach ($items as $item) {
                 $provider_id = (int) $item['provider_id'];
-                mysqli_stmt_bind_param($stmt, 'iiss', $booking_id, $provider_id, $event_date, $special_instruction);
+                $quantity = (int) $item['quantity'];
+                mysqli_stmt_bind_param($stmt, 'iiiss', $booking_id, $provider_id, $quantity, $event_date, $special_instruction);
                 mysqli_stmt_execute($stmt);
             }
             mysqli_stmt_close($stmt);
@@ -124,7 +125,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             mysqli_stmt_close($stmt);
 
             mysqli_commit($conn);
-            header('Location: cart.php?booked=' . $booking_id);
+            header('Location: booking_details.php?id=' . $booking_id . '&booked=1');
             exit;
         } catch (Throwable $e) {
             mysqli_rollback($conn);
@@ -230,10 +231,10 @@ include 'includes/header.php';
                         <label for="event_date">Event date</label>
                         <input id="event_date" type="date" name="event_date" min="<?= date('Y-m-d'); ?>" required>
                         <label for="special_instruction">Special instruction <span>Optional</span></label>
-                        <textarea id="special_instruction" name="special_instruction" rows="4" maxlength="1000" placeholder="Tell the manager anything important about your booking...\"></textarea>
+                        <textarea id="special_instruction" name="special_instruction" rows="4" maxlength="1000" placeholder="Tell the manager anything important about your booking..."></textarea>
                         <button class="confirm-book-btn" type="submit"><i class="fa-solid fa-calendar-check"></i> Request Booking</button>
                     </form>
-                    <p class="checkout-note"><i class="fa-solid fa-shield-heart"></i> Your booking starts as <strong>Pending</strong> and can be confirmed by the Event Manager.</p>
+                    <p class="checkout-note"><i class="fa-solid fa-shield-heart"></i> Your request starts as <strong>Pending</strong>. You can track its status from My Bookings.</p>
                 </aside>
             </div>
         <?php endif; ?>

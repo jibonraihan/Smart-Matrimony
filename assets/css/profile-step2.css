@@ -1,0 +1,844 @@
+/* =========================================================
+   Smart Matrimony — Profile Step 2
+   Family Information
+   ========================================================= */
+
+.profile-step-page {
+    min-height: 100vh;
+    padding: 28px 18px 54px;
+    background: #f3f8f7;
+}
+
+.profile-step-shell {
+    width: min(1100px, 100%);
+    margin: 0 auto;
+    padding: 34px 38px 38px;
+    background: #ffffff;
+    border: 1px solid #d8e7e5;
+    border-radius: 24px;
+    box-shadow: 0 18px 50px rgba(7, 66, 66, 0.08);
+}
+
+/* Keep the shared wizard visually consistent while making it breathe. */
+.profile-step-shell > .d-flex:first-child {
+    margin-bottom: 18px !important;
+}
+
+.profile-step-shell h2.text-success {
+    color: #0f8b57 !important;
+    font-size: clamp(2rem, 4vw, 3rem);
+    line-height: 1;
+    letter-spacing: -0.04em;
+}
+
+.profile-step-shell .text-muted {
+    color: #55717a !important;
+}
+
+.profile-step-shell .progress {
+    background: #e7edef;
+    overflow: hidden;
+}
+
+.profile-step-shell .progress-bar {
+    background: linear-gradient(90deg, #168c59, #20a978) !important;
+}
+
+.step2-alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin: 4px 0 22px;
+    padding: 13px 16px;
+    border: 1px solid #f0c6c6;
+    border-radius: 14px;
+    background: #fff5f5;
+    color: #b4232d;
+    font-size: 0.92rem;
+}
+
+.step2-alert i {
+    margin-top: 2px;
+}
+
+.step2-form {
+    margin-top: 10px;
+}
+
+.step2-section {
+    margin-top: 22px;
+    padding: 25px;
+    border: 1px solid #e2eceb;
+    border-radius: 20px;
+    background: #fbfdfd;
+}
+
+.step2-section:first-of-type {
+    margin-top: 0;
+}
+
+.step2-section-heading {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    margin-bottom: 22px;
+}
+
+.step2-heading-icon {
+    flex: 0 0 42px;
+    width: 42px;
+    height: 42px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 13px;
+    background: #e8f6f1;
+    color: #108a67;
+    font-size: 1.15rem;
+}
+
+.step2-section-heading h3 {
+    margin: 0;
+    color: #092d47;
+    font-size: 1.35rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+
+.step2-section-heading p {
+    margin: 3px 0 0;
+    color: #6b8590;
+    font-size: 0.84rem;
+}
+
+.wali-badge {
+    margin-left: auto;
+    padding: 7px 11px;
+    border-radius: 999px;
+    background: #eef7f4;
+    color: #087e58;
+    font-size: 0.75rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.wali-required .wali-badge {
+    background: #e7f7ee;
+}
+
+.wali-optional .wali-badge {
+    background: #f1f4f5;
+    color: #63757d;
+}
+
+.required,
+.wali-required-mark {
+    color: #e0314d;
+    font-weight: 700;
+}
+
+.step2-grid {
+    display: grid;
+    gap: 18px 22px;
+}
+
+.step2-grid-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.step2-grid-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.step2-grid-5 {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.step2-field {
+    min-width: 0;
+}
+
+.step2-field label {
+    display: block;
+    margin-bottom: 8px;
+    color: #102e46;
+    font-size: 0.91rem;
+    font-weight: 700;
+}
+
+.step2-field input,
+.step2-field select,
+.step2-field textarea {
+    width: 100%;
+    min-height: 52px;
+    padding: 12px 14px;
+    border: 1px solid #cedfdf;
+    border-radius: 13px;
+    outline: none;
+    background: #ffffff;
+    color: #102e46;
+    font: inherit;
+    font-size: 0.92rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.step2-field input::placeholder,
+.step2-field textarea::placeholder {
+    color: #91a4ab;
+}
+
+.step2-field select {
+    cursor: pointer;
+    appearance: auto;
+}
+
+.step2-field input:hover,
+.step2-field select:hover,
+.step2-field textarea:hover {
+    border-color: #9dc7c0;
+}
+
+.step2-field input:focus,
+.step2-field select:focus,
+.step2-field textarea:focus {
+    border-color: #128c72;
+    box-shadow: 0 0 0 4px rgba(18, 140, 114, 0.1);
+}
+
+.step2-field small {
+    display: block;
+    margin-top: 6px;
+    color: #77909a;
+    font-size: 0.72rem;
+}
+
+/* Family Details: keep the new extended-family fields aligned and balanced. */
+.step2-family-extra-grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    align-items: start;
+}
+
+.step2-family-extra-grid > .step2-field:nth-child(-n+3) {
+    grid-column: span 2;
+}
+
+.step2-family-extra-grid > .step2-field:nth-child(4),
+.step2-family-extra-grid > .step2-field:nth-child(5) {
+    grid-column: span 3;
+}
+
+.step2-field textarea {
+    width: 100%;
+    min-height: 96px;
+    padding: 12px 14px;
+    border: 1px solid #cedfdf;
+    border-radius: 13px;
+    outline: none;
+    resize: vertical;
+    background: #ffffff;
+    color: #102e46;
+    font: inherit;
+    font-size: 0.92rem;
+    line-height: 1.5;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    box-sizing: border-box;
+}
+
+.step2-family-extra-grid .step2-field textarea {
+    min-height: 96px;
+}
+
+.step2-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    margin-top: 28px;
+    padding-top: 24px;
+    border-top: 1px solid #e0e9e8;
+}
+
+.step2-btn {
+    min-height: 50px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    padding: 12px 20px;
+    border-radius: 12px;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 0.92rem;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.step2-btn:hover {
+    transform: translateY(-2px);
+}
+
+.step2-btn-back {
+    border: 1px solid #879da5;
+    background: #ffffff;
+    color: #516974;
+}
+
+.step2-btn-back:hover {
+    color: #173d50;
+    box-shadow: 0 8px 20px rgba(34, 67, 75, 0.08);
+}
+
+.step2-btn-primary {
+    border: 0;
+    background: #168f5b;
+    color: #ffffff;
+    cursor: pointer;
+    box-shadow: 0 8px 18px rgba(22, 143, 91, 0.16);
+}
+
+.step2-btn-primary:hover {
+    background: #117b4e;
+    color: #ffffff;
+    box-shadow: 0 11px 24px rgba(22, 143, 91, 0.22);
+}
+
+@media (max-width: 1000px) {
+    .step2-grid-5 {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 800px) {
+    .profile-step-page {
+        padding: 18px 12px 35px;
+    }
+
+    .profile-step-shell {
+        padding: 25px 20px 28px;
+        border-radius: 20px;
+    }
+
+    .step2-grid-3,
+    .step2-grid-5 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .step2-family-extra-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .step2-family-extra-grid > .step2-field {
+        grid-column: span 1 !important;
+    }
+}
+
+@media (max-width: 560px) {
+    .profile-step-page {
+        padding: 10px 7px 25px;
+    }
+
+    .profile-step-shell {
+        padding: 21px 13px 22px;
+        border-radius: 17px;
+    }
+
+    .profile-step-shell > .d-flex:first-child {
+        align-items: flex-start !important;
+    }
+
+    .profile-step-shell h2.text-success {
+        font-size: 2rem;
+    }
+
+    .profile-step-shell .progress {
+        height: 9px !important;
+    }
+
+    .profile-step-shell .text-end {
+        margin-top: 7px !important;
+    }
+
+    .step2-section {
+        padding: 18px 14px;
+        border-radius: 16px;
+    }
+
+    .step2-section-heading {
+        align-items: flex-start;
+        gap: 10px;
+        margin-bottom: 17px;
+    }
+
+    .step2-heading-icon {
+        flex-basis: 38px;
+        width: 38px;
+        height: 38px;
+        border-radius: 11px;
+    }
+
+    .step2-section-heading h3 {
+        font-size: 1.08rem;
+    }
+
+    .step2-section-heading p {
+        font-size: 0.75rem;
+    }
+
+    .wali-badge {
+        padding: 5px 8px;
+        font-size: 0.67rem;
+    }
+
+    .step2-grid-2,
+    .step2-grid-3,
+    .step2-grid-5,
+    .step2-family-extra-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .step2-family-extra-grid > .step2-field {
+        grid-column: auto !important;
+    }
+
+    .step2-grid {
+        gap: 15px;
+    }
+
+    .step2-field input,
+    .step2-field select {
+        min-height: 49px;
+    }
+
+    .step2-actions {
+        flex-direction: column-reverse;
+        align-items: stretch;
+        gap: 11px;
+        margin-top: 22px;
+        padding-top: 20px;
+    }
+
+    .step2-btn {
+        width: 100%;
+    }
+}
+
+/* =========================================================
+   Step 2 wizard responsiveness
+   Scoped to Step 2 so completed pages remain untouched.
+   ========================================================= */
+
+.profile-step-shell > .d-flex:first-child {
+    min-width: 0;
+    gap: 20px;
+}
+
+.profile-step-shell > .d-flex:first-child > div:first-child {
+    min-width: 0;
+}
+
+.profile-step-shell > .d-flex:first-child img {
+    display: block;
+    width: 95px !important;
+    max-width: 100%;
+    height: auto;
+    object-fit: contain;
+}
+
+/* The seven-step navigation gets its own responsive horizontal track.
+   This prevents the circles/labels from collapsing into each other. */
+.profile-step-shell .mb-4 > .d-flex.justify-content-between.align-items-center {
+    min-width: 0;
+    gap: 8px;
+}
+
+.profile-step-shell .mb-4 > .d-flex.justify-content-between.align-items-center > .text-center {
+    min-width: 0;
+}
+
+.profile-step-shell .mb-4 > .d-flex.justify-content-between.align-items-center > .text-center > div:first-child {
+    flex-shrink: 0;
+}
+
+.profile-step-shell .progress {
+    width: 100%;
+    min-width: 0;
+    height: 10px !important;
+}
+
+@media (max-width: 700px) {
+    .profile-step-shell > .d-flex:first-child {
+        gap: 12px;
+    }
+
+    .profile-step-shell > .d-flex:first-child img {
+        width: 72px !important;
+    }
+
+    .profile-step-shell .mb-4 > .d-flex.justify-content-between.align-items-center {
+        justify-content: flex-start !important;
+        overflow-x: auto;
+        overflow-y: hidden;
+        flex-wrap: nowrap !important;
+        gap: 12px;
+        padding: 2px 3px 8px;
+        margin-left: -3px;
+        margin-right: -3px;
+        scrollbar-width: thin;
+    }
+
+    .profile-step-shell .mb-4 > .d-flex.justify-content-between.align-items-center > .text-center {
+        flex: 0 0 66px !important;
+        width: 66px;
+    }
+
+    .profile-step-shell .mb-4 > .d-flex.justify-content-between.align-items-center > .text-center > div:first-child {
+        width: 46px !important;
+        height: 46px !important;
+    }
+
+    .profile-step-shell .mb-4 > .d-flex.justify-content-between.align-items-center > .text-center small {
+        font-size: 0.74rem;
+        white-space: nowrap;
+    }
+
+    .profile-step-shell .progress {
+        height: 8px !important;
+        margin-top: 12px !important;
+    }
+
+    .profile-step-shell .text-end {
+        margin-top: 6px !important;
+    }
+}
+
+@media (max-width: 420px) {
+    .profile-step-shell > .d-flex:first-child img {
+        width: 62px !important;
+    }
+
+    .profile-step-shell h2.text-success {
+        font-size: 1.85rem;
+    }
+
+    .profile-step-shell > .d-flex:first-child .text-muted {
+        font-size: 0.84rem;
+    }
+}
+
+/* =========================================================
+   Step 2 — Wizard header
+   Mirrors the completed Step 1 wizard without touching Step 1.
+   ========================================================= */
+.step2-wizard-head {
+    background: rgba(255, 255, 255, .96);
+    border: 1px solid #dbe7e6;
+    border-radius: 24px;
+    padding: 28px 30px 25px;
+    margin-bottom: 22px;
+    box-shadow: 0 18px 45px rgba(16, 35, 63, .07);
+}
+
+.step2-heading-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+}
+
+.step2-kicker {
+    display: block;
+    color: #0f6f49;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+.step2-heading-row h1 {
+    margin: 5px 0 0;
+    color: #10233f;
+    font-size: clamp(32px, 4vw, 48px);
+    line-height: 1.05;
+    font-weight: 800;
+    letter-spacing: -.04em;
+}
+
+.step2-heading-row p {
+    margin: 5px 0 0;
+    color: #68809a;
+    font-size: 16px;
+}
+
+.step2-logo {
+    width: 104px;
+    height: 78px;
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    border-radius: 18px;
+    background: #f3faf7;
+    border: 1px solid #dcece5;
+    transition: transform .2s ease, box-shadow .2s ease, background .2s ease;
+}
+
+.step2-logo:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 24px rgba(23, 139, 90, .12);
+    background: #edf8f3;
+}
+
+.step2-logo img {
+    width: 78px;
+    max-height: 62px;
+    object-fit: contain;
+}
+
+.step2-step-nav {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 28px;
+}
+
+.step2-step {
+    min-width: 0;
+    padding: 5px 3px 3px;
+    color: #68809a;
+    text-decoration: none;
+    text-align: center;
+    border-radius: 16px;
+    transition: transform .2s ease, background .2s ease, color .2s ease;
+}
+
+.step2-step:hover {
+    color: #0f6f49;
+    background: #f5faf8;
+    transform: translateY(-2px);
+}
+
+.step2-step-icon {
+    width: 48px;
+    height: 48px;
+    margin: 0 auto;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: #f7f9fa;
+    border: 1px solid #d9e3e6;
+    font-size: 18px;
+    transition: all .2s ease;
+}
+
+.step2-step.is-current .step2-step-icon,
+.step2-step.is-completed .step2-step-icon {
+    color: #fff;
+    background: #178b5a;
+    border-color: #178b5a;
+    box-shadow: 0 9px 20px rgba(23, 139, 90, .22);
+}
+
+.step2-step.is-current {
+    color: #10233f;
+}
+
+.step2-step-label {
+    display: block;
+    margin-top: 8px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.step2-progress-wrap {
+    margin-top: 22px;
+}
+
+.step2-progress-track {
+    width: 100%;
+    height: 10px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: #e7edef;
+}
+
+.step2-progress-fill {
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #0f6f49, #20a86e);
+    transition: width .3s ease;
+}
+
+.step2-progress-meta {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    margin-top: 8px;
+    color: #68809a;
+    font-size: 12px;
+}
+
+.step2-progress-meta strong {
+    color: #0f6f49;
+}
+
+@media (max-width: 800px) {
+    .step2-wizard-head {
+        padding: 22px 18px 20px;
+        border-radius: 19px;
+    }
+
+    .step2-step-nav {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 7px;
+    }
+
+    .step2-step-label {
+        font-size: 11px;
+    }
+}
+
+@media (max-width: 520px) {
+    .step2-heading-row {
+        align-items: flex-start;
+    }
+
+    .step2-logo {
+        width: 76px;
+        height: 62px;
+        border-radius: 14px;
+    }
+
+    .step2-logo img {
+        width: 58px;
+        max-height: 48px;
+    }
+
+    .step2-heading-row h1 {
+        font-size: 34px;
+    }
+
+    .step2-heading-row p {
+        font-size: 13px;
+    }
+
+    .step2-step-nav {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 7px;
+    }
+
+    .step2-step {
+        padding: 7px 3px;
+    }
+
+    .step2-step-icon {
+        width: 42px;
+        height: 42px;
+    }
+
+    .step2-progress-track {
+        height: 9px;
+    }
+
+    .step2-progress-meta {
+        font-size: 10px;
+    }
+}
+
+/* =========================================================
+   Step 2 wizard visual parity with Step 3
+   Desktop: six icons in one row.
+   Mobile: three columns x two rows.
+   Horizontal connector stays between icons.
+   ========================================================= */
+.profile-step-page .step2-step-nav {
+    position: relative;
+    overflow: visible;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+.profile-step-page .step2-step {
+    position: relative;
+    z-index: 1;
+}
+
+.profile-step-page .step2-step::after {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    top: 29px;
+    left: calc(50% + 24px);
+    width: calc(100% - 38px);
+    height: 4px;
+    border-radius: 999px;
+    background: #e0e8e7;
+    pointer-events: none;
+}
+
+.profile-step-page .step2-step.is-completed::after {
+    background: #148b5d;
+}
+
+.profile-step-page .step2-step:last-child::after {
+    display: none;
+}
+
+/* Replace the old thick progress bar visually with the icon connector. */
+.profile-step-page .step2-progress-wrap {
+    margin-top: 16px;
+}
+
+.profile-step-page .step2-progress-track {
+    display: none !important;
+}
+
+.profile-step-page .step2-progress-meta {
+    justify-content: flex-end;
+    margin-top: 0;
+}
+
+.profile-step-page .step2-progress-meta span {
+    display: none;
+}
+
+.profile-step-page .step2-progress-meta strong {
+    font-size: 13px;
+    font-weight: 800;
+}
+
+@media (max-width: 800px) {
+    .profile-step-page .step2-step-nav {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 7px;
+    }
+
+    .profile-step-page .step2-step::after {
+        top: 25px;
+        left: calc(50% + 21px);
+        width: calc(100% - 41px);
+        height: 4px;
+    }
+
+    .profile-step-page .step2-step:nth-child(3n)::after {
+        display: none;
+    }
+}
+
+@media (max-width: 520px) {
+    /* Keep Step 3's mobile 3 x 2 wizard — do not collapse to 2 columns. */
+    .profile-step-page .step2-step-nav {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 7px;
+    }
+
+    .profile-step-page .step2-step::after {
+        top: 26px;
+        left: calc(50% + 21px);
+        width: calc(100% - 41px);
+    }
+
+    .profile-step-page .step2-progress-wrap {
+        margin-top: 12px;
+    }
+
+    .profile-step-page .step2-progress-meta strong {
+        font-size: 11px;
+    }
+}

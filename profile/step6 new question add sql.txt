@@ -1,0 +1,5 @@
+INSERT INTO trait_questions
+(question_text, question_type, gender, options, is_active)
+VALUES
+('How important is Quran study to you?', 'dropdown', 'all',
+ 'Very Important,Important,Moderate,Not Important', 1);

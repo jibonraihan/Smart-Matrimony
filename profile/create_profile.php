@@ -18,10 +18,18 @@ if (!isset($_SESSION['user_id'])) {
 
 $user_id = $_SESSION['user_id'];
 
+$page_css = 'assets/css/create-profile.css';
+
 include '../includes/header.php';
 include '../includes/navbar.php';
 ?>
-<div class="container py-5">
+<div class="container py-5 create-profile-page">
+
+    <div class="create-profile-back">
+        <a href="view_profile.php?user_id=<?= (int) $user_id ?>" class="create-profile-back-link">
+            <i class="bi bi-arrow-left"></i> Back to My Profile
+        </a>
+    </div>
 
     <div class="row justify-content-center">
 
@@ -33,7 +41,7 @@ include '../includes/navbar.php';
 
                     <div class="text-center mb-5">
 
-                        <h2 class="fw-bold text-success">
+                        <h2 class="fw-bold text-success create-profile-title">
 
                             Complete Your Matrimony Profile
 
@@ -67,13 +75,9 @@ include '../includes/navbar.php';
 
                         </div>
 
-                        <div class="progress" style="height:10px;">
+                        <div class="create-profile-progress progress" role="progressbar" aria-label="Profile completion" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
 
-                            <div
-                                class="progress-bar bg-success"
-                                style="width:0%;">
-
-                            </div>
+                            <div class="progress-bar bg-success" style="width:0%;"></div>
 
                         </div>
 
@@ -82,196 +86,142 @@ include '../includes/navbar.php';
                     <!-- Step Cards -->
 
                     <div class="row g-4">
-
                         <div class="col-md-4">
 
-                            <div class="card h-100 border-success">
+                            <a href="step1.php" class="create-step-card step-card-active" aria-label="Go to Step 1: Personal Information">
 
-                                <div class="card-body text-center">
+                                <div class="create-step-card-body text-center">
 
-                                    <i class="bi bi-person-circle display-4 text-success"></i>
+                                    <span class="create-step-icon">
+                                        <i class="bi bi-person-circle"></i>
+                                    </span>
 
-                                    <h5 class="mt-3">
+                                    <span class="create-step-number">Step 1</span>
 
-                                        Step 1
+                                    <span class="create-step-title">Personal Information</span>
 
-                                    </h5>
+                                    <span class="create-step-description">Basic personal details.</span>
 
-                                    <h6>
-
-                                        Personal Information
-
-                                    </h6>
-
-                                    <small class="text-muted">
-
-                                        Basic personal details.
-
-                                    </small>
+                                    <span class="create-step-link">Open Step <i class="bi bi-arrow-right"></i></span>
 
                                 </div>
 
-                            </div>
+                            </a>
 
                         </div>
-
                         <div class="col-md-4">
 
-                            <div class="card h-100">
+                            <a href="step2.php" class="create-step-card " aria-label="Go to Step 2: Family Information">
 
-                                <div class="card-body text-center">
+                                <div class="create-step-card-body text-center">
 
-                                    <i class="bi bi-people display-4 text-secondary"></i>
+                                    <span class="create-step-icon">
+                                        <i class="bi bi-people"></i>
+                                    </span>
 
-                                    <h5 class="mt-3">
+                                    <span class="create-step-number">Step 2</span>
 
-                                        Step 2
+                                    <span class="create-step-title">Family Information</span>
 
-                                    </h5>
+                                    <span class="create-step-description">Parents & Guardian.</span>
 
-                                    <h6>
-
-                                        Family Information
-
-                                    </h6>
-
-                                    <small class="text-muted">
-
-                                        Parents & Guardian.
-
-                                    </small>
+                                    <span class="create-step-link">Open Step <i class="bi bi-arrow-right"></i></span>
 
                                 </div>
 
-                            </div>
+                            </a>
 
                         </div>
-
                         <div class="col-md-4">
 
-                            <div class="card h-100">
+                            <a href="step3.php" class="create-step-card " aria-label="Go to Step 3: Lifestyle">
 
-                                <div class="card-body text-center">
+                                <div class="create-step-card-body text-center">
 
-                                    <i class="bi bi-heart display-4 text-secondary"></i>
+                                    <span class="create-step-icon">
+                                        <i class="bi bi-heart"></i>
+                                    </span>
 
-                                    <h5 class="mt-3">
+                                    <span class="create-step-number">Step 3</span>
 
-                                        Step 3
+                                    <span class="create-step-title">Lifestyle</span>
 
-                                    </h5>
+                                    <span class="create-step-description">Religious & Cultural lifestyle.</span>
 
-                                    <h6>
-
-                                        Lifestyle
-
-                                    </h6>
-
-                                    <small class="text-muted">
-
-                                        Islamic lifestyle.
-
-                                    </small>
+                                    <span class="create-step-link">Open Step <i class="bi bi-arrow-right"></i></span>
 
                                 </div>
 
-                            </div>
+                            </a>
 
                         </div>
-
                         <div class="col-md-4">
 
-                            <div class="card h-100">
+                            <a href="step4.php" class="create-step-card " aria-label="Go to Step 4: Location">
 
-                                <div class="card-body text-center">
+                                <div class="create-step-card-body text-center">
 
-                                    <i class="bi bi-geo-alt display-4 text-secondary"></i>
+                                    <span class="create-step-icon">
+                                        <i class="bi bi-geo-alt"></i>
+                                    </span>
 
-                                    <h5 class="mt-3">
+                                    <span class="create-step-number">Step 4</span>
 
-                                        Step 4
+                                    <span class="create-step-title">Location</span>
 
-                                    </h5>
+                                    <span class="create-step-description">Address information.</span>
 
-                                    <h6>
-
-                                        Location
-
-                                    </h6>
-
-                                    <small class="text-muted">
-
-                                        Address information.
-
-                                    </small>
+                                    <span class="create-step-link">Open Step <i class="bi bi-arrow-right"></i></span>
 
                                 </div>
 
-                            </div>
+                            </a>
 
                         </div>
-
                         <div class="col-md-4">
 
-                            <div class="card h-100">
+                            <a href="step5.php" class="create-step-card " aria-label="Go to Step 5: Privacy">
 
-                                <div class="card-body text-center">
+                                <div class="create-step-card-body text-center">
 
-                                    <i class="bi bi-shield-lock display-4 text-secondary"></i>
+                                    <span class="create-step-icon">
+                                        <i class="bi bi-shield-lock"></i>
+                                    </span>
 
-                                    <h5 class="mt-3">
+                                    <span class="create-step-number">Step 5</span>
 
-                                        Step 5
+                                    <span class="create-step-title">Privacy</span>
 
-                                    </h5>
+                                    <span class="create-step-description">Photo & Visibility.</span>
 
-                                    <h6>
-
-                                        Privacy
-
-                                    </h6>
-
-                                    <small class="text-muted">
-
-                                        Photo & Visibility.
-
-                                    </small>
+                                    <span class="create-step-link">Open Step <i class="bi bi-arrow-right"></i></span>
 
                                 </div>
 
-                            </div>
+                            </a>
 
                         </div>
-
                         <div class="col-md-4">
 
-                            <div class="card h-100">
+                            <a href="step6.php" class="create-step-card " aria-label="Go to Step 6: Questions">
 
-                                <div class="card-body text-center">
+                                <div class="create-step-card-body text-center">
 
-                                    <i class="bi bi-patch-question display-4 text-secondary"></i>
+                                    <span class="create-step-icon">
+                                        <i class="bi bi-patch-question"></i>
+                                    </span>
 
-                                    <h5 class="mt-3">
+                                    <span class="create-step-number">Step 6</span>
 
-                                        Step 6
+                                    <span class="create-step-title">Questions</span>
 
-                                    </h5>
+                                    <span class="create-step-description">Partner preferences & QnA.</span>
 
-                                    <h6>
-
-                                        Questions
-
-                                    </h6>
-
-                                    <small class="text-muted">
-
-                                        Short personality questions.
-
-                                    </small>
+                                    <span class="create-step-link">Open Step <i class="bi bi-arrow-right"></i></span>
 
                                 </div>
 
-                            </div>
+                            </a>
 
                         </div>
 

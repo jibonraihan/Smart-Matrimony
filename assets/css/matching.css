@@ -1,0 +1,104 @@
+.matching-page{min-height:calc(100vh - 160px);padding:42px 18px 70px;background:#f7fbfa}.matching-wrap{max-width:1100px;margin:auto}.matching-wrap.narrow{max-width:720px}.back-link{display:inline-flex;gap:8px;align-items:center;text-decoration:none;font-weight:700;margin-bottom:22px}.matching-hero{background:#fff;border:1px solid #e5eeee;border-radius:22px;padding:28px 30px;margin-bottom:20px;box-shadow:0 10px 30px rgba(20,70,65,.06)}.section-kicker{font-size:12px;font-weight:800;letter-spacing:.14em;opacity:.7}.matching-hero h1,.interest-form-card h1{margin:7px 0;font-size:32px}.matching-hero p{margin:0;color:#687878}.matching-alert{padding:13px 16px;border-radius:12px;margin:15px 0;font-weight:700}.matching-alert.success{background:#e9f8ef;color:#176b3b}.matching-alert.error{background:#fff0f0;color:#a72d2d}.matching-alert.info{background:#eef7ff;color:#21618c}.match-list{display:grid;gap:14px}.match-card{display:flex;gap:18px;background:#fff;border:1px solid #e4eeee;border-radius:18px;padding:18px;box-shadow:0 7px 22px rgba(20,70,65,.05)}.match-avatar,.bookmark-photo{width:82px;height:82px;flex:0 0 82px;border-radius:16px;background:#edf5f4;display:flex;align-items:center;justify-content:center;overflow:hidden}.match-avatar img,.bookmark-photo img{width:100%;height:100%;object-fit:cover}.match-avatar i,.bookmark-photo i{font-size:28px;opacity:.45}.match-main{flex:1;min-width:0}.match-top{display:flex;justify-content:space-between;gap:12px}.match-top h3,.bookmark-body h3{margin:0;font-size:20px}.match-top p,.bookmark-body p{margin:5px 0;color:#6a7979}.status-pill{padding:6px 10px;border-radius:999px;font-size:12px;font-weight:800;height:max-content}.status-pending{background:#fff6df;color:#956600}.status-accepted{background:#e8f8ef;color:#197344}.status-rejected,.status-cancelled,.status-unmatched{background:#f3eeee;color:#8b4a4a}.match-message{margin:12px 0;color:#475656}.match-meta{display:flex;gap:18px;color:#899393;font-size:13px}.match-actions,.bookmark-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:14px}.match-actions form,.bookmark-actions form{display:inline}.primary-btn,.secondary-btn,.danger-btn{border:0;border-radius:10px;padding:9px 14px;font-weight:800;text-decoration:none;display:inline-flex;align-items:center;gap:7px;cursor:pointer}.primary-btn{background:#0d766f;color:#fff}.secondary-btn{background:#eef5f4;color:#175d58}.danger-btn{background:#fff0f0;color:#a43c3c}.matching-empty{text-align:center;background:#fff;border:1px dashed #ccdede;border-radius:20px;padding:55px 20px}.matching-empty>i{font-size:42px;opacity:.35}.matching-empty h3{margin:12px 0 5px}.matching-empty p{color:#718080;margin-bottom:20px}.bookmark-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}.bookmark-card{display:flex;gap:15px;background:#fff;border:1px solid #e4eeee;border-radius:18px;padding:16px}.bookmark-body{min-width:0;flex:1}.interest-form-card{background:#fff;border:1px solid #e4eeee;border-radius:22px;padding:32px;box-shadow:0 10px 30px rgba(20,70,65,.06)}.interest-form-card p{color:#667676;line-height:1.7}.interest-form-card label{display:block;font-weight:800;margin:22px 0 8px}.interest-form-card label span{font-weight:500;color:#8a9898}.interest-form-card textarea{width:100%;min-height:150px;resize:vertical;border:1px solid #d7e3e2;border-radius:13px;padding:13px;font:inherit}.form-note{font-size:12px;color:#8b9898;margin:7px 0 16px}@media(max-width:700px){.bookmark-grid{grid-template-columns:1fr}.match-card,.bookmark-card{align-items:flex-start}.match-top{flex-direction:column}.matching-hero h1,.interest-form-card h1{font-size:26px}.interest-form-card{padding:24px}}
+.profile-card-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.interest-button,.interaction-state{display:inline-flex;align-items:center;justify-content:center;gap:7px;border-radius:10px;padding:10px 12px;text-decoration:none;font-weight:800;font-size:13px}.interest-button{background:#fff1f4;color:#a43f59;border:1px solid #f3d6dd}.interaction-state{background:#edf7f5;color:#276f69}.interaction-state.pending{background:#fff7e7;color:#936800}.interaction-state.received{background:#eef5ff;color:#315f91}.bookmark-inline-form{margin:0}.bookmark-button.is-bookmarked{background:#fff1c9!important;color:#9b7100!important}@media(max-width:520px){.profile-card-actions{grid-template-columns:1fr}}
+
+/* ===================== PHASE 9 PROFILE ID ===================== */
+.bookmark-profile-id {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 5px;
+    padding: 3px 7px;
+    border: 1px solid #d9ece8;
+    border-radius: 999px;
+    background: #edf8f6;
+    color: #0f766e;
+    font-size: 8px;
+    font-weight: 800;
+    letter-spacing: .04em;
+}
+
+
+/* ===================== PHASE 9C ID SIZE CONSISTENCY ===================== */
+.bookmark-profile-id { padding: 3px 7px; font-size: 8px; font-weight: 750; }
+.bookmark-profile-id i { font-size: 8px; }
+
+
+/* ===================== PHASE 9C ID SIZE CONSISTENCY ===================== */
+.match-profile-id { display:inline-flex; align-items:center; gap:5px; margin-top:5px; padding:3px 7px; border:1px solid #d9ece8; border-radius:999px; background:#edf8f6; color:#0f766e; font-size:8px; font-weight:750; letter-spacing:.04em; }
+.match-profile-id i { font-size:8px; }
+
+/* ===================== PHASE 10 MATCH MANAGEMENT ===================== */
+.match-dashboard-hero{display:flex;align-items:center;justify-content:space-between;gap:20px}
+.match-hero-icon{width:58px;height:58px;flex:0 0 58px;border-radius:18px;background:#eaf7f5;color:#0d766f;display:flex;align-items:center;justify-content:center;font-size:24px}
+.match-tabs{display:flex;gap:8px;flex-wrap:wrap;background:#fff;border:1px solid #e4eeee;border-radius:16px;padding:8px;margin:0 0 18px;box-shadow:0 7px 22px rgba(20,70,65,.04)}
+.match-tabs a{display:inline-flex;align-items:center;gap:7px;padding:9px 13px;border-radius:10px;text-decoration:none;color:#617171;font-weight:800;font-size:13px}
+.match-tabs a:hover{background:#f2f8f7;color:#175d58}
+.match-tabs a.active{background:#0d766f;color:#fff}
+.match-tabs b{min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:#edf4f3;color:#376b67;display:inline-flex;align-items:center;justify-content:center;font-size:11px}
+.match-tabs a.active b{background:rgba(255,255,255,.2);color:#fff}
+.match-card.is-accepted{border-color:#cce8df;box-shadow:0 9px 25px rgba(13,118,111,.07)}
+.match-connected{color:#197344!important;font-weight:800}
+.match-message i{margin-right:5px;opacity:.65}
+.inline-action-form{display:inline-flex;gap:8px;flex-wrap:wrap}
+@media(max-width:600px){.match-dashboard-hero{align-items:flex-start}.match-hero-icon{display:none}.match-tabs{display:grid;grid-template-columns:1fr 1fr}.match-tabs a{justify-content:center}.match-tabs a:last-child{grid-column:1/-1}.match-actions{align-items:stretch}.inline-action-form{width:100%}.inline-action-form button{flex:1}}
+
+/* ===================== PHASE 10B — SWEET ALERT + NO SCROLL JUMP ===================== */
+body.swal-open{overflow:hidden}
+.match-swal{position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center;padding:20px}
+.match-swal.show{display:flex}
+.match-swal-backdrop{position:absolute;inset:0;background:rgba(12,35,34,.48);backdrop-filter:blur(3px)}
+.match-swal-box{position:relative;width:min(420px,100%);background:#fff;border-radius:22px;padding:28px 26px 24px;text-align:center;box-shadow:0 24px 70px rgba(8,40,38,.24);animation:matchSwalIn .18s ease-out}
+.match-swal-icon{width:58px;height:58px;margin:0 auto 13px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#fff6df;color:#b07a08;font-size:25px}
+.match-swal-box h3{margin:0 0 7px;font-size:22px;color:#123b38}
+.match-swal-box p{margin:0 auto;color:#6f7f7e;line-height:1.55;font-size:14px;max-width:330px}
+.match-swal-actions{display:flex;justify-content:center;gap:10px;margin-top:21px}
+.match-swal-actions button{border:0;border-radius:11px;padding:10px 18px;font:inherit;font-weight:800;cursor:pointer}
+.swal-cancel{background:#eef4f3;color:#42615f}
+.swal-confirm{background:#b64a4a;color:#fff}
+.swal-confirm.accept{background:#0d766f}
+.match-toast{position:fixed;right:22px;bottom:22px;z-index:10000;display:flex;align-items:center;gap:9px;max-width:min(380px,calc(100vw - 44px));padding:13px 17px;border-radius:13px;background:#e9f8ef;color:#176b3b;box-shadow:0 12px 30px rgba(10,60,48,.18);font-weight:800;opacity:0;pointer-events:none;transform:translateY(10px);transition:opacity .2s ease,transform .2s ease}
+.match-toast.show{opacity:1;transform:translateY(0)}
+.match-toast.error{background:#fff0f0;color:#a72d2d}
+.match-toast i{font-size:17px}
+.inline-action-form button:disabled{opacity:.55;cursor:wait}
+@keyframes matchSwalIn{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+@media(max-width:520px){.match-swal-box{padding:24px 19px}.match-toast{right:14px;bottom:14px;max-width:calc(100vw - 28px)}}
+
+/* Phase 10F: richer profile summary details */
+.match-profile-details {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px 18px;
+    margin-top: 9px;
+    color: #6d8083;
+    font-size: 14px;
+    line-height: 1.45;
+}
+
+.match-profile-details span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.match-profile-details i {
+    color: #0f817b;
+    width: 15px;
+    text-align: center;
+    flex: 0 0 15px;
+}
+
+@media (max-width: 700px) {
+    .match-profile-details {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px 12px;
+        font-size: 13px;
+    }
+}
+
+@media (max-width: 480px) {
+    .match-profile-details {
+        grid-template-columns: 1fr;
+    }
+}

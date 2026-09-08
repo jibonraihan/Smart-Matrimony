@@ -2,12 +2,12 @@
 
 $page_css = 'assets/css/dashboard.css';
 
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
 
 require_once 'config/db.php';
 require_once 'includes/functions.php';
 require_once 'includes/dropdowns.php';
+require_once 'includes/profile_completion.php';
+require_once 'includes/match_score.php';
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -19,6 +19,69 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 $user_id = (int) $_SESSION['user_id'];
+
+if (empty($_SESSION['matching_csrf'])) {
+    $_SESSION['matching_csrf'] = bin2hex(random_bytes(32));
+}
+$matching_csrf = $_SESSION['matching_csrf'];
+
+/* Dashboard bookmark action: normal POST + redirect, no AJAX endpoint. */
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['dashboard_bookmark_action'])) {
+    $posted_csrf = (string) ($_POST['csrf_token'] ?? '');
+    $target_id = (int) ($_POST['bookmark_user_id'] ?? 0);
+    $bookmark_action = (string) ($_POST['bookmark_action'] ?? '');
+    $return_query = (string) ($_POST['return_query'] ?? '');
+
+    $redirect_url = BASE_URL . 'dashboard.php';
+    if ($return_query !== '') $redirect_url .= '?' . ltrim($return_query, '?');
+    $redirect_url .= '#matching-profiles';
+
+    if (!hash_equals($matching_csrf, $posted_csrf)) {
+        $_SESSION['dashboard_bookmark_flash'] = 'Your session expired. Please refresh the page and try again.';
+        header('Location: ' . $redirect_url); exit;
+    }
+    if ($target_id <= 0 || $target_id === $user_id || !in_array($bookmark_action, ['add','remove'], true)) {
+        $_SESSION['dashboard_bookmark_flash'] = 'This bookmark action is not available.';
+        header('Location: ' . $redirect_url); exit;
+    }
+
+    $target_stmt = mysqli_prepare($conn, "SELECT user_id FROM users WHERE user_id=? AND role='User' AND account_status='Active' LIMIT 1");
+    $target_ok = false;
+    if ($target_stmt) {
+        mysqli_stmt_bind_param($target_stmt, 'i', $target_id);
+        mysqli_stmt_execute($target_stmt);
+        $target_ok = (bool) mysqli_fetch_assoc(mysqli_stmt_get_result($target_stmt));
+        mysqli_stmt_close($target_stmt);
+    }
+    if (!$target_ok) {
+        $_SESSION['dashboard_bookmark_flash'] = 'This profile is not available.';
+        header('Location: ' . $redirect_url); exit;
+    }
+
+    if ($bookmark_action === 'add') {
+        $stmt_b = mysqli_prepare($conn, "INSERT IGNORE INTO bookmarks (user_id, bookmarked_user_id) VALUES (?, ?)");
+        $ok = false;
+        if ($stmt_b) {
+            mysqli_stmt_bind_param($stmt_b, 'ii', $user_id, $target_id);
+            $ok = mysqli_stmt_execute($stmt_b);
+            mysqli_stmt_close($stmt_b);
+        }
+        $_SESSION['dashboard_bookmark_flash'] = $ok ? 'Profile bookmarked.' : 'Unable to save the bookmark right now.';
+    } else {
+        $stmt_b = mysqli_prepare($conn, "DELETE FROM bookmarks WHERE user_id=? AND bookmarked_user_id=?");
+        $ok = false;
+        if ($stmt_b) {
+            mysqli_stmt_bind_param($stmt_b, 'ii', $user_id, $target_id);
+            $ok = mysqli_stmt_execute($stmt_b);
+            mysqli_stmt_close($stmt_b);
+        }
+        $_SESSION['dashboard_bookmark_flash'] = $ok ? 'Bookmark removed.' : 'Unable to remove the bookmark right now.';
+    }
+    header('Location: ' . $redirect_url); exit;
+}
+
+$dashboard_bookmark_flash = $_SESSION['dashboard_bookmark_flash'] ?? '';
+unset($_SESSION['dashboard_bookmark_flash']);
 
 /* ---------------------------------------------------------
    Logged-in user + profile
@@ -75,52 +138,79 @@ if (!$current_user) {
 
 $display_name = trim(($current_user['first_name'] ?? '') . ' ' . ($current_user['last_name'] ?? ''));
 $display_name = $display_name !== '' ? $display_name : 'Member';
+$profile_public_id = 'SM-' . str_pad((string) $user_id, 6, '0', STR_PAD_LEFT);
+$current_gender = $current_user['gender'] ?? '';
+
+/* ---------------------------------------------------------
+   Service cart + booking summary
+--------------------------------------------------------- */
+$cart_count = 0;
+$booking_count = 0;
+$bookmark_count = 0;
+
+$cart_stmt = mysqli_prepare($conn, 'SELECT COALESCE(SUM(quantity),0) AS total FROM service_cart_items WHERE user_id = ?');
+mysqli_stmt_bind_param($cart_stmt, 'i', $user_id);
+mysqli_stmt_execute($cart_stmt);
+$cart_row = mysqli_fetch_assoc(mysqli_stmt_get_result($cart_stmt));
+$cart_count = (int) ($cart_row['total'] ?? 0);
+mysqli_stmt_close($cart_stmt);
+
+$booking_stmt = mysqli_prepare($conn, "SELECT COUNT(*) AS total FROM bookings WHERE user_id = ? AND booking_status <> 'Cancelled'");
+mysqli_stmt_bind_param($booking_stmt, 'i', $user_id);
+mysqli_stmt_execute($booking_stmt);
+$booking_row = mysqli_fetch_assoc(mysqli_stmt_get_result($booking_stmt));
+$booking_count = (int) ($booking_row['total'] ?? 0);
+mysqli_stmt_close($booking_stmt);
+
+$bookmark_stmt = mysqli_prepare($conn, "SELECT COUNT(*) AS total FROM bookmarks WHERE user_id = ?");
+mysqli_stmt_bind_param($bookmark_stmt, 'i', $user_id);
+mysqli_stmt_execute($bookmark_stmt);
+$bookmark_row = mysqli_fetch_assoc(mysqli_stmt_get_result($bookmark_stmt));
+$bookmark_count = (int) ($bookmark_row['total'] ?? 0);
+mysqli_stmt_close($bookmark_stmt);
+
+$booking_package_count = 0;
+$booking_package_stmt = mysqli_prepare($conn, "SELECT COALESCE(SUM(bd.quantity), 0) AS total FROM bookings b INNER JOIN booking_details bd ON bd.booking_id = b.booking_id WHERE b.user_id = ? AND b.booking_status <> 'Cancelled'");
+mysqli_stmt_bind_param($booking_package_stmt, 'i', $user_id);
+mysqli_stmt_execute($booking_package_stmt);
+$booking_package_row = mysqli_fetch_assoc(mysqli_stmt_get_result($booking_package_stmt));
+$booking_package_count = (int) ($booking_package_row['total'] ?? 0);
+mysqli_stmt_close($booking_package_stmt);
+
+/* Current active matches */
+$current_matches_count = 0;
+$match_count_stmt = mysqli_prepare($conn, "SELECT COUNT(*) AS total FROM matches WHERE (sender_user_id = ? OR receiver_user_id = ?) AND status = 'Accepted' AND relationship_active = 1");
+if ($match_count_stmt) {
+    mysqli_stmt_bind_param($match_count_stmt, 'ii', $user_id, $user_id);
+    mysqli_stmt_execute($match_count_stmt);
+    $match_count_row = mysqli_fetch_assoc(mysqli_stmt_get_result($match_count_stmt));
+    $current_matches_count = (int) ($match_count_row['total'] ?? 0);
+    mysqli_stmt_close($match_count_stmt);
+}
+
 
 /* ---------------------------------------------------------
    Profile completion
-   This is calculated from the fields already present in
-   user_profiles; no database schema change is required.
+   Use the same centralized completion calculator as Profile View.
 --------------------------------------------------------- */
-
-$completion_fields = [
-    'date_of_birth',
-    'religion',
-    'highest_education',
-    'profession',
-    'bio',
-    'photo',
-    'height_cm',
-    'weight_kg',
-    'complexion',
-    'family_type',
-    'family_status',
-    'division_id',
-    'district_id',
-    'upazila_id',
-    'smoking_status',
-    'prayer_status',
-    'mahram_maintained'
-];
-
-$filled = 0;
-foreach ($completion_fields as $field) {
-    if (array_key_exists($field, $current_user) && $current_user[$field] !== null && $current_user[$field] !== '') {
-        $filled++;
-    }
-}
-
-$profile_completion = (int) round(($filled / count($completion_fields)) * 100);
-$profile_completion = max(0, min(100, $profile_completion));
+$profile_completion_data = sm_get_profile_completion($conn, $user_id);
+$profile_completion = (int) ($profile_completion_data['percentage'] ?? 0);
 $profile_complete = $profile_completion >= 100;
 
 $profile_link = 'profile/create_profile.php';
+$own_profile_link = 'profile/view_profile.php?user_id=' . $user_id;
 $profile_cta_text = $profile_complete ? 'View / Update Profile' : 'Update Profile Details';
+
+/* Search state must be resolved before building the return URL. */
+$search_submitted = isset($_GET['search']);
+$profile_return_url = $search_submitted
+    ? BASE_URL . 'dashboard.php?' . http_build_query($_GET) . '#matching-profiles'
+    : BASE_URL . 'dashboard.php#partner-search';
 
 /* ---------------------------------------------------------
    Search filters
 --------------------------------------------------------- */
 
-$search_submitted = isset($_GET['search']);
 
 $target_gender = trim($_GET['gender'] ?? '');
 $division_id = (int) ($_GET['division_id'] ?? 0);
@@ -167,7 +257,7 @@ if ($search_submitted && in_array($target_gender, ['Male', 'Female'], true)) {
         "up.user_id <> ?",
         "u.account_status = 'Active'",
         "up.profile_visibility = 'Public'",
-        "up.gender = ?"
+        "u.gender = ?"
     ];
 
     $types = 'is';
@@ -270,7 +360,7 @@ if ($search_submitted && in_array($target_gender, ['Male', 'Female'], true)) {
             up.user_id,
             up.first_name,
             up.last_name,
-            up.gender,
+            u.gender,
             up.date_of_birth,
             up.religion,
             up.madhhab,
@@ -293,6 +383,13 @@ if ($search_submitted && in_array($target_gender, ['Male', 'Female'], true)) {
             up.upazila,
             up.verification_status,
             up.photo_visibility,
+            up.halal_lifestyle,
+            up.mahram_maintained,
+            up.islamic_knowledge,
+            up.monthly_income,
+            up.district_id,
+            up.upazila_id,
+            up.division_id,
             d.name_bn AS district_name,
             uz.name_bn AS upazila_name,
             dv.name_bn AS division_name
@@ -332,6 +429,145 @@ if ($search_submitted && in_array($target_gender, ['Male', 'Female'], true)) {
 }
 
 /* ---------------------------------------------------------
+   Mutual compatibility score preparation
+   This is a read-only layer over the existing search results.
+   Existing search filtering/pagination remains unchanged.
+--------------------------------------------------------- */
+$dashboard_match_scores = [];
+if (!empty($results)) {
+    $viewer_profile_stmt = mysqli_prepare($conn, "SELECT * FROM user_profiles WHERE user_id = ? LIMIT 1");
+    $viewer_profile = [];
+    if ($viewer_profile_stmt) {
+        mysqli_stmt_bind_param($viewer_profile_stmt, 'i', $user_id);
+        mysqli_stmt_execute($viewer_profile_stmt);
+        $viewer_profile = mysqli_fetch_assoc(mysqli_stmt_get_result($viewer_profile_stmt)) ?: [];
+        mysqli_stmt_close($viewer_profile_stmt);
+    }
+
+    $viewer_preferences = [];
+    $viewer_pref_stmt = mysqli_prepare($conn, "SELECT * FROM search_preferences WHERE user_id = ? LIMIT 1");
+    if ($viewer_pref_stmt) {
+        mysqli_stmt_bind_param($viewer_pref_stmt, 'i', $user_id);
+        mysqli_stmt_execute($viewer_pref_stmt);
+        $viewer_preferences = mysqli_fetch_assoc(mysqli_stmt_get_result($viewer_pref_stmt)) ?: [];
+        mysqli_stmt_close($viewer_pref_stmt);
+    }
+
+    $candidate_ids = [];
+    foreach ($results as $candidate_row) {
+        $candidate_ids[] = (int) $candidate_row['user_id'];
+    }
+    $candidate_ids = array_values(array_unique(array_filter($candidate_ids)));
+
+    $candidate_preferences = [];
+    $candidate_trait_preferences = [];
+    $candidate_trait_answers = [];
+    if ($candidate_ids) {
+        $placeholders = implode(',', array_fill(0, count($candidate_ids), '?'));
+        $types = str_repeat('i', count($candidate_ids));
+
+        $pref_stmt = mysqli_prepare($conn, "SELECT * FROM search_preferences WHERE user_id IN ($placeholders)");
+        if ($pref_stmt) {
+            $refs = [];
+            foreach ($candidate_ids as $key => $value) $refs[$key] = &$candidate_ids[$key];
+            mysqli_stmt_bind_param($pref_stmt, $types, ...$refs);
+            mysqli_stmt_execute($pref_stmt);
+            $pref_result = mysqli_stmt_get_result($pref_stmt);
+            while ($pref_row = mysqli_fetch_assoc($pref_result)) {
+                $candidate_preferences[(int) $pref_row['user_id']] = $pref_row;
+            }
+            mysqli_stmt_close($pref_stmt);
+        }
+
+        $trait_pref_stmt = mysqli_prepare($conn, "SELECT user_id, question_id, preferred_answer FROM partner_trait_preferences WHERE user_id IN ($placeholders)");
+        if ($trait_pref_stmt) {
+            $ids_for_trait = $candidate_ids;
+            $refs = [];
+            foreach ($ids_for_trait as $key => $value) $refs[$key] = &$ids_for_trait[$key];
+            mysqli_stmt_bind_param($trait_pref_stmt, $types, ...$refs);
+            mysqli_stmt_execute($trait_pref_stmt);
+            $trait_result = mysqli_stmt_get_result($trait_pref_stmt);
+            while ($trait_row = mysqli_fetch_assoc($trait_result)) {
+                $candidate_trait_preferences[(int) $trait_row['user_id']][(int) $trait_row['question_id']] = $trait_row['preferred_answer'];
+            }
+            mysqli_stmt_close($trait_pref_stmt);
+        }
+
+        $trait_answer_stmt = mysqli_prepare($conn, "SELECT user_id, question_id, answer FROM user_trait_answers WHERE user_id IN ($placeholders)");
+        if ($trait_answer_stmt) {
+            $ids_for_answers = $candidate_ids;
+            $refs = [];
+            foreach ($ids_for_answers as $key => $value) $refs[$key] = &$ids_for_answers[$key];
+            mysqli_stmt_bind_param($trait_answer_stmt, $types, ...$refs);
+            mysqli_stmt_execute($trait_answer_stmt);
+            $answer_result = mysqli_stmt_get_result($trait_answer_stmt);
+            while ($answer_row = mysqli_fetch_assoc($answer_result)) {
+                $candidate_trait_answers[(int) $answer_row['user_id']][(int) $answer_row['question_id']] = $answer_row['answer'];
+            }
+            mysqli_stmt_close($trait_answer_stmt);
+        }
+    }
+
+    $viewer_trait_preferences = [];
+    $viewer_trait_answers = [];
+    $viewer_trait_stmt = mysqli_prepare($conn, "SELECT question_id, preferred_answer FROM partner_trait_preferences WHERE user_id = ?");
+    if ($viewer_trait_stmt) {
+        mysqli_stmt_bind_param($viewer_trait_stmt, 'i', $user_id);
+        mysqli_stmt_execute($viewer_trait_stmt);
+        $viewer_trait_result = mysqli_stmt_get_result($viewer_trait_stmt);
+        while ($row = mysqli_fetch_assoc($viewer_trait_result)) {
+            $viewer_trait_preferences[(int) $row['question_id']] = $row['preferred_answer'];
+        }
+        mysqli_stmt_close($viewer_trait_stmt);
+    }
+    $viewer_answer_stmt = mysqli_prepare($conn, "SELECT question_id, answer FROM user_trait_answers WHERE user_id = ?");
+    if ($viewer_answer_stmt) {
+        mysqli_stmt_bind_param($viewer_answer_stmt, 'i', $user_id);
+        mysqli_stmt_execute($viewer_answer_stmt);
+        $viewer_answer_result = mysqli_stmt_get_result($viewer_answer_stmt);
+        while ($row = mysqli_fetch_assoc($viewer_answer_result)) {
+            $viewer_trait_answers[(int) $row['question_id']] = $row['answer'];
+        }
+        mysqli_stmt_close($viewer_answer_stmt);
+    }
+
+    foreach ($results as $candidate_row) {
+        $candidate_id = (int) $candidate_row['user_id'];
+        $dashboard_match_scores[$candidate_id] = sm_calculate_mutual_match_score(
+            $viewer_preferences,
+            $viewer_profile,
+            $candidate_preferences[$candidate_id] ?? [],
+            $candidate_row,
+            $viewer_trait_preferences,
+            $viewer_trait_answers,
+            $candidate_trait_preferences[$candidate_id] ?? [],
+            $candidate_trait_answers[$candidate_id] ?? []
+        );
+    }
+}
+
+/* ---------------------------------------------------------
+   Dashboard photo privacy helpers
+   - Everyone: visible to everyone
+   - Verified Users: visible only to verified viewers
+   - Matched Users: visible only to an active accepted match
+   - Hidden: never visible
+--------------------------------------------------------- */
+$dashboard_matched_user_ids = [];
+if (!empty($results)) {
+    $matched_stmt = mysqli_prepare($conn, "SELECT CASE WHEN sender_user_id = ? THEN receiver_user_id ELSE sender_user_id END AS matched_user_id FROM matches WHERE (sender_user_id = ? OR receiver_user_id = ?) AND status = 'Accepted' AND relationship_active = 1");
+    if ($matched_stmt) {
+        mysqli_stmt_bind_param($matched_stmt, 'iii', $user_id, $user_id, $user_id);
+        mysqli_stmt_execute($matched_stmt);
+        $matched_result = mysqli_stmt_get_result($matched_stmt);
+        while ($matched_row = mysqli_fetch_assoc($matched_result)) {
+            $dashboard_matched_user_ids[(int) $matched_row['matched_user_id']] = true;
+        }
+        mysqli_stmt_close($matched_stmt);
+    }
+}
+
+/* ---------------------------------------------------------
    Divisions
 --------------------------------------------------------- */
 
@@ -363,9 +599,28 @@ if ($service_result) {
         $services[] = $row;
     }
 }
+$active_provider_count = 0;
+foreach ($services as $service) {
+    $active_provider_count += (int) ($service['provider_count'] ?? 0);
+}
+
+/* Total active packages represented by the current service-provider catalog. */
+$total_service_packages = 0;
+$package_count_result = mysqli_query($conn, "
+    SELECT COUNT(*) AS total_packages
+    FROM service_providers
+    WHERE status = 'Active'
+      AND package_name IS NOT NULL
+      AND TRIM(package_name) <> ''
+");
+if ($package_count_result) {
+    $package_count_row = mysqli_fetch_assoc($package_count_result);
+    $total_service_packages = (int) ($package_count_row['total_packages'] ?? 0);
+}
 
 include 'includes/header.php';
 ?>
+<link rel="stylesheet" href="<?= BASE_URL; ?>assets/css/dashboard-hero-responsive.css?v=1">
 
 <div class="dashboard-page">
 
@@ -423,25 +678,26 @@ include 'includes/header.php';
 
         <nav class="menu-links">
             <a class="active" href="<?= BASE_URL; ?>dashboard.php"><i class="fa-solid fa-grid-2"></i><span>Dashboard</span></a>
-            <a href="#profile-section"><i class="fa-solid fa-user-circle"></i><span>My Profile</span></a>
+            <a href="<?= BASE_URL; ?><?= htmlspecialchars($own_profile_link); ?>"><i class="fa-solid fa-user-circle"></i><span>My Profile</span></a>
             <a href="#partner-search"><i class="fa-solid fa-magnifying-glass"></i><span>Find Partner</span></a>
             <a href="#wedding-services"><i class="fa-solid fa-ring"></i><span>Wedding Services</span></a>
-            <a href="<?= BASE_URL; ?>cart.php"><i class="fa-solid fa-cart-shopping"></i><span>My Service Cart</span></a>
-            <a href="#"><i class="fa-solid fa-heart"></i><span>My Matches</span><span class="menu-soon">Soon</span></a>
-            <a href="#"><i class="fa-solid fa-bookmark"></i><span>Bookmarks</span><span class="menu-soon">Soon</span></a>
-            <a href="#"><i class="fa-solid fa-comments"></i><span>Messages</span><span class="menu-soon">Soon</span></a>
+            <a href="<?= BASE_URL; ?>cart.php"><i class="fa-solid fa-cart-shopping"></i><span>My Service Cart</span><?php if ($cart_count > 0): ?><span class="menu-count"><?= $cart_count; ?></span><?php endif; ?></a>
+            <a href="<?= BASE_URL; ?>my_bookings.php"><i class="fa-solid fa-calendar-check"></i><span>My Bookings</span><?php if ($booking_count > 0): ?><span class="menu-count"><?= $booking_count; ?></span><?php endif; ?></a>
+            <a href="<?= BASE_URL; ?>matching/my_matches.php"><i class="fa-solid fa-heart"></i><span>My Matches</span></a>
+            <a href="<?= BASE_URL; ?>matching/bookmarks.php"><i class="fa-solid fa-bookmark"></i><span>Bookmarks</span></a>
+            <a href="<?= BASE_URL; ?>matching/chat_requests.php"><i class="fa-solid fa-comments"></i><span>Messages</span></a>
 
             <?php if (($current_user['role'] ?? '') === 'Admin'): ?>
-                <a href="#"><i class="fa-solid fa-user-shield"></i><span>Admin Login</span></a>
-            <?php else: ?>
-                <a href="#" class="disabled-link"><i class="fa-solid fa-user-shield"></i><span>Admin Login</span><span class="menu-soon">Restricted</span></a>
+                <a href="<?= BASE_URL; ?>admin/login.php" target="_blank" rel="noopener"><i class="fa-solid fa-user-shield"></i><span>Admin Login</span></a>
             <?php endif; ?>
 
             <?php if (($current_user['role'] ?? '') === 'Manager'): ?>
-                <a href="#"><i class="fa-solid fa-calendar-check"></i><span>Event Manager</span></a>
+                <a href="<?= BASE_URL; ?>manager/login.php" target="_blank" rel="noopener"><i class="fa-solid fa-calendar-check"></i><span>Event Manager</span></a>
             <?php else: ?>
-                <a href="#" class="disabled-link"><i class="fa-solid fa-calendar-check"></i><span>Event Manager</span><span class="menu-soon">Restricted</span></a>
+                <a href="<?= BASE_URL; ?>manager/login.php" target="_blank" rel="noopener"><i class="fa-solid fa-calendar-check"></i><span>Event Manager Login</span></a>
             <?php endif; ?>
+
+            <a href="<?= BASE_URL; ?>authenticator/login.php" target="_blank" rel="noopener"><i class="fa-solid fa-user-check"></i><span>Authenticator Login</span></a>
         </nav>
 
         <div class="menu-footer">
@@ -454,74 +710,177 @@ include 'includes/header.php';
 
     <main>
 
-        <!-- ===================== WELCOME ===================== -->
-        <section class="dashboard-hero">
-            <div class="dashboard-container hero-grid">
-
-                <div class="welcome-copy">
-                    <span class="section-kicker"><i class="fa-solid fa-sparkles"></i> YOUR MATRIMONY SPACE</span>
-                    <h1>Welcome back, <span><?= htmlspecialchars($current_user['first_name'] ?? 'Member'); ?></span> 👋</h1>
-                    <p>
-                        Manage your profile, discover compatible partners and explore wedding services — all from one place.
-                    </p>
-
-                    <div class="hero-mini-stats">
-                        <div><strong><?= number_format($total_results); ?></strong><span>Current Matches</span></div>
-                        <div><strong><?= $profile_completion; ?>%</strong><span>Profile Complete</span></div>
-                        <div><strong><?= count($services); ?></strong><span>Service Categories</span></div>
-                    </div>
-                </div>
-
-                <div class="profile-summary" id="profile-section">
-                    <div class="profile-summary-top">
-                        <div class="profile-avatar">
+        <!-- ===================== PROFILE COMMAND CENTER HERO ===================== -->
+        <section class="dashboard-hero" id="profile-hero">
+            <div class="dashboard-container hero-card">
+                <div class="hero-profile-panel">
+                    <div class="hero-identity">
+                        <div class="profile-avatar hero-profile-avatar">
                             <?php if (!empty($current_user['photo'])): ?>
                                 <img src="<?= BASE_URL; ?>uploads/profile/<?= htmlspecialchars($current_user['photo']); ?>" alt="Profile photo">
                             <?php else: ?>
-                                <i class="fa-solid fa-user"></i>
+                                <i class="fa-solid <?= ($current_user['gender'] ?? '') === 'Female' ? 'fa-user-large' : 'fa-user'; ?>"></i>
                             <?php endif; ?>
                         </div>
 
-                        <div class="profile-summary-info">
-                            <span class="profile-label">YOUR PROFILE</span>
-                            <h2><?= htmlspecialchars($display_name); ?></h2>
-                            <p><?= htmlspecialchars($current_user['email'] ?? ''); ?></p>
-                        </div>
-
-                        <a href="<?= BASE_URL . $profile_link; ?>" class="profile-icon-btn" title="View / Update Profile">
-                            <i class="fa-solid fa-arrow-up-right-from-square"></i>
-                        </a>
-                    </div>
-
-                    <div class="completion-row">
-                        <div>
-                            <span>Profile completion</span>
-                            <strong><?= $profile_completion; ?>%</strong>
-                        </div>
-                        <div class="completion-track">
-                            <span style="width: <?= $profile_completion; ?>%"></span>
-                        </div>
-                    </div>
-
-                    <?php if (!$profile_complete): ?>
-                        <div class="profile-alert">
-                            <div class="profile-alert-icon"><i class="fa-solid fa-user-pen"></i></div>
-                            <div>
-                                <strong>Your profile needs a little more detail.</strong>
-                                <p>A complete profile helps other members understand you better and improves matching.</p>
+                        <div class="hero-identity-copy">
+                            <span class="hero-profile-label">MY PROFILE</span>
+                            <div class="hero-name-row">
+                                <h1><?= htmlspecialchars($display_name); ?></h1>
+                                <?php
+                                    $hero_verification = (string) ($current_user['verification_status'] ?? 'Pending');
+                                    $hero_verification_class = strtolower($hero_verification);
+                                ?>
+                                <span class="hero-verification-badge <?= htmlspecialchars($hero_verification_class); ?>">
+                                    <i class="fa-solid <?= $hero_verification === 'Verified' ? 'fa-circle-check' : ($hero_verification === 'Rejected' ? 'fa-circle-xmark' : 'fa-clock') ; ?>"></i>
+                                    <?= htmlspecialchars($hero_verification); ?>
+                                </span>
                             </div>
-                            <a href="<?= BASE_URL . $profile_link; ?>" class="profile-cta">
-                                <?= htmlspecialchars($profile_cta_text); ?>
-                                <i class="fa-solid fa-arrow-right"></i>
-                            </a>
+                            <div style="margin-top: 6px; color: #6f8582; font-size: .82rem; line-height: 1.4; overflow-wrap: anywhere;">
+                                <i class="fa-solid fa-envelope" style="margin-right: 5px;"></i><?= htmlspecialchars($current_user['email'] ?? ''); ?>
+                            </div>
+                            <span class="profile-id-badge"><i class="fa-solid fa-id-card"></i> <?= htmlspecialchars($profile_public_id); ?></span>
                         </div>
-                    <?php else: ?>
-                        <div class="profile-complete-note">
-                            <i class="fa-solid fa-circle-check"></i>
-                            Your profile is complete. You can update it anytime.
-                            <a href="<?= BASE_URL . $profile_link; ?>">Profile</a>
+                    </div>
+
+                    <div class="hero-info-grid">
+                        <div class="hero-info-item"><i class="fa-solid fa-venus-mars"></i><span><small>Gender</small><strong><?= htmlspecialchars($current_user['gender'] ?? '—'); ?></strong></span></div>
+                        <div class="hero-info-item"><i class="fa-solid fa-mosque"></i><span><small>Religion</small><strong><?= htmlspecialchars($current_user['religion'] ?? '—'); ?></strong></span></div>
+                        <div class="hero-info-item"><i class="fa-solid fa-graduation-cap"></i><span><small>Education</small><strong><?= htmlspecialchars($current_user['highest_education'] ?? '—'); ?></strong></span></div>
+                        <div class="hero-info-item"><i class="fa-solid fa-briefcase"></i><span><small>Profession</small><strong><?= htmlspecialchars($current_user['profession'] ?? '—'); ?></strong></span></div>
+                    </div>
+
+                    <div class="hero-action-row">
+                        <a href="<?= BASE_URL . $own_profile_link; ?>" class="hero-action primary"><i class="fa-solid fa-user"></i> View Profile</a>
+                        <a href="<?= BASE_URL . $profile_link; ?>" class="hero-action secondary"><i class="fa-solid fa-pen-to-square"></i> Update Profile</a>
+                    </div>
+                </div>
+
+                <div class="hero-overview-panel">
+                    <div class="hero-panel-heading">
+                        <div>
+                            <span class="hero-profile-label">PROFILE OVERVIEW</span>
+                            <h2>Your Matrimony Dashboard</h2>
                         </div>
-                    <?php endif; ?>
+                        <span class="hero-status-dot"><i class="fa-solid fa-shield-heart"></i> Account Active</span>
+                    </div>
+
+                    <div class="hero-stat-grid">
+                        <div class="hero-stat-card"><span class="hero-stat-icon"><i class="fa-solid fa-heart"></i></span><div><strong><?= number_format($current_matches_count); ?></strong><small>Current Matches</small></div></div>
+                        <div class="hero-stat-card"><span class="hero-stat-icon"><i class="fa-solid fa-chart-line"></i></span><div><strong><?= $profile_completion; ?>%</strong><small>Profile Complete</small></div></div>
+                        <div class="hero-stat-card"><span class="hero-stat-icon"><i class="fa-solid fa-bookmark"></i></span><div><strong><?= number_format($bookmark_count); ?></strong><small>Bookmark Profile</small></div></div>
+                        <div class="hero-stat-card"><span class="hero-stat-icon"><i class="fa-solid fa-box-open"></i></span><div><strong><?= number_format($booking_package_count); ?></strong><small>Booking Packages</small></div></div>
+                    </div>
+
+                    <div class="hero-completion">
+                        <div class="hero-completion-head"><span>Profile completion</span><strong><?= $profile_completion; ?>%</strong></div>
+                        <div class="completion-track"><span style="width: <?= $profile_completion; ?>%"></span></div>
+                        <div class="hero-completion-note">
+                            <?php if ($profile_complete): ?>
+                                <i class="fa-solid fa-circle-check"></i><span>Your profile is complete and ready for matching.</span>
+                            <?php else: ?>
+                                <i class="fa-solid fa-circle-info"></i><span>Complete your profile to improve visibility and matching.</span>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+
+                    <div class="hero-quick-actions">
+                        <span class="hero-quick-label">QUICK ACTIONS</span>
+                        <div class="hero-quick-grid">
+                            <a href="<?= BASE_URL; ?>matching/my_matches.php"><i class="fa-solid fa-heart"></i><span>My Matches</span></a>
+                            <a href="<?= BASE_URL; ?>matching/bookmarks.php"><i class="fa-solid fa-bookmark"></i><span>Bookmarks</span></a>
+                            <a href="<?= BASE_URL; ?>matching/chat_requests.php"><i class="fa-solid fa-comments"></i><span>Messages</span></a>
+                            <a href="#wedding-services"><i class="fa-solid fa-ring"></i><span>Wedding Services</span></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ===================== ACCOUNT OVERVIEW / QUICK ACTIONS ===================== -->
+        <section class="dashboard-account-overview" aria-label="Account overview and quick actions">
+            <div class="dashboard-container">
+                <div class="account-overview-head">
+                    <div>
+                        <span class="section-kicker">ACCOUNT OVERVIEW</span>
+                        <h2>Quick Actions</h2>
+                        <p>Jump directly to the parts of your matrimony account you use most.</p>
+                    </div>
+                </div>
+
+                <div class="account-overview-grid">
+                    <a class="account-action-card" href="<?= BASE_URL; ?><?= htmlspecialchars($own_profile_link); ?>">
+                        <span class="account-action-icon"><i class="fa-solid fa-user"></i></span>
+                        <span class="account-action-copy">
+                            <strong>My Profile</strong>
+                            <small>View your profile</small>
+                        </span>
+                        <i class="fa-solid fa-arrow-right account-action-arrow"></i>
+                    </a>
+
+                    <a class="account-action-card" href="#partner-search">
+                        <span class="account-action-icon"><i class="fa-solid fa-magnifying-glass"></i></span>
+                        <span class="account-action-copy">
+                            <strong>Find Partner</strong>
+                            <small>Search suitable profiles</small>
+                        </span>
+                        <i class="fa-solid fa-arrow-right account-action-arrow"></i>
+                    </a>
+
+                    <a class="account-action-card" href="<?= BASE_URL; ?>matching/my_matches.php">
+                        <span class="account-action-icon"><i class="fa-solid fa-heart"></i></span>
+                        <span class="account-action-copy">
+                            <strong>My Matches</strong>
+                            <small><?= number_format($current_matches_count); ?> current matches</small>
+                        </span>
+                        <i class="fa-solid fa-arrow-right account-action-arrow"></i>
+                    </a>
+
+                    <a class="account-action-card" href="<?= BASE_URL; ?>matching/bookmarks.php">
+                        <span class="account-action-icon"><i class="fa-solid fa-bookmark"></i></span>
+                        <span class="account-action-copy">
+                            <strong>Bookmarks</strong>
+                            <small>Saved profiles</small>
+                        </span>
+                        <i class="fa-solid fa-arrow-right account-action-arrow"></i>
+                    </a>
+
+                    <a class="account-action-card" href="<?= BASE_URL; ?>matching/chat_requests.php">
+                        <span class="account-action-icon"><i class="fa-solid fa-comments"></i></span>
+                        <span class="account-action-copy">
+                            <strong>Messages</strong>
+                            <small>Interests &amp; conversations</small>
+                        </span>
+                        <i class="fa-solid fa-arrow-right account-action-arrow"></i>
+                    </a>
+
+                    <a class="account-action-card" href="#wedding-services">
+                        <span class="account-action-icon"><i class="fa-solid fa-ring"></i></span>
+                        <span class="account-action-copy">
+                            <strong>Wedding Services</strong>
+                            <small><?= count($services); ?> service categories</small>
+                        </span>
+                        <i class="fa-solid fa-arrow-right account-action-arrow"></i>
+                    </a>
+
+                    <a class="account-action-card" href="<?= BASE_URL; ?>cart.php">
+                        <span class="account-action-icon"><i class="fa-solid fa-cart-shopping"></i></span>
+                        <span class="account-action-copy">
+                            <strong>Service Cart</strong>
+                            <small><?= number_format($cart_count); ?> saved item<?= $cart_count === 1 ? '' : 's'; ?></small>
+                        </span>
+                        <i class="fa-solid fa-arrow-right account-action-arrow"></i>
+                    </a>
+
+                    <a class="account-action-card" href="<?= BASE_URL; ?>my_bookings.php">
+                        <span class="account-action-icon"><i class="fa-solid fa-calendar-check"></i></span>
+                        <span class="account-action-copy">
+                            <strong>My Bookings</strong>
+                            <small><?= number_format($booking_count); ?> booking<?= $booking_count === 1 ? '' : 's'; ?></small>
+                        </span>
+                        <i class="fa-solid fa-arrow-right account-action-arrow"></i>
+                    </a>
                 </div>
             </div>
         </section>
@@ -542,7 +901,7 @@ include 'includes/header.php';
                     </div>
                 </div>
 
-                <form method="GET" class="search-panel" autocomplete="off">
+                <form method="GET" class="search-panel" id="partnerSearchForm" autocomplete="off">
                     <input type="hidden" name="search" value="1">
 
                     <div class="gender-choice-wrap">
@@ -551,18 +910,28 @@ include 'includes/header.php';
                             <label class="gender-option <?= $target_gender === 'Female' ? 'selected' : ''; ?>">
                                 <input type="radio" name="gender" value="Female" <?= $target_gender === 'Female' ? 'checked' : ''; ?> required>
                                 <span class="gender-icon"><i class="fa-solid fa-venus"></i></span>
-                                <span><strong>Bride</strong><small>Search female profiles</small></span>
+                                <span class="gender-copy"><strong>Bride</strong><small>Search female profiles</small></span>
+                                <span class="gender-selected-badge"><i class="fa-solid fa-check"></i> Selected</span>
                             </label>
 
                             <label class="gender-option <?= $target_gender === 'Male' ? 'selected' : ''; ?>">
                                 <input type="radio" name="gender" value="Male" <?= $target_gender === 'Male' ? 'checked' : ''; ?> required>
                                 <span class="gender-icon"><i class="fa-solid fa-mars"></i></span>
-                                <span><strong>Groom</strong><small>Search male profiles</small></span>
+                                <span class="gender-copy"><strong>Groom</strong><small>Search male profiles</small></span>
+                                <span class="gender-selected-badge"><i class="fa-solid fa-check"></i> Selected</span>
                             </label>
                         </div>
                     </div>
 
-                    <div class="filter-grid">
+                    <div class="filter-section filter-essential">
+                        <div class="filter-section-heading">
+                            <div>
+                                <span class="filter-section-kicker">ESSENTIAL FILTERS</span>
+                                <strong>Refine the basics</strong>
+                            </div>
+                            <span class="filter-section-note">All optional</span>
+                        </div>
+                        <div class="filter-grid filter-grid-essential">
                         <div class="filter-group">
                             <label class="filter-label">Division</label>
                             <select name="division_id" id="searchDivision" class="filter-control">
@@ -574,21 +943,18 @@ include 'includes/header.php';
                                 <?php endforeach; ?>
                             </select>
                         </div>
-
                         <div class="filter-group">
                             <label class="filter-label">District</label>
                             <select name="district_id" id="searchDistrict" class="filter-control" data-selected="<?= $district_id; ?>">
                                 <option value="">Any District</option>
                             </select>
                         </div>
-
                         <div class="filter-group">
                             <label class="filter-label">Upazila</label>
                             <select name="upazila_id" id="searchUpazila" class="filter-control" data-selected="<?= $upazila_id; ?>">
                                 <option value="">Any Upazila</option>
                             </select>
                         </div>
-
                         <div class="filter-group">
                             <label class="filter-label">Religion</label>
                             <select name="religion" class="filter-control">
@@ -598,7 +964,6 @@ include 'includes/header.php';
                                 <?php endforeach; ?>
                             </select>
                         </div>
-
                         <div class="filter-group">
                             <label class="filter-label">Profession</label>
                             <select name="profession" class="filter-control">
@@ -610,7 +975,24 @@ include 'includes/header.php';
                                 <?php endforeach; ?>
                             </select>
                         </div>
+                        </div>
+                    </div>
 
+                    <div class="filter-advanced-wrap">
+                        <button type="button" class="more-filters-toggle" id="moreFiltersToggle"
+                                aria-expanded="false" aria-controls="advancedSearchFilters">
+                            <span><i class="fa-solid fa-sliders"></i> More Filters</span>
+                            <i class="fa-solid fa-chevron-down more-filters-chevron"></i>
+                        </button>
+
+                        <div class="filter-section filter-advanced" id="advancedSearchFilters" hidden>
+                            <div class="filter-section-heading">
+                                <div>
+                                    <span class="filter-section-kicker">MORE FILTERS</span>
+                                    <strong>Fine-tune your preferences</strong>
+                                </div>
+                            </div>
+                            <div class="filter-grid filter-grid-advanced">
                         <div class="filter-group">
                             <label class="filter-label">Family Type</label>
                             <select name="family_type" class="filter-control">
@@ -620,7 +1002,6 @@ include 'includes/header.php';
                                 <?php endforeach; ?>
                             </select>
                         </div>
-
                         <div class="filter-group">
                             <label class="filter-label">Family Status</label>
                             <select name="family_status" class="filter-control">
@@ -630,7 +1011,6 @@ include 'includes/header.php';
                                 <?php endforeach; ?>
                             </select>
                         </div>
-
                         <div class="filter-group">
                             <label class="filter-label">Complexion</label>
                             <select name="complexion" class="filter-control">
@@ -640,7 +1020,6 @@ include 'includes/header.php';
                                 <?php endforeach; ?>
                             </select>
                         </div>
-
                         <div class="filter-group range-pair">
                             <label class="filter-label">Height (cm)</label>
                             <div class="range-inputs">
@@ -649,7 +1028,6 @@ include 'includes/header.php';
                                 <input type="number" name="max_height" min="120" max="250" step="1" value="<?= $max_height !== null ? htmlspecialchars($max_height) : ''; ?>" placeholder="Max">
                             </div>
                         </div>
-
                         <div class="filter-group range-pair">
                             <label class="filter-label">Weight (kg)</label>
                             <div class="range-inputs">
@@ -658,7 +1036,6 @@ include 'includes/header.php';
                                 <input type="number" name="max_weight" min="25" max="250" step="1" value="<?= $max_weight !== null ? htmlspecialchars($max_weight) : ''; ?>" placeholder="Max">
                             </div>
                         </div>
-
                         <div class="filter-group range-pair">
                             <label class="filter-label">Monthly Income</label>
                             <div class="range-inputs">
@@ -667,7 +1044,6 @@ include 'includes/header.php';
                                 <input type="number" name="max_salary" min="0" step="1000" value="<?= $max_salary !== null ? htmlspecialchars($max_salary) : ''; ?>" placeholder="Max">
                             </div>
                         </div>
-
                         <div class="filter-group">
                             <label class="filter-label">Prayer</label>
                             <select name="prayer_status" class="filter-control">
@@ -677,7 +1053,6 @@ include 'includes/header.php';
                                 <?php endforeach; ?>
                             </select>
                         </div>
-
                         <div class="filter-group">
                             <label class="filter-label">Smoking</label>
                             <select name="smoking_status" class="filter-control">
@@ -687,7 +1062,6 @@ include 'includes/header.php';
                                 <?php endforeach; ?>
                             </select>
                         </div>
-
                         <div class="filter-group">
                             <label class="filter-label">Father's Profession</label>
                             <select name="father_profession" class="filter-control">
@@ -697,7 +1071,6 @@ include 'includes/header.php';
                                 <?php endforeach; ?>
                             </select>
                         </div>
-
                         <div class="filter-group">
                             <label class="filter-label">Mother's Profession</label>
                             <select name="mother_profession" class="filter-control">
@@ -707,7 +1080,6 @@ include 'includes/header.php';
                                 <?php endforeach; ?>
                             </select>
                         </div>
-
                         <div class="filter-group">
                             <label class="filter-label">Mahram Maintenance</label>
                             <select name="mahram_maintained" class="filter-control">
@@ -716,7 +1088,6 @@ include 'includes/header.php';
                                 <option value="0" <?= $mahram_maintained === '0' ? 'selected' : ''; ?>>Not Maintained</option>
                             </select>
                         </div>
-
                         <div class="filter-group">
                             <label class="filter-label">Marital Status</label>
                             <select name="marital_status" class="filter-control">
@@ -726,7 +1097,6 @@ include 'includes/header.php';
                                 <?php endforeach; ?>
                             </select>
                         </div>
-
                         <div class="filter-group">
                             <label class="filter-label">Education</label>
                             <select name="education" class="filter-control">
@@ -736,7 +1106,6 @@ include 'includes/header.php';
                                 <?php endforeach; ?>
                             </select>
                         </div>
-
                         <div class="filter-group">
                             <label class="filter-label">Madhhab / Manhaj</label>
                             <select name="madhhab" class="filter-control">
@@ -746,7 +1115,6 @@ include 'includes/header.php';
                                 <?php endforeach; ?>
                             </select>
                         </div>
-
                         <div class="filter-group">
                             <label class="filter-label">Blood Group</label>
                             <select name="blood_group" class="filter-control">
@@ -756,41 +1124,23 @@ include 'includes/header.php';
                                 <?php endforeach; ?>
                             </select>
                         </div>
-
-                        <div class="filter-group" id="beardFilterGroup">
-                            <label class="filter-label">Beard</label>
-                            <select name="beard_status" class="filter-control">
-                                <option value="">Any</option>
-                                <?php foreach (['Yes', 'No', 'Not Applicable'] as $value): ?>
-                                    <option value="<?= htmlspecialchars($value); ?>" <?= $beard_status === $value ? 'selected' : ''; ?>><?= htmlspecialchars($value); ?></option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-
-                        <div class="filter-group" id="hijabFilterGroup">
-                            <label class="filter-label">Hijab</label>
-                            <select name="hijab_status" class="filter-control">
-                                <option value="">Any</option>
-                                <?php foreach (['Yes', 'No', 'Not Applicable'] as $value): ?>
-                                    <option value="<?= htmlspecialchars($value); ?>" <?= $hijab_status === $value ? 'selected' : ''; ?>><?= htmlspecialchars($value); ?></option>
-                                <?php endforeach; ?>
-                            </select>
+                            </div>
                         </div>
                     </div>
 
                     <div class="search-actions">
-                        <a href="<?= BASE_URL; ?>dashboard.php#partner-search" class="clear-search">
+                        <button type="button" class="clear-search" id="clearSearchFilters">
                             <i class="fa-solid fa-rotate-left"></i> Clear filters
-                        </a>
+                        </button>
                         <button type="submit" class="search-button">
                             <i class="fa-solid fa-magnifying-glass"></i>
-                            Search <?= $target_gender === 'Male' ? 'Groom' : ($target_gender === 'Female' ? 'Bride' : 'Profiles'); ?>
+                            Search Profile
                         </button>
                     </div>
                 </form>
 
                 <!-- Results -->
-                <div class="results-header">
+                <div class="results-header" id="matching-profiles">
                     <div>
                         <span class="section-kicker">MATCHING PROFILES</span>
                         <h3>
@@ -804,25 +1154,25 @@ include 'includes/header.php';
                 </div>
 
                 <?php if (!$search_submitted): ?>
-                    <div class="empty-results">
+                    <div class="empty-results" id="matching-results-grid">
                         <div class="empty-results-icon"><i class="fa-solid fa-magnifying-glass"></i></div>
                         <h4>Start with Bride or Groom</h4>
                         <p>Pick the mandatory search type above, then use as many optional filters as you need.</p>
                     </div>
                 <?php elseif ($search_submitted && $target_gender === ''): ?>
-                    <div class="empty-results warning-empty">
+                    <div class="empty-results warning-empty" id="matching-results-grid">
                         <div class="empty-results-icon"><i class="fa-solid fa-circle-exclamation"></i></div>
                         <h4>Please choose Bride or Groom</h4>
                         <p>The search target is mandatory before other filters can be applied.</p>
                     </div>
                 <?php elseif (empty($results)): ?>
-                    <div class="empty-results">
+                    <div class="empty-results" id="matching-results-grid">
                         <div class="empty-results-icon"><i class="fa-regular fa-face-frown"></i></div>
                         <h4>No matching profiles yet</h4>
                         <p>Try removing one or two filters to broaden your search.</p>
                     </div>
                 <?php else: ?>
-                    <div class="profile-results-grid">
+                    <div class="profile-results-grid" id="matching-results-grid">
                         <?php foreach ($results as $profile): ?>
                             <?php
                                 $name = trim(($profile['first_name'] ?? '') . ' ' . ($profile['last_name'] ?? ''));
@@ -837,15 +1187,29 @@ include 'includes/header.php';
                                     }
                                 }
                                 $photo = $profile['photo'] ?? '';
+                                $photo_visibility = (string) ($profile['photo_visibility'] ?? 'Hidden');
+                                $target_verification = (string) ($profile['verification_status'] ?? 'Pending');
+                                $viewer_is_verified = (string) ($current_user['verification_status'] ?? 'Pending') === 'Verified';
+                                $target_is_matched = isset($dashboard_matched_user_ids[(int) ($profile['user_id'] ?? 0)]);
+                                $photo_visible = $photo !== '' && (
+                                    $photo_visibility === 'Everyone'
+                                    || ($photo_visibility === 'Verified Users' && $viewer_is_verified)
+                                    || ($photo_visibility === 'Matched Users' && $target_is_matched)
+                                );
+                                $target_gender_for_placeholder = (string) ($profile['gender'] ?? '');
+                                $gender_icon = $target_gender_for_placeholder === 'Female' ? 'fa-person-dress' : ($target_gender_for_placeholder === 'Male' ? 'fa-person' : 'fa-user');
                             ?>
                             <article class="profile-card">
                                 <div class="profile-card-photo">
-                                    <?php if ($photo !== '' && ($profile['photo_visibility'] ?? '') === 'Everyone'): ?>
+                                    <?php if ($photo_visible): ?>
                                         <img src="<?= BASE_URL; ?>uploads/profile/<?= htmlspecialchars($photo); ?>" alt="Profile photo">
                                     <?php elseif ($photo !== ''): ?>
-                                        <div class="profile-photo-placeholder private-photo"><i class="fa-solid fa-lock"></i></div>
+                                        <div class="profile-photo-placeholder private-photo gender-placeholder">
+                                            <i class="fa-solid <?= $gender_icon; ?>"></i>
+                                            <span class="privacy-lock-indicator"><i class="fa-solid fa-lock"></i></span>
+                                        </div>
                                     <?php else: ?>
-                                        <div class="profile-photo-placeholder"><i class="fa-solid fa-user"></i></div>
+                                        <div class="profile-photo-placeholder gender-placeholder"><i class="fa-solid <?= $gender_icon; ?>"></i></div>
                                     <?php endif; ?>
 
                                     <?php if (($profile['verification_status'] ?? '') === 'Verified'): ?>
@@ -854,24 +1218,91 @@ include 'includes/header.php';
                                 </div>
 
                                 <div class="profile-card-body">
+                                    <?php
+                                        $target_id = (int) $profile['user_id'];
+                                        $target_public_id = 'SM-' . str_pad((string) $target_id, 6, '0', STR_PAD_LEFT);
+                                        // Gender is canonical in users.gender. A profile interaction
+                                        // must always be opposite-gender, regardless of any old match row.
+                                        $target_gender_value = $profile['gender'] ?? '';
+                                        $same_gender = in_array($current_gender, ['Male', 'Female'], true)
+                                            && in_array($target_gender_value, ['Male', 'Female'], true)
+                                            && $current_gender === $target_gender_value;
+                                        $can_send_interest = in_array($current_gender, ['Male', 'Female'], true)
+                                            && in_array($target_gender_value, ['Male', 'Female'], true)
+                                            && !$same_gender;
+                                        $is_bookmarked = false;
+                                        $interaction_status = '';
+                                        $interaction_id = 0;
+                                        $interaction_direction = '';
+                                        $interaction_stmt = mysqli_prepare($conn, "SELECT 1 FROM bookmarks WHERE user_id=? AND bookmarked_user_id=? LIMIT 1");
+                                        mysqli_stmt_bind_param($interaction_stmt, 'ii', $user_id, $target_id);
+                                        mysqli_stmt_execute($interaction_stmt);
+                                        $is_bookmarked = (bool) mysqli_fetch_assoc(mysqli_stmt_get_result($interaction_stmt));
+                                        mysqli_stmt_close($interaction_stmt);
+                                        $interaction_stmt = mysqli_prepare($conn, "SELECT match_id, status, relationship_active, sender_user_id FROM matches WHERE ((sender_user_id=? AND receiver_user_id=?) OR (sender_user_id=? AND receiver_user_id=?)) ORDER BY match_id DESC LIMIT 1");
+                                        mysqli_stmt_bind_param($interaction_stmt, 'iiii', $user_id, $target_id, $target_id, $user_id);
+                                        mysqli_stmt_execute($interaction_stmt);
+                                        $interaction = mysqli_fetch_assoc(mysqli_stmt_get_result($interaction_stmt));
+                                        mysqli_stmt_close($interaction_stmt);
+                                        if ($interaction) {
+                                            $interaction_status = $interaction['status'];
+                                            $interaction_id = (int) $interaction['match_id'];
+                                            $interaction_direction = ((int) $interaction['sender_user_id'] === $user_id) ? 'sent' : 'received';
+                                        }
+                                    ?>
                                     <div class="profile-card-name-row">
                                         <div>
                                             <h4><?= htmlspecialchars($name); ?></h4>
+                                            <span class="profile-card-id"><i class="fa-solid fa-id-card"></i> <?= htmlspecialchars($target_public_id); ?></span>
                                             <p>
                                                 <?= $age !== '' ? (int) $age . ' yrs' : 'Age not provided'; ?>
                                                 <?php if (!empty($profile['religion'])): ?> · <?= htmlspecialchars($profile['religion']); ?><?php endif; ?>
                                             </p>
+                                            <?php $match_score = $dashboard_match_scores[$target_id] ?? null; ?>
+                                            <?php if ($match_score !== null): ?>
+                                                <span class="profile-match-badge" title="Mutual compatibility score">
+                                                    <i class="fa-solid fa-heart"></i> <?= (int) $match_score; ?>% Match
+                                                </span>
+                                            <?php else: ?>
+                                                <span class="profile-match-badge is-unavailable" title="Add partner preferences to calculate a compatibility score">
+                                                    <i class="fa-regular fa-heart"></i> Match —
+                                                </span>
+                                            <?php endif; ?>
                                         </div>
-                                        <button type="button" class="bookmark-button" title="Bookmark">
-                                            <i class="fa-regular fa-bookmark"></i>
-                                        </button>
+                                        <form method="post" action="<?= htmlspecialchars($_SERVER['REQUEST_URI'], ENT_QUOTES, 'UTF-8'); ?>" class="bookmark-inline-form dashboard-bookmark-form">
+                                            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($matching_csrf); ?>">
+                                            <input type="hidden" name="dashboard_bookmark_action" value="1">
+                                            <input type="hidden" name="bookmark_user_id" value="<?= $target_id; ?>">
+                                            <input type="hidden" name="bookmark_action" value="<?= $is_bookmarked ? 'remove' : 'add'; ?>">
+                                            <input type="hidden" name="return_query" value="<?= htmlspecialchars($_SERVER['QUERY_STRING'] ?? '', ENT_QUOTES, 'UTF-8'); ?>">
+                                            <button type="submit" class="bookmark-button <?= $is_bookmarked ? 'is-bookmarked' : ''; ?>" title="<?= $is_bookmarked ? 'Remove bookmark' : 'Bookmark profile'; ?>">
+                                                <i class="fa-<?= $is_bookmarked ? 'solid' : 'regular'; ?> fa-bookmark"></i>
+                                            </button>
+                                        </form>
                                     </div>
 
                                     <div class="profile-facts">
                                         <?php if (!empty($profile['profession'])): ?><span><i class="fa-solid fa-briefcase"></i><?= htmlspecialchars($profile['profession']); ?></span><?php endif; ?>
                                         <?php if (!empty($profile['highest_education'])): ?><span><i class="fa-solid fa-graduation-cap"></i><?= htmlspecialchars($profile['highest_education']); ?></span><?php endif; ?>
                                         <?php if (!empty($profile['height_cm']) || !empty($profile['weight_kg'])): ?>
-                                            <span><i class="fa-solid fa-ruler-combined"></i><?= !empty($profile['height_cm']) ? htmlspecialchars($profile['height_cm']) . ' cm' : 'Height —'; ?><?= !empty($profile['weight_kg']) ? ' · ' . htmlspecialchars($profile['weight_kg']) . ' kg' : ''; ?></span>
+                                            <?php
+                                                $height_ft = null;
+                                                $height_in = null;
+                                                if (!empty($profile['height_cm'])) {
+                                                    $height_total_inches = (float) $profile['height_cm'] / 2.54;
+                                                    $height_ft = (int) floor($height_total_inches / 12);
+                                                    $height_in = (int) round($height_total_inches - ($height_ft * 12));
+                                                    if ($height_in >= 12) {
+                                                        $height_ft++;
+                                                        $height_in = 0;
+                                                    }
+                                                }
+                                                $weight_display = null;
+                                                if ($profile['weight_kg'] !== null && $profile['weight_kg'] !== '') {
+                                                    $weight_display = rtrim(rtrim(number_format((float) $profile['weight_kg'], 2, '.', ''), '0'), '.');
+                                                }
+                                            ?>
+                                            <span><i class="fa-solid fa-ruler-combined"></i><?= $height_ft !== null ? $height_ft . ' ft ' . $height_in . ' inch' : 'Height —'; ?><?= $weight_display !== null ? ' · ' . htmlspecialchars($weight_display) . ' kg' : ''; ?></span>
                                         <?php endif; ?>
                                         <?php if (!empty($profile['complexion'])): ?><span><i class="fa-solid fa-user"></i><?= htmlspecialchars($profile['complexion']); ?></span><?php endif; ?>
                                         <?php if (!empty($profile['family_type']) || !empty($profile['family_status'])): ?><span><i class="fa-solid fa-house-user"></i><?= htmlspecialchars(trim(($profile['family_type'] ?? '') . ' · ' . ($profile['family_status'] ?? ''), ' ·')); ?></span><?php endif; ?>
@@ -881,10 +1312,25 @@ include 'includes/header.php';
                                         <?php if (!empty($profile['district_name']) || !empty($profile['district'])): ?><span><i class="fa-solid fa-location-dot"></i><?= htmlspecialchars($profile['district_name'] ?? $profile['district'] ?? ''); ?></span><?php endif; ?>
                                     </div>
 
-                                    <a class="view-profile-button" href="profile/view_profile.php?user_id=<?= (int) $profile['user_id']; ?>">
-                                        View Details Profile
-                                        <i class="fa-solid fa-arrow-right"></i>
-                                    </a>
+                                    <div class="profile-card-actions">
+                                        <a class="view-profile-button" href="profile/view_profile.php?<?= http_build_query(['user_id' => $target_id, 'return_url' => $profile_return_url]); ?>">
+                                            View Details Profile
+                                            <i class="fa-solid fa-arrow-right"></i>
+                                        </a>
+                                        <?php if ($same_gender): ?>
+                                            <span class="interaction-state unavailable" title="Interest can only be sent to the opposite gender"><i class="fa-solid fa-ban"></i> Interest Unavailable</span>
+                                        <?php elseif ($interaction_status === 'Accepted' && $interaction_direction && $interaction_id > 0): ?>
+                                            <a class="interaction-state accepted" href="<?= BASE_URL; ?>matching/my_matches.php"><i class="fa-solid fa-heart-circle-check"></i> Matched</a>
+                                        <?php elseif ($interaction_status === 'Pending' && $interaction_direction === 'sent'): ?>
+                                            <a class="interaction-state pending" href="<?= BASE_URL; ?>matching/my_matches.php"><i class="fa-solid fa-clock"></i> Interest Sent</a>
+                                        <?php elseif ($interaction_status === 'Pending' && $interaction_direction === 'received'): ?>
+                                            <a class="interaction-state received" href="<?= BASE_URL; ?>matching/my_matches.php"><i class="fa-solid fa-envelope"></i> Respond</a>
+                                        <?php elseif ($can_send_interest): ?>
+                                            <a class="interest-button" href="<?= BASE_URL; ?>matching/send_interest.php?user_id=<?= $target_id; ?>"><i class="fa-solid fa-heart"></i> Send Interest</a>
+                                        <?php else: ?>
+                                            <span class="interaction-state unavailable"><i class="fa-solid fa-ban"></i> Interest Unavailable</span>
+                                        <?php endif; ?>
+                                    </div>
                                 </div>
                             </article>
                         <?php endforeach; ?>
@@ -921,13 +1367,22 @@ include 'includes/header.php';
         <!-- ===================== SERVICE CATEGORIES ===================== -->
         <section class="dashboard-section services-section" id="wedding-services">
             <div class="dashboard-container">
-                <div class="section-heading">
-                    <div>
+                <div class="section-heading service-section-heading">
+                    <div class="service-heading-copy">
                         <span class="section-kicker">WEDDING PLANNING</span>
                         <h2>Wedding Services</h2>
                         <p>Choose a service to explore its available packages, providers, prices and booking options.</p>
                     </div>
-                    <span class="service-phase-note"><i class="fa-solid fa-database"></i> Database connected</span>
+                    <div class="service-overview-stats" aria-label="Wedding service overview">
+                        <div class="service-overview-stat">
+                            <span class="service-overview-icon"><i class="fa-solid fa-layer-group"></i></span>
+                            <span><strong><?= count($services); ?></strong><small>Total Services</small></span>
+                        </div>
+                        <div class="service-overview-stat">
+                            <span class="service-overview-icon package-stat-icon"><i class="fa-solid fa-box-open"></i></span>
+                            <span><strong><?= $total_service_packages; ?></strong><small>Total Packages</small></span>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="service-category-grid">
@@ -961,7 +1416,7 @@ include 'includes/header.php';
                                 <p><?= htmlspecialchars($service['description'] ?? 'Wedding-related service'); ?></p>
                             </div>
                             <span class="service-status">
-                                <?= (int) $service['provider_count']; ?> <?= (int) $service['provider_count'] === 1 ? 'option' : 'options'; ?>
+                                <?= (int) $service['provider_count']; ?> <?= (int) $service['provider_count'] === 1 ? 'package' : 'packages'; ?>
                             </span>
                             <i class="service-arrow fa-solid fa-arrow-right"></i>
                         </a>
@@ -971,8 +1426,8 @@ include 'includes/header.php';
                 <div class="service-roadmap">
                     <div class="roadmap-icon"><i class="fa-solid fa-circle-info"></i></div>
                     <div>
-                        <strong>Next service-management phase</strong>
-                        <p>Click any category to compare available options. You can add selected packages to your cart and continue to booking.</p>
+                        <strong>Plan your wedding services</strong>
+                        <p>Explore packages, add your choices to the cart, request a booking, and track your booking status from My Bookings.</p>
                     </div>
                 </div>
             </div>
@@ -1085,21 +1540,245 @@ include 'includes/header.php';
         });
     }
 
+
+    const moreFiltersToggle = document.getElementById('moreFiltersToggle');
+    const advancedSearchFilters = document.getElementById('advancedSearchFilters');
+
+    if (moreFiltersToggle && advancedSearchFilters) {
+        moreFiltersToggle.addEventListener('click', function () {
+            const isOpen = moreFiltersToggle.getAttribute('aria-expanded') === 'true';
+            moreFiltersToggle.setAttribute('aria-expanded', isOpen ? 'false' : 'true');
+            advancedSearchFilters.hidden = isOpen;
+            moreFiltersToggle.classList.toggle('is-open', !isOpen);
+        });
+
+        // If an advanced filter is already active after a search, keep the section open.
+        const advancedHasValue = Array.from(advancedSearchFilters.querySelectorAll('select, input'))
+            .some(function (field) { return field.value !== ''; });
+        if (advancedHasValue) {
+            moreFiltersToggle.setAttribute('aria-expanded', 'true');
+            advancedSearchFilters.hidden = false;
+            moreFiltersToggle.classList.add('is-open');
+        }
+    }
+
+    const partnerSearchForm = document.getElementById('partnerSearchForm');
+
+    // Search UI helpers. These run entirely on the current page; no completed
+    // dashboard sections are involved.
+    function updateGenderSelectionUI() {
+        document.querySelectorAll('.gender-option').forEach(function (option) {
+            const radio = option.querySelector('input[name="gender"]');
+            option.classList.toggle('selected', !!radio && radio.checked);
+        });
+    }
+
     function updateGenderSpecificFilters() {
         const selected = document.querySelector('input[name="gender"]:checked');
         const gender = selected ? selected.value : '';
         const beardGroup = document.getElementById('beardFilterGroup');
         const hijabGroup = document.getElementById('hijabFilterGroup');
 
-        beardGroup.style.display = gender === 'Female' ? 'none' : '';
-        hijabGroup.style.display = gender === 'Male' ? 'none' : '';
+        if (beardGroup) beardGroup.style.display = gender === 'Female' ? 'none' : '';
+        if (hijabGroup) hijabGroup.style.display = gender === 'Male' ? 'none' : '';
+    }
+
+    if (partnerSearchForm) {
+        partnerSearchForm.addEventListener('submit', function (event) {
+            if (!partnerSearchForm.checkValidity()) return;
+
+            event.preventDefault();
+
+            // Build the exact GET query from the current filter values.
+            // Use the results-grid fragment so the browser opens the new page
+            // directly at the profile cards, instead of loading at the top and
+            // visibly scrolling down afterward.
+            const url = new URL(partnerSearchForm.getAttribute('action') || window.location.href, window.location.origin);
+            url.search = new URLSearchParams(new FormData(partnerSearchForm)).toString();
+            url.hash = 'matching-results-grid';
+
+            window.location.href = url.toString();
+        });
     }
 
     document.querySelectorAll('input[name="gender"]').forEach(function (radio) {
-        radio.addEventListener('change', updateGenderSpecificFilters);
+        radio.addEventListener('change', function () {
+            updateGenderSpecificFilters();
+            updateGenderSelectionUI();
+        });
     });
 
     updateGenderSpecificFilters();
+    updateGenderSelectionUI();
+
+    // Bookmark: submit in the background so the current card position never reloads or jumps.
+    // The existing PHP bookmark action remains unchanged; we only consume its redirected
+    // response here and update the clicked card when the database action succeeds.
+    document.querySelectorAll('.dashboard-bookmark-form').forEach(function (form) {
+        form.addEventListener('submit', function (event) {
+            event.preventDefault();
+
+            const button = form.querySelector('.bookmark-button');
+            const actionField = form.querySelector('input[name="bookmark_action"]');
+            if (!button || !actionField || form.dataset.bookmarkBusy === '1') return;
+
+            const requestedAction = actionField.value;
+            const currentScrollY = window.scrollY || window.pageYOffset || 0;
+            const wasBookmarked = button.classList.contains('is-bookmarked');
+            const icon = button.querySelector('i');
+            form.dataset.bookmarkBusy = '1';
+            button.disabled = true;
+
+            // Update the visual state immediately. The existing server-side action
+            // remains authoritative; if it fails, the previous state is restored.
+            const optimisticAdded = requestedAction === 'add';
+            button.classList.toggle('is-bookmarked', optimisticAdded);
+            button.title = optimisticAdded ? 'Remove bookmark' : 'Bookmark profile';
+            // Keep the next click in sync with the instant visual state.
+            actionField.value = optimisticAdded ? 'remove' : 'add';
+            if (icon) {
+                icon.classList.toggle('fa-solid', optimisticAdded);
+                icon.classList.toggle('fa-regular', !optimisticAdded);
+            }
+
+            // Capture the intended server action BEFORE changing the hidden field
+            // for the next click's optimistic UI state.
+            const requestData = new FormData(form);
+            requestData.set('bookmark_action', requestedAction);
+
+            fetch(form.action, {
+                method: 'POST',
+                body: requestData,
+                credentials: 'same-origin',
+                redirect: 'follow',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(function (response) {
+                return response.text();
+            })
+            .then(function (html) {
+                const parsed = new DOMParser().parseFromString(html, 'text/html');
+                const serverToast = parsed.querySelector('.dashboard-bookmark-toast');
+                const message = serverToast ? serverToast.textContent.trim() : '';
+
+                if (message === 'Profile bookmarked.' || message === 'Bookmark removed.') {
+                    const added = requestedAction === 'add';
+
+                    const toast = document.createElement('div');
+                    toast.className = 'dashboard-bookmark-toast';
+                    toast.textContent = message;
+                    document.body.appendChild(toast);
+                    setTimeout(function () { toast.classList.add('show'); }, 20);
+                    setTimeout(function () {
+                        toast.classList.remove('show');
+                        setTimeout(function () { toast.remove(); }, 250);
+                    }, 2200);
+                } else if (message) {
+                    // Server rejected the action, so restore the exact previous visual state.
+                    button.classList.toggle('is-bookmarked', wasBookmarked);
+                    button.title = wasBookmarked ? 'Remove bookmark' : 'Bookmark profile';
+                    actionField.value = wasBookmarked ? 'remove' : 'add';
+                    if (icon) {
+                        icon.classList.toggle('fa-solid', wasBookmarked);
+                        icon.classList.toggle('fa-regular', !wasBookmarked);
+                    }
+
+                    const toast = document.createElement('div');
+                    toast.className = 'dashboard-bookmark-toast';
+                    toast.textContent = message;
+                    document.body.appendChild(toast);
+                    setTimeout(function () { toast.classList.add('show'); }, 20);
+                    setTimeout(function () {
+                        toast.classList.remove('show');
+                        setTimeout(function () { toast.remove(); }, 250);
+                    }, 2200);
+                }
+            })
+            .catch(function () {
+                // Network/server failure: roll back the optimistic visual change.
+                button.classList.toggle('is-bookmarked', wasBookmarked);
+                button.title = wasBookmarked ? 'Remove bookmark' : 'Bookmark profile';
+                actionField.value = wasBookmarked ? 'remove' : 'add';
+                if (icon) {
+                    icon.classList.toggle('fa-solid', wasBookmarked);
+                    icon.classList.toggle('fa-regular', !wasBookmarked);
+                }
+
+                const toast = document.createElement('div');
+                toast.className = 'dashboard-bookmark-toast';
+                toast.textContent = 'Unable to save the bookmark right now.';
+                document.body.appendChild(toast);
+                setTimeout(function () { toast.classList.add('show'); }, 20);
+                setTimeout(function () {
+                    toast.classList.remove('show');
+                    setTimeout(function () { toast.remove(); }, 250);
+                }, 2200);
+            })
+            .finally(function () {
+                form.dataset.bookmarkBusy = '0';
+                button.disabled = false;
+                window.scrollTo(0, currentScrollY);
+            });
+        });
+    });
+
+    const clearSearchFilters = document.getElementById('clearSearchFilters');
+    if (clearSearchFilters && partnerSearchForm) {
+        clearSearchFilters.addEventListener('click', function (event) {
+            event.preventDefault();
+
+            // Reset the controls in-place. Do NOT navigate/reload, so the
+            // current viewport position remains exactly where the user clicked.
+            const clearScrollY = window.scrollY || window.pageYOffset || 0;
+
+            // Explicitly clear every visible search control, including the
+            // collapsed More Filters fields. Form.reset() can restore the
+            // values that were present when the current search page loaded,
+            // so clear each non-hidden field instead.
+            partnerSearchForm.querySelectorAll('select, input:not([type="hidden"]), textarea').forEach(function (field) {
+                if (field.type === 'radio' || field.type === 'checkbox') {
+                    field.checked = false;
+                } else {
+                    field.value = '';
+                }
+            });
+
+            if (district) district.innerHTML = '<option value="">Any District</option>';
+            if (upazila) upazila.innerHTML = '<option value="">Any Upazila</option>';
+
+            if (division) division.value = '';
+            if (district) district.value = '';
+            if (upazila) upazila.value = '';
+
+            updateGenderSelectionUI();
+            updateGenderSpecificFilters();
+
+            // Remove old search parameters without changing scroll position.
+            const clearUrl = new URL(window.location.href);
+            clearUrl.search = '';
+            clearUrl.hash = '';
+            window.history.replaceState({}, '', clearUrl.toString());
+
+            // reset()/replaceState() must not move the viewport. Restore the
+            // exact position after the browser has finished processing the click.
+            requestAnimationFrame(function () {
+                window.scrollTo(0, clearScrollY);
+            });
+        });
+    }
+
+    // Clear any legacy bookmark scroll marker left by an older dashboard version.
+    sessionStorage.removeItem('dashboard_bookmark_scroll');
+    const bookmarkFlash = <?= json_encode($dashboard_bookmark_flash, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
+    if (bookmarkFlash) {
+        const toast = document.createElement('div');
+        toast.className = 'dashboard-bookmark-toast';
+        toast.textContent = bookmarkFlash;
+        document.body.appendChild(toast);
+        setTimeout(function () { toast.classList.add('show'); }, 20);
+        setTimeout(function () { toast.classList.remove('show'); setTimeout(function () { toast.remove(); }, 250); }, 2200);
+    }
+
 })();
 </script>
 

@@ -1,0 +1,556 @@
+.profile-step3-page {
+    --step3-border: #d9e7e6;
+    --step3-soft: #f7fbfa;
+    --step3-muted: #6b8290;
+    --step3-green: #148b5d;
+    --step3-dark: #062c4a;
+}
+
+.profile-step3-page .step3-shell {
+    background: #fff;
+    border: 1px solid var(--step3-border);
+    border-radius: 28px;
+    padding: clamp(20px, 3vw, 42px);
+    box-shadow: 0 16px 40px rgba(7, 55, 67, .08);
+}
+
+.profile-step3-page .step3-alert {
+    border-radius: 14px;
+    margin: 20px 0 0;
+}
+
+.profile-step3-page .step3-form {
+    margin-top: 26px;
+}
+
+.profile-step3-page .step3-section {
+    background: linear-gradient(180deg, #fbfdfd 0%, #f7faf9 100%);
+    border: 1px solid var(--step3-border);
+    border-radius: 22px;
+    padding: clamp(18px, 2.4vw, 28px);
+    margin-bottom: 22px;
+}
+
+.profile-step3-page .section-heading {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 24px;
+}
+
+.profile-step3-page .section-icon {
+    width: 46px;
+    height: 46px;
+    flex: 0 0 46px;
+    border-radius: 14px;
+    display: grid;
+    place-items: center;
+    background: #e8f7f2;
+    color: var(--step3-green);
+    font-size: 1.25rem;
+}
+
+.profile-step3-page .section-heading h2 {
+    margin: 0;
+    color: var(--step3-dark);
+    font-size: clamp(1.25rem, 2vw, 1.55rem);
+    font-weight: 700;
+}
+
+.profile-step3-page .section-heading p {
+    margin: 3px 0 0;
+    color: var(--step3-muted);
+    font-size: .9rem;
+}
+
+.profile-step3-page .form-label {
+    color: #092d4c;
+    font-weight: 600;
+    margin-bottom: 9px;
+}
+
+.profile-step3-page .required {
+    color: #e23a4f;
+    font-weight: 700;
+}
+
+.profile-step3-page .optional {
+    color: var(--step3-muted);
+    font-weight: 400;
+}
+
+.profile-step3-page .form-control,
+.profile-step3-page .form-select {
+    min-height: 52px;
+    border: 1px solid #cfe0e2;
+    border-radius: 14px;
+    color: #17334d;
+    background-color: #fff;
+    box-shadow: none;
+    transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease;
+}
+
+.profile-step3-page textarea.form-control {
+    min-height: 112px;
+    resize: vertical;
+}
+
+.profile-step3-page .form-control:focus,
+.profile-step3-page .form-select:focus {
+    border-color: #149a76;
+    box-shadow: 0 0 0 4px rgba(20, 154, 118, .10);
+}
+
+.profile-step3-page .form-select:invalid {
+    color: #17334d;
+}
+
+.profile-step3-page .field-help {
+    color: var(--step3-muted);
+    font-size: .82rem;
+    margin-top: 9px;
+}
+
+.profile-step3-page .interest-grid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.profile-step3-page .interest-option {
+    position: relative;
+    cursor: pointer;
+}
+
+.profile-step3-page .interest-option input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.profile-step3-page .interest-option span {
+    display: block;
+    min-height: 48px;
+    padding: 12px 13px;
+    border: 1px solid #d4e2e3;
+    border-radius: 13px;
+    background: #fff;
+    color: #466273;
+    font-size: .88rem;
+    text-align: center;
+    transition: all .2s ease;
+}
+
+.profile-step3-page .interest-option:hover span {
+    border-color: #78b9a7;
+    transform: translateY(-2px);
+    box-shadow: 0 7px 16px rgba(8, 77, 66, .08);
+}
+
+.profile-step3-page .interest-option input:checked + span {
+    border-color: var(--step3-green);
+    background: #e8f7f2;
+    color: #08734d;
+    font-weight: 600;
+}
+
+.profile-step3-page .interest-option input:focus-visible + span {
+    outline: 3px solid rgba(20, 154, 118, .18);
+}
+
+.profile-step3-page .step3-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    border-top: 1px solid var(--step3-border);
+    padding-top: 24px;
+    margin-top: 6px;
+}
+
+.profile-step3-page .step3-actions .btn {
+    min-height: 50px;
+    border-radius: 13px;
+    padding: 11px 22px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.profile-step3-page .step3-save {
+    min-width: 190px;
+}
+
+@media (max-width: 1100px) {
+    .profile-step3-page .interest-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 767.98px) {
+    .profile-step3-page {
+        padding-left: 10px !important;
+        padding-right: 10px !important;
+    }
+
+    .profile-step3-page .step3-shell {
+        border-radius: 20px;
+        padding: 16px;
+    }
+
+    .profile-step3-page .step3-form {
+        margin-top: 18px;
+    }
+
+    .profile-step3-page .step3-section {
+        border-radius: 17px;
+        padding: 16px;
+        margin-bottom: 16px;
+    }
+
+    .profile-step3-page .section-heading {
+        align-items: flex-start;
+        margin-bottom: 19px;
+    }
+
+    .profile-step3-page .section-icon {
+        width: 40px;
+        height: 40px;
+        flex-basis: 40px;
+        border-radius: 12px;
+        font-size: 1.05rem;
+    }
+
+    .profile-step3-page .interest-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .profile-step3-page .step3-actions {
+        flex-direction: column-reverse;
+        align-items: stretch;
+    }
+
+    .profile-step3-page .step3-actions .btn,
+    .profile-step3-page .step3-save {
+        width: 100%;
+        min-width: 0;
+    }
+}
+
+@media (max-width: 420px) {
+    .profile-step3-page .interest-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .profile-step3-page .form-control,
+    .profile-step3-page .form-select {
+        min-height: 50px;
+    }
+}
+
+/* =========================================================
+   Step 3 wizard header / progress
+   Mirrors the responsive Step 1 / Step 2 wizard pattern.
+   ========================================================= */
+.profile-step3-page .step3-wizard-head {
+    background: #fff;
+    border: 1px solid var(--step3-border);
+    border-radius: 24px;
+    padding: 28px 30px 25px;
+    margin-bottom: 22px;
+}
+
+.profile-step3-page .step3-heading-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+}
+
+.profile-step3-page .step3-kicker {
+    display: block;
+    color: #168b5a;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+.profile-step3-page .step3-heading-row h1 {
+    margin: 5px 0 0;
+    color: var(--step3-dark);
+    font-size: clamp(32px, 4vw, 48px);
+    line-height: 1.05;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+}
+
+.profile-step3-page .step3-heading-row p {
+    margin: 5px 0 0;
+    color: var(--step3-muted);
+    font-size: 16px;
+}
+
+.profile-step3-page .step3-logo {
+    width: 104px;
+    height: 78px;
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    border-radius: 18px;
+    background: #f3faf7;
+    border: 1px solid #dcece5;
+    text-decoration: none;
+    transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+}
+
+.profile-step3-page .step3-logo:hover {
+    transform: translateY(-2px);
+    border-color: #a9d3c3;
+    box-shadow: 0 10px 24px rgba(23, 139, 90, .12);
+}
+
+.profile-step3-page .step3-logo img {
+    width: 78px;
+    max-height: 62px;
+    object-fit: contain;
+}
+
+.profile-step3-page .step3-step-nav {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 28px;
+}
+
+.profile-step3-page .step3-step {
+    min-width: 0;
+    padding: 5px 3px 3px;
+    color: #687f8d;
+    text-decoration: none;
+    text-align: center;
+    border-radius: 16px;
+    transition: transform .2s ease, background .2s ease, color .2s ease;
+}
+
+.profile-step3-page .step3-step:hover {
+    color: #0b7952;
+    background: #f5faf8;
+    transform: translateY(-2px);
+}
+
+.profile-step3-page .step3-step-icon {
+    width: 48px;
+    height: 48px;
+    margin: 0 auto;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: #f7f9fa;
+    border: 1px solid #d9e3e6;
+    color: #6b7f8b;
+    font-size: 18px;
+    transition: all .2s ease;
+}
+
+.profile-step3-page .step3-step:hover .step3-step-icon {
+    border-color: #9fcbbc;
+    color: #0b7952;
+    box-shadow: 0 6px 16px rgba(8, 77, 66, .08);
+}
+
+.profile-step3-page .step3-step.is-current .step3-step-icon,
+.profile-step3-page .step3-step.is-completed .step3-step-icon {
+    color: #fff;
+    background: #178b5a;
+    border-color: #178b5a;
+    box-shadow: 0 9px 20px rgba(23, 139, 90, .22);
+}
+
+.profile-step3-page .step3-step.is-current {
+    color: #10233f;
+}
+
+.profile-step3-page .step3-step-label {
+    display: block;
+    margin-top: 8px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.profile-step3-page .step3-progress-wrap {
+    margin-top: 22px;
+}
+
+.profile-step3-page .step3-progress-track {
+    width: 100%;
+    height: 10px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: #e7edef;
+}
+
+.profile-step3-page .step3-progress-fill {
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #0f6f49, #20a86e);
+    transition: width .3s ease;
+}
+
+.profile-step3-page .step3-progress-meta {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    margin-top: 8px;
+    color: #68809a;
+    font-size: 12px;
+}
+
+.profile-step3-page .step3-progress-meta strong {
+    color: #0f6f49;
+}
+
+@media (max-width: 800px) {
+    .profile-step3-page .step3-wizard-head {
+        padding: 22px 18px 20px;
+        border-radius: 19px;
+    }
+
+    .profile-step3-page .step3-step-nav {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 7px;
+    }
+
+    .profile-step3-page .step3-step-label {
+        font-size: 11px;
+    }
+}
+
+@media (max-width: 520px) {
+    .profile-step3-page .step3-heading-row {
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .profile-step3-page .step3-logo {
+        width: 76px;
+        height: 62px;
+        border-radius: 14px;
+    }
+
+    .profile-step3-page .step3-logo img {
+        width: 58px;
+        max-height: 48px;
+    }
+
+    .profile-step3-page .step3-heading-row h1 {
+        font-size: clamp(28px, 10vw, 38px);
+    }
+
+    .profile-step3-page .step3-heading-row p {
+        font-size: 14px;
+    }
+
+    .profile-step3-page .step3-step-icon {
+        width: 42px;
+        height: 42px;
+        font-size: 16px;
+    }
+
+    .profile-step3-page .step3-progress-track {
+        height: 9px;
+    }
+}
+
+/* Step 3 Part 2: UX enhancements only. Existing layout/design rules remain unchanged. */
+.profile-step3-page .step3-field-invalid {
+    border-color: #e23a4f !important;
+    box-shadow: 0 0 0 4px rgba(226, 58, 79, .10) !important;
+}
+.profile-step3-page .step3-interest-count,
+.profile-step3-page .step3-character-count {
+    color: var(--step3-muted);
+    font-size: .78rem;
+    margin-top: 7px;
+}
+.profile-step3-page .step3-interest-count { font-weight: 600; }
+
+/* =========================================================
+   Actual completion wizard — Phase 7 foundation
+   Desktop: six icons in one row.
+   Mobile: icons in 3 x 2 rows.
+   The connector remains ONE continuous horizontal line per row.
+   ========================================================= */
+.profile-step3-page .step3-step-nav {
+    position: relative;
+    overflow: visible;
+}
+.profile-step3-page .step3-step {
+    position: relative;
+    z-index: 1;
+}
+.profile-step3-page .step3-step::after {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    top: 29px;
+    left: calc(50% + 24px);
+    width: calc(100% - 38px);
+    height: 4px;
+    border-radius: 999px;
+    background: #e0e8e7;
+    pointer-events: none;
+}
+.profile-step3-page .step3-step.is-completed::after {
+    background: #148b5d;
+}
+.profile-step3-page .step3-step:last-child::after {
+    display: none;
+}
+
+/* The old thick progress bar is replaced visually by the icon connector. */
+.profile-step3-page .step3-progress-wrap {
+    margin-top: 16px;
+}
+.profile-step3-page .step3-progress-track {
+    display: none;
+}
+.profile-step3-page .step3-progress-meta {
+    justify-content: flex-end;
+    margin-top: 0;
+}
+.profile-step3-page .step3-progress-meta span {
+    display: none;
+}
+.profile-step3-page .step3-progress-meta strong {
+    font-size: 13px;
+    font-weight: 800;
+}
+
+@media (max-width: 800px) {
+    .profile-step3-page .step3-step::after {
+        top: 25px;
+        left: calc(50% + 21px);
+        width: calc(100% - 41px);
+        height: 4px;
+    }
+    .profile-step3-page .step3-step:nth-child(3n)::after {
+        display: none;
+    }
+}
+
+@media (max-width: 520px) {
+    .profile-step3-page .step3-step::after {
+        top: 26px;
+        left: calc(50% + 21px);
+        width: calc(100% - 41px);
+    }
+    .profile-step3-page .step3-progress-wrap {
+        margin-top: 12px;
+    }
+    .profile-step3-page .step3-progress-meta strong {
+        font-size: 11px;
+    }
+}

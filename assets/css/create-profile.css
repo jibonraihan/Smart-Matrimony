@@ -1,0 +1,275 @@
+/* =========================================================
+   SMART MATRIMONY — CREATE PROFILE LANDING / STEP SELECTOR
+   Page-specific styles only. Does not alter the six step forms.
+========================================================= */
+
+.create-profile-page {
+    max-width: 1180px;
+    margin-inline: auto;
+}
+
+.create-profile-page > .row {
+    margin-inline: 0;
+}
+
+.create-profile-back {
+    margin-bottom: 1rem;
+}
+
+.create-profile-back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    color: #0f766e;
+    text-decoration: none;
+    font-weight: 600;
+    transition: color .2s ease, transform .2s ease;
+}
+
+.create-profile-back-link:hover {
+    color: #0c5d58;
+    transform: translateX(-3px);
+}
+
+.create-profile-page > .row > .col-lg-10 {
+    width: 100%;
+}
+
+.create-profile-page > .row > .col-lg-10 > .card {
+    border: 1px solid rgba(15, 118, 110, .08) !important;
+    background: rgba(255, 255, 255, .97);
+    overflow: hidden;
+}
+
+.create-profile-page > .row > .col-lg-10 > .card > .card-body {
+    padding: clamp(1.5rem, 4vw, 3rem) !important;
+}
+
+.create-profile-page .create-profile-title {
+    color: #0f766e;
+}
+
+.create-profile-page .create-profile-progress {
+    height: 10px !important;
+    min-height: 10px;
+    width: 100%;
+    overflow: hidden;
+    border-radius: 999px;
+    background: #e7efee;
+}
+
+.create-profile-page .create-profile-progress .progress-bar {
+    min-width: 0;
+    border-radius: inherit;
+    transition: width .35s ease;
+}
+
+/* Clickable step cards */
+.create-profile-page .create-step-card {
+    position: relative;
+    display: block;
+    height: 100%;
+    color: inherit;
+    text-decoration: none;
+    background: #fff;
+    border: 1px solid transparent;
+    border-radius: 18px;
+    box-shadow: 0 10px 28px rgba(15, 47, 53, .07);
+    overflow: hidden;
+    transform: translateY(0);
+    transition:
+        transform .22s ease,
+        box-shadow .22s ease,
+        border-color .22s ease,
+        background-color .22s ease;
+}
+
+.create-profile-page .create-step-card::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto;
+    height: 4px;
+    background: linear-gradient(90deg, #0f766e, #19a39a, #d4af37);
+    opacity: 0;
+    transition: opacity .22s ease;
+}
+
+.create-profile-page .create-step-card:hover,
+.create-profile-page .create-step-card:focus-visible {
+    color: inherit;
+    border-color: rgba(15, 118, 110, .24);
+    background: #fbfefd;
+    box-shadow: 0 16px 34px rgba(15, 118, 110, .13);
+    transform: translateY(-5px);
+    outline: none;
+}
+
+.create-profile-page .create-step-card:hover::before,
+.create-profile-page .create-step-card:focus-visible::before {
+    opacity: 1;
+}
+
+.create-profile-page .create-step-card:focus-visible {
+    box-shadow:
+        0 0 0 3px rgba(15, 118, 110, .14),
+        0 16px 34px rgba(15, 118, 110, .13);
+}
+
+.create-profile-page .create-step-card-body {
+    min-height: 255px;
+    padding: 2rem 1.25rem 1.35rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.create-profile-page .create-step-icon {
+    width: 78px;
+    height: 78px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+    border-radius: 50%;
+    color: #6f7b80;
+    background: #f1f7f6;
+    border: 1px solid #dcebea;
+    font-size: 2.6rem;
+    transition: color .22s ease, background-color .22s ease, transform .22s ease;
+}
+
+.create-profile-page .create-step-card:hover .create-step-icon,
+.create-profile-page .create-step-card:focus-visible .create-step-icon,
+.create-profile-page .step-card-active .create-step-icon {
+    color: #0f8a55;
+    background: #eefaf4;
+    border-color: #bfe6d1;
+    transform: scale(1.04);
+}
+
+.create-profile-page .create-step-number,
+.create-profile-page .create-step-title,
+.create-profile-page .create-step-description,
+.create-profile-page .create-step-link {
+    display: block;
+}
+
+.create-profile-page .create-step-number {
+    margin-bottom: .3rem;
+    color: #102f35;
+    font-size: 1.05rem;
+    font-weight: 700;
+}
+
+.create-profile-page .create-step-title {
+    color: #102f35;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.create-profile-page .create-step-description {
+    margin-top: .5rem;
+    color: #71808a;
+    font-size: .9rem;
+}
+
+.create-profile-page .create-step-link {
+    margin-top: .95rem;
+    color: #0f766e;
+    font-size: .82rem;
+    font-weight: 700;
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity .22s ease, transform .22s ease;
+}
+
+.create-profile-page .create-step-link i {
+    margin-left: .2rem;
+}
+
+.create-profile-page .create-step-card:hover .create-step-link,
+.create-profile-page .create-step-card:focus-visible .create-step-link {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.create-profile-page .step-card-active {
+    border-color: rgba(15, 118, 110, .16);
+}
+
+.create-profile-page .step-card-active::before {
+    opacity: .7;
+}
+
+/* Keep the main CTA comfortable on narrow screens. */
+.create-profile-page .btn.btn-lg {
+    border-radius: 10px;
+    font-weight: 600;
+}
+
+@media (max-width: 991.98px) {
+    .create-profile-page > .row > .col-lg-10 {
+        padding-inline: 0;
+    }
+
+    .create-profile-page .create-step-card-body {
+        min-height: 235px;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .create-profile-page {
+        padding-top: 1.25rem !important;
+        padding-bottom: 1.75rem !important;
+    }
+
+    .create-profile-page > .row > .col-lg-10 > .card > .card-body {
+        padding: 1.25rem !important;
+    }
+
+    .create-profile-page .create-profile-back {
+        margin-bottom: .8rem;
+    }
+
+    .create-profile-page .create-step-card-body {
+        min-height: 220px;
+        padding: 1.6rem 1rem 1.2rem;
+    }
+
+    .create-profile-page .create-step-icon {
+        width: 70px;
+        height: 70px;
+        font-size: 2.25rem;
+    }
+
+    /* On touch devices the card remains clearly actionable. */
+    .create-profile-page .create-step-link {
+        opacity: 1;
+        transform: none;
+    }
+
+    .create-profile-page .create-profile-progress {
+        height: 10px !important;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .create-profile-page .row.g-4 {
+        --bs-gutter-x: 1rem;
+        --bs-gutter-y: 1rem;
+    }
+
+    .create-profile-page .create-step-card-body {
+        min-height: 205px;
+    }
+
+    .create-profile-page .text-center.mt-5 {
+        margin-top: 1.5rem !important;
+    }
+
+    .create-profile-page .text-center.mt-5 .btn {
+        width: 100%;
+        max-width: 330px;
+    }
+}

@@ -27,7 +27,7 @@
 .profile-action.primary { background: #0f766e; color: #fff; border-color: #0f766e; }
 .profile-action.secondary { background: #fff; color: #64748b; }
 .profile-action:disabled { opacity: 1; cursor: default; }
-.profile-detail-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 15px; margin-top: 18px; }
+.profile-detail-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 15px; margin-top: 18px; align-content: start; }
 .profile-detail-card { padding: 21px; border: 1px solid #e1eae8; border-radius: 17px; background: #fff; box-shadow: 0 9px 25px rgba(15,23,42,.04); }
 .detail-card-heading { display: flex; align-items: center; gap: 9px; margin-bottom: 17px; }
 .detail-card-heading i { width: 33px; height: 33px; display: flex; align-items: center; justify-content: center; border-radius: 10px; background: #edf8f6; color: #0f766e; font-size: 12px; }
@@ -35,8 +35,8 @@
 .detail-list { display: flex; flex-direction: column; gap: 10px; }
 .detail-list div { display: flex; justify-content: space-between; gap: 15px; padding-bottom: 9px; border-bottom: 1px solid #eef2f1; }
 .detail-list div:last-child { padding-bottom: 0; border-bottom: 0; }
-.detail-list span { color: #94a3b8; font-size: 9px; }
-.detail-list strong { max-width: 62%; text-align: right; color: #475569; font-size: 9px; }
+.detail-list span { color: #7b8da0; font-size: 11px; }
+.detail-list strong { max-width: 62%; text-align: right; color: #475569; font-size: 11px; }
 .profile-privacy-note { display: flex; gap: 12px; margin-top: 16px; padding: 14px; border: 1px solid #dcece8; border-radius: 15px; background: #eff9f7; }
 .profile-privacy-note > i { color: #0f766e; margin-top: 2px; }
 .profile-privacy-note strong { font-size: 10px; }
@@ -55,4 +55,1048 @@
     .profile-view-title-row { flex-direction: column; }
     .profile-view-actions { flex-direction: column; }
     .profile-action { width: 100%; }
+}
+
+/* ===================== PHASE 9 PROFILE ID + INTERACTION ===================== */
+.profile-view-id {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border: 1px solid #d9ece8;
+    border-radius: 999px;
+    background: #edf8f6;
+    color: #0f766e;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: .05em;
+}
+.profile-view-actions form { margin: 0; }
+.profile-action { display: inline-flex; align-items: center; justify-content: center; gap: 7px; text-decoration: none; cursor: pointer; }
+.profile-action.bookmarked { background: #fff7df; color: #9b7100; border-color: #f0dfaa; }
+.profile-action.state-pending { background: #fff7e7; color: #936800; border-color: #f1dfb0; }
+.profile-action.state-received { background: #eef5ff; color: #315f91; border-color: #dbe7f7; }
+.profile-action.unavailable { background: #f4f6f6; color: #8a9797; border-color: #e1e7e6; cursor: not-allowed; }
+.interest-unavailable { margin-top: 25px; padding: 16px; border: 1px solid #e1e7e6; border-radius: 13px; background: #f6f8f8; color: #687777; }
+.interest-unavailable i { color: #8b9998; margin-right: 6px; }
+.interest-unavailable strong { font-size: 11px; color: #526060; }
+.interest-unavailable p { margin: 6px 0 0; font-size: 10px; line-height: 1.6; }
+
+
+/* ===================== PHASE 9C ID SIZE CONSISTENCY ===================== */
+.profile-view-id { padding: 4px 8px; font-size: 8px; font-weight: 750; }
+.profile-view-id i { font-size: 8px; }
+
+/* ===================== PHASE 9E PROFILE VIEW POLISH ===================== */
+.profile-view-main { padding-top: 28px; padding-bottom: 45px; }
+.profile-detail-grid { margin-top: 16px; }
+.profile-detail-card { margin: 0; }
+.profile-detail-card { align-self: start; }
+.detail-card-heading h2 { font-size: 15px; }
+.detail-list { gap: 11px; }
+
+/* ===================== PHASE 7 PART 2 - PREMIUM PROFILE HEADER ===================== */
+.profile-view-hero-card {
+    grid-template-columns: 340px minmax(0, 1fr);
+    border-radius: 24px;
+    border-color: #dce9e6;
+    box-shadow: 0 20px 55px rgba(15, 23, 42, .08);
+}
+.profile-view-photo-wrap {
+    position: relative;
+    min-height: 430px;
+    background: #e7f2f0;
+}
+.profile-view-photo {
+    height: 100%;
+    min-height: 430px;
+}
+.profile-view-photo img,
+.profile-view-photo .private-photo-large {
+    min-height: 430px;
+}
+.profile-photo-badge {
+    position: absolute;
+    left: 18px;
+    bottom: 28px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 11px;
+    border: 1px solid rgba(255,255,255,.55);
+    border-radius: 999px;
+    background: rgba(15,118,110,.92);
+    color: #fff;
+    font-size: 9px;
+    font-weight: 800;
+    box-shadow: 0 8px 20px rgba(15,23,42,.16);
+    backdrop-filter: blur(7px);
+}
+.profile-view-intro {
+    padding: 32px 34px 30px;
+}
+.profile-view-header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 13px;
+}
+.profile-view-kicker {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 8px;
+    letter-spacing: 1.7px;
+}
+.profile-view-intro h1 {
+    margin-top: 0;
+    font-size: clamp(28px, 3.2vw, 40px);
+}
+.profile-header-summary {
+    margin: 0;
+    color: #64748b;
+    font-size: 11px;
+    line-height: 1.6;
+}
+.profile-completion-mini {
+    margin-top: 21px;
+    padding: 13px 14px 12px;
+    border: 1px solid #dcece8;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #f7fcfb, #eef8f5);
+}
+.profile-completion-mini-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 8px;
+    color: #315b57;
+    font-size: 10px;
+    font-weight: 750;
+}
+.profile-completion-mini-head i {
+    margin-right: 5px;
+    color: #0f766e;
+}
+.profile-completion-mini-head strong {
+    color: #0f766e;
+    font-size: 12px;
+}
+.profile-completion-track {
+    width: 100%;
+    height: 7px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: #dce9e6;
+}
+.profile-completion-track span {
+    display: block;
+    height: 100%;
+    min-width: 0;
+    border-radius: inherit;
+    background: #0f766e;
+}
+.profile-completion-mini small {
+    display: block;
+    margin-top: 6px;
+    color: #7b8d8a;
+    font-size: 8px;
+}
+.profile-quick-info {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 9px;
+    margin-top: 17px;
+}
+.profile-quick-item {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    min-width: 0;
+    padding: 9px 10px;
+    border: 1px solid #edf1f0;
+    border-radius: 12px;
+    background: #fff;
+}
+.profile-quick-icon {
+    flex: 0 0 30px;
+    width: 30px;
+    height: 30px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9px;
+    background: #edf8f6;
+    color: #0f766e;
+    font-size: 10px;
+}
+.profile-quick-copy {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.profile-quick-copy small {
+    color: #8a9998;
+    font-size: 7px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .6px;
+}
+.profile-quick-copy strong {
+    overflow: hidden;
+    color: #465a59;
+    font-size: 9px;
+    font-weight: 750;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.profile-completion-mini + .profile-quick-info + .profile-bio {
+    margin-top: 17px;
+}
+
+@media (max-width: 850px) {
+    .profile-view-hero-card { grid-template-columns: 285px minmax(0, 1fr); }
+    .profile-view-photo-wrap,
+    .profile-view-photo,
+    .profile-view-photo img,
+    .profile-view-photo .private-photo-large { min-height: 410px; }
+    .profile-view-intro { padding: 27px; }
+}
+
+@media (max-width: 750px) {
+    .profile-view-hero-card { grid-template-columns: 1fr; }
+    .profile-view-photo-wrap,
+    .profile-view-photo,
+    .profile-view-photo img,
+    .profile-view-photo .private-photo-large { min-height: 330px; height: 330px; }
+    .profile-view-intro { padding: 25px; }
+}
+
+@media (max-width: 480px) {
+    .profile-view-header-top { align-items: flex-start; }
+    .profile-quick-info { grid-template-columns: 1fr; }
+    .profile-photo-badge { left: 13px; bottom: 22px; }
+}
+
+
+/* ===================== PHASE 7 PART 3 - PERSONAL / PHYSICAL / RELIGION ===================== */
+.profile-part3-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+}
+.profile-part3-card {
+    min-width: 0;
+    padding: 19px;
+    border-color: #e0ebe9;
+    box-shadow: 0 10px 28px rgba(15, 23, 42, .045);
+}
+.profile-part3-card .detail-card-heading {
+    align-items: flex-start;
+    margin-bottom: 16px;
+}
+.profile-part3-card .detail-card-heading > div {
+    min-width: 0;
+}
+.profile-part3-card .detail-card-heading h2 {
+    font-size: 13px;
+    line-height: 1.3;
+}
+.profile-part3-card .detail-card-heading small {
+    display: block;
+    margin-top: 3px;
+    color: #91a09f;
+    font-size: 8px;
+    line-height: 1.4;
+}
+.profile-part3-card .detail-list {
+    gap: 9px;
+}
+.profile-part3-card .detail-list div {
+    padding-bottom: 8px;
+}
+.profile-part3-card .detail-list span {
+    font-size: 10px;
+}
+.profile-part3-card .detail-list strong {
+    font-size: 10px;
+}
+@media (max-width: 980px) {
+    .profile-part3-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 750px) {
+    .profile-part3-grid { grid-template-columns: 1fr; }
+}
+
+
+/* ===================== PHASE 7 PART 4 - FAMILY / LOCATION / LIFESTYLE ===================== */
+.profile-part4-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+    align-items: stretch;
+}
+.profile-part4-card {
+    padding: 19px;
+    min-width: 0;
+    border-color: #e0ebe9;
+    box-shadow: 0 10px 28px rgba(15, 23, 42, .045);
+}
+.profile-part4-card .detail-card-heading {
+    align-items: flex-start;
+    margin-bottom: 16px;
+}
+.profile-part4-card .detail-card-heading > div { min-width: 0; }
+.profile-part4-card .detail-card-heading h2 { font-size: 13px; line-height: 1.3; }
+.profile-part4-card .detail-card-heading small {
+    display: block;
+    margin-top: 3px;
+    color: #91a09f;
+    font-size: 8px;
+    line-height: 1.4;
+}
+.profile-part4-card .detail-list { gap: 9px; }
+.profile-part4-card .detail-list div { padding-bottom: 8px; }
+.profile-part4-card .detail-list span { font-size: 10px; }
+.profile-part4-card .detail-list strong { font-size: 10px; }
+.profile-lifestyle-card {
+    background: linear-gradient(180deg, #ffffff 0%, #fbfefd 100%);
+}
+.profile-interest-tags {
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px dashed #dce8e6;
+}
+.interest-label {
+    display: block;
+    margin-bottom: 8px;
+    color: #738483;
+    font-size: 9px;
+    font-weight: 750;
+}
+.interest-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.interest-tags span {
+    display: inline-flex;
+    align-items: center;
+    min-height: 24px;
+    padding: 4px 9px;
+    border: 1px solid #d9ece8;
+    border-radius: 999px;
+    background: #f1faf8;
+    color: #39706b;
+    font-size: 8px;
+    font-weight: 700;
+}
+@media (max-width: 980px) {
+    .profile-part4-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .profile-part4-card { padding: 18px; }
+}
+@media (max-width: 750px) {
+    .profile-part4-grid { grid-template-columns: 1fr; }
+}
+
+/* ===================== PROFILE VIEW - RESPONSIVE MASONRY FLOW ===================== */
+.profile-detail-grid {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    margin-top: 16px;
+}
+.profile-masonry-column {
+    flex: 1 1 0;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+.profile-masonry-column > .profile-detail-card {
+    width: 100%;
+    margin: 0;
+    align-self: stretch;
+    box-sizing: border-box;
+    break-inside: avoid;
+}
+
+@media (max-width: 980px) {
+    .profile-detail-grid { gap: 14px; }
+    .profile-masonry-column { gap: 14px; }
+}
+
+@media (max-width: 750px) {
+    .profile-detail-grid { flex-direction: column; gap: 14px; }
+    .profile-masonry-column { width: 100%; gap: 14px; }
+}
+
+/* ===================== VERIFICATION STATUS BADGES ===================== */
+.profile-verified.verification-verified,
+.profile-photo-badge.verification-verified {
+    background: #e9f7ef;
+    color: #23845a;
+    border-color: #c9e8d5;
+}
+
+.profile-verified.verification-pending,
+.profile-photo-badge.verification-pending {
+    background: #fff6e4;
+    color: #a87416;
+    border-color: #f0d9a8;
+}
+
+.profile-verified.verification-rejected,
+.profile-photo-badge.verification-rejected {
+    background: #fcedee;
+    color: #b84b53;
+    border-color: #ecc8cc;
+}
+
+
+/* ===================== PHASE 7 PART 5 - HEALTH INFORMATION ===================== */
+.profile-health-card {
+    background: linear-gradient(180deg, #ffffff 0%, #fbfdfd 100%);
+}
+.health-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+.health-summary-grid > div {
+    min-width: 0;
+    padding: 10px 11px;
+    border: 1px solid #e3eeec;
+    border-radius: 11px;
+    background: #fcfefe;
+}
+.health-summary-grid .health-wide { grid-column: 1 / -1; }
+.health-summary-grid span, .health-condition-meta span {
+    display: block;
+    color: #83918f;
+    font-size: 9px;
+    font-weight: 650;
+    margin-bottom: 4px;
+}
+.health-summary-grid strong {
+    display: block;
+    color: #334b49;
+    font-size: 10px;
+    line-height: 1.55;
+    overflow-wrap: anywhere;
+}
+.health-conditions { margin-top: 14px; padding-top: 13px; border-top: 1px dashed #dce8e6; }
+.health-subheading { color: #52716e; font-size: 10px; font-weight: 800; margin-bottom: 9px; }
+.health-subheading i { margin-right: 5px; }
+.health-condition-list { display: flex; flex-direction: column; gap: 8px; }
+.health-condition-item { padding: 10px 11px; border: 1px solid #e6eeee; border-radius: 11px; background: #fff; }
+.health-condition-main { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.health-condition-main strong { color: #354d4b; font-size: 10px; }
+.health-condition-main span { padding: 3px 7px; border-radius: 999px; background: #f2f7f6; color: #5c7774; font-size: 8px; font-weight: 750; white-space: nowrap; }
+.health-condition-meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+.health-condition-meta span { margin: 0; font-size: 8px; }
+.profile-empty-state { display: flex; align-items: center; gap: 7px; padding: 12px; border: 1px dashed #d9e7e4; border-radius: 11px; color: #7e908e; font-size: 9px; background: #fcfefe; }
+@media (max-width: 750px) {
+    .health-summary-grid { grid-template-columns: 1fr; }
+    .health-summary-grid .health-wide { grid-column: auto; }
+}
+
+
+/* ===================== PHASE 7 PART 6 - ABOUT ME / QUESTIONS & ANSWERS ===================== */
+.profile-part6-card {
+    min-width: 0;
+    padding: 19px;
+    border-color: #e0ebe9;
+    box-shadow: 0 10px 28px rgba(15, 23, 42, .045);
+}
+.profile-about-card {
+    background: linear-gradient(180deg, #ffffff 0%, #fbfefd 100%);
+}
+.profile-about-text {
+    padding: 15px 16px;
+    border: 1px solid #e4efed;
+    border-radius: 13px;
+    background: #f9fcfb;
+    color: #526563;
+    font-size: 10px;
+    line-height: 1.9;
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+.profile-qa-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.profile-qa-item {
+    padding: 12px 13px;
+    border: 1px solid #e3eeec;
+    border-radius: 13px;
+    background: #fcfefe;
+}
+.profile-qa-question {
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+    color: #415957;
+    font-size: 10px;
+    line-height: 1.55;
+}
+.profile-qa-question strong {
+    flex: 1;
+    min-width: 0;
+    font-size: 10px;
+    font-weight: 750;
+    overflow-wrap: anywhere;
+}
+.profile-qa-number {
+    flex: 0 0 23px;
+    width: 23px;
+    height: 23px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    background: #edf8f6;
+    color: #0f766e;
+    font-size: 8px;
+    font-weight: 800;
+}
+.profile-qa-answer {
+    margin: 9px 0 0 32px;
+    padding: 9px 11px;
+    border-left: 2px solid #b9ddd7;
+    border-radius: 0 9px 9px 0;
+    background: #f7fbfa;
+    color: #617270;
+    font-size: 9px;
+    line-height: 1.8;
+    overflow-wrap: anywhere;
+}
+.profile-part6-card .profile-empty-state {
+    margin-top: 2px;
+}
+
+@media (max-width: 750px) {
+    .profile-part6-card { padding: 17px; }
+    .profile-qa-answer { margin-left: 0; }
+}
+
+/* ===================== PHASE 7 PART 7 - MEDIA GALLERY ===================== */
+.profile-part7-card {
+    min-width: 0;
+    padding: 19px;
+    border-color: #e0ebe9;
+    box-shadow: 0 10px 28px rgba(15, 23, 42, .045);
+}
+.profile-media-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+.profile-media-item {
+    min-width: 0;
+    border: 1px solid #e2edeb;
+    border-radius: 14px;
+    background: #fbfefd;
+    overflow: hidden;
+}
+.profile-media-photo {
+    position: relative;
+    display: block;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    background: #eef5f3;
+}
+.profile-media-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform .25s ease;
+}
+.profile-media-photo:hover img { transform: scale(1.035); }
+.profile-media-overlay {
+    position: absolute;
+    right: 9px;
+    bottom: 9px;
+    width: 30px;
+    height: 30px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: rgba(255,255,255,.92);
+    color: #47706b;
+    box-shadow: 0 5px 14px rgba(15,23,42,.10);
+    font-size: 10px;
+}
+.profile-media-audio-icon {
+    width: 42px;
+    height: 42px;
+    margin: 13px 13px 5px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    background: #edf8f6;
+    color: #377a73;
+    font-size: 16px;
+}
+.profile-media-copy {
+    padding: 4px 13px 10px;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+}
+.profile-media-copy strong {
+    color: #405957;
+    font-size: 9px;
+    font-weight: 800;
+}
+.profile-media-copy span {
+    color: #81928f;
+    font-size: 8px;
+    white-space: nowrap;
+}
+.profile-media-audio {
+    display: block;
+    width: calc(100% - 26px);
+    margin: 0 13px 13px;
+    height: 34px;
+}
+.profile-media-video-wrap {
+    aspect-ratio: 16 / 9;
+    background: #172522;
+}
+.profile-media-video {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+}
+.profile-media-video + .profile-media-copy { padding-top: 8px; }
+
+@media (max-width: 750px) {
+    .profile-media-grid { grid-template-columns: 1fr; }
+    .profile-part7-card { padding: 17px; }
+}
+
+
+/* ===================== PHASE 7 PART 8 - PARTNER PREFERENCES ===================== */
+.profile-preferences-card {
+    background: linear-gradient(180deg, #ffffff 0%, #fbfefd 100%);
+}
+.preference-summary-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0;
+}
+.preference-summary-grid > div {
+    min-width: 0;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 9px 0;
+    border-bottom: 1px solid #edf2f1;
+}
+.preference-summary-grid span {
+    color: #7f9290;
+    font-size: 9px;
+    line-height: 1.5;
+}
+.preference-summary-grid strong {
+    max-width: 62%;
+    color: #3e5552;
+    font-size: 9px;
+    line-height: 1.55;
+    text-align: right;
+    overflow-wrap: anywhere;
+}
+.preference-block {
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px dashed #dce8e6;
+}
+.preference-block-title {
+    margin-bottom: 8px;
+    color: #52716e;
+    font-size: 9px;
+    font-weight: 800;
+}
+.preference-block-title i { margin-right: 5px; }
+.preference-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+.preference-tags span {
+    display: inline-flex;
+    align-items: center;
+    min-height: 24px;
+    padding: 4px 9px;
+    border: 1px solid #d9ece8;
+    border-radius: 999px;
+    background: #f1faf8;
+    color: #39706b;
+    font-size: 8px;
+    font-weight: 700;
+    overflow-wrap: anywhere;
+}
+.preference-additional {
+    margin-top: 14px;
+    padding: 12px 13px;
+    border: 1px solid #e4efed;
+    border-radius: 12px;
+    background: #f9fcfb;
+}
+.preference-additional > span {
+    display: block;
+    margin-bottom: 5px;
+    color: #81918f;
+    font-size: 8px;
+    font-weight: 750;
+}
+.preference-additional p {
+    margin: 0;
+    color: #536764;
+    font-size: 10px;
+    line-height: 1.85;
+    overflow-wrap: anywhere;
+}
+.preference-qa-list {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+.preference-qa-item {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(100px, auto);
+    gap: 12px;
+    padding: 9px 10px;
+    border: 1px solid #e7efee;
+    border-radius: 10px;
+    background: #fff;
+}
+.preference-qa-item span {
+    color: #607471;
+    font-size: 9px;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+}
+.preference-qa-item strong {
+    color: #39534f;
+    font-size: 9px;
+    line-height: 1.6;
+    text-align: right;
+    overflow-wrap: anywhere;
+}
+@media (max-width: 750px) {
+    .preference-summary-grid { grid-template-columns: 1fr; }
+    .preference-qa-item { grid-template-columns: 1fr; }
+    .preference-qa-item strong { text-align: left; }
+}
+
+/* ===================== INDIVIDUAL PERSONAL Q&A CARDS ===================== */
+/* Q&A cards continue naturally through the same responsive Pinterest-style masonry columns. */
+.profile-qa-section {
+    display: none;
+}
+.profile-detail-grid.has-qa-flow {
+    position: relative;
+}
+.profile-qa-flow-heading {
+    position: absolute;
+    top: var(--qa-flow-top);
+    left: 0;
+    right: 0;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0 2px 14px;
+    background: #f5faf9;
+    z-index: 3;
+}
+.profile-qa-flow-heading .detail-card-heading {
+    margin: 0;
+}
+.profile-masonry-column .profile-qa-item {
+    width: 100%;
+    height: auto;
+    min-height: 0;
+    margin: 14px 0 0;
+    padding: 15px 17px;
+    border: 1px solid #e1eae8;
+    border-radius: 16px;
+    background: #fff;
+    box-shadow: 0 8px 22px rgba(15, 23, 42, .045);
+    box-sizing: border-box;
+    align-self: stretch;
+}
+.profile-qa-card-title {
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    margin: 0 0 10px;
+    padding: 5px 9px;
+    border-radius: 999px;
+    background: #edf7f5;
+    color: #287f78;
+    font-size: .72rem;
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: .02em;
+}
+.profile-masonry-column .profile-qa-question {
+    margin-bottom: 8px;
+}
+.profile-masonry-column .profile-qa-answer {
+    line-height: 1.62;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+@media (max-width: 750px) {
+    .profile-detail-grid.has-qa-flow::after {
+        font-size: 14px;
+        padding-bottom: 12px;
+    }
+    .profile-masonry-column .profile-qa-item {
+        padding: 14px 15px;
+        border-radius: 14px;
+    }
+    .profile-qa-card-title {
+        margin-bottom: 9px;
+    }
+}
+
+/* ===================== TYPOGRAPHY SIZE POLISH - V10 ===================== */
+/* Small, targeted readability increase only. Existing layout/spacing remain unchanged. */
+.profile-view-page .profile-view-title-row p,
+.profile-view-page .profile-header-summary,
+.profile-view-page .profile-bio { font-size: 12px; }
+
+.profile-view-page .profile-view-kicker,
+.profile-view-page .profile-part3-card .detail-card-heading small,
+.profile-view-page .profile-part4-card .detail-card-heading small { font-size: 9px; }
+
+.profile-view-page .profile-verified,
+.profile-view-page .profile-view-id,
+.profile-view-page .profile-view-id i,
+.profile-view-page .profile-part4-card .detail-list span,
+.profile-view-page .profile-part4-card .detail-list strong,
+.profile-view-page .profile-quick-copy small,
+.profile-view-page .profile-quick-copy strong,
+.profile-view-page .interest-label,
+.profile-view-page .health-summary-grid span,
+.profile-view-page .health-condition-meta span,
+.profile-view-page .profile-empty-state,
+.profile-view-page .profile-media-copy strong,
+.profile-view-page .preference-summary-grid span,
+.profile-view-page .preference-block-title,
+.profile-view-page .preference-additional > span,
+.profile-view-page .preference-qa-item span,
+.profile-view-page .preference-qa-item strong { font-size: 10px; }
+
+.profile-view-page .profile-action,
+.profile-view-page .interest-unavailable p,
+.profile-view-page .profile-about-text,
+.profile-view-page .profile-qa-question,
+.profile-view-page .profile-masonry-column .profile-qa-question { font-size: 11px; }
+
+.profile-view-page .detail-list span,
+.profile-view-page .detail-list strong,
+.profile-view-page .profile-part3-card .detail-list span,
+.profile-view-page .profile-part3-card .detail-list strong,
+.profile-view-page .health-subheading,
+.profile-view-page .health-condition-main strong,
+.profile-view-page .preference-summary-grid strong,
+.profile-view-page .preference-additional p { font-size: 11px; }
+
+.profile-view-page .profile-privacy-note strong { font-size: 11px; }
+.profile-view-page .profile-privacy-note p { font-size: 10px; }
+.profile-view-page .health-condition-main span { font-size: 9px; }
+.profile-view-page .interest-tags span,
+.profile-view-page .preference-tags span { font-size: 9px; }
+.profile-view-page .profile-qa-answer,
+.profile-view-page .profile-masonry-column .profile-qa-answer { font-size: 10px; }
+.profile-view-page .profile-qa-card-title { font-size: .78rem; }
+.profile-view-page .profile-view-id { font-size: 9px; }
+.profile-view-page .profile-part3-card .detail-card-heading h2,
+.profile-view-page .profile-part4-card .detail-card-heading h2 { font-size: 14px; }
+
+/* ===================== PRIVACY CONTROL CENTER V1 ===================== */
+.profile-view-page .privacy-control-trigger {
+    background: #f7fbfa;
+    color: #0f766e;
+    border-color: #cfe5e1;
+}
+.profile-view-page .privacy-control-trigger:hover {
+    background: #edf8f6;
+    border-color: #b9dcd6;
+}
+.privacy-drawer {
+    position: fixed;
+    inset: 0;
+    z-index: 1200;
+    visibility: hidden;
+    pointer-events: none;
+}
+.privacy-drawer.is-open {
+    visibility: visible;
+    pointer-events: auto;
+}
+.privacy-drawer-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 23, 42, .34);
+    opacity: 0;
+    transition: opacity .22s ease;
+}
+.privacy-drawer.is-open .privacy-drawer-backdrop { opacity: 1; }
+.privacy-drawer-panel {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: min(430px, 94vw);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    border-left: 1px solid #dfeae7;
+    box-shadow: -18px 0 50px rgba(15, 23, 42, .12);
+    transform: translateX(100%);
+    transition: transform .25s ease;
+}
+.privacy-drawer.is-open .privacy-drawer-panel { transform: translateX(0); }
+.privacy-drawer-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 27px 26px 20px;
+    border-bottom: 1px solid #e8efed;
+}
+.privacy-drawer-kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #0f766e;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: .03em;
+}
+.privacy-drawer-head h2 {
+    margin: 6px 0 5px;
+    color: #172033;
+    font-size: 21px;
+    line-height: 1.25;
+}
+.privacy-drawer-head p {
+    margin: 0;
+    color: #71838a;
+    font-size: 11px;
+    line-height: 1.55;
+}
+.privacy-drawer-close {
+    flex: 0 0 36px;
+    width: 36px;
+    height: 36px;
+    border: 1px solid #e0e9e7;
+    border-radius: 10px;
+    background: #f7faf9;
+    color: #627572;
+    cursor: pointer;
+}
+.privacy-control-form {
+    flex: 1;
+    overflow-y: auto;
+    padding: 21px 26px 26px;
+}
+.privacy-control-field {
+    padding: 0 0 17px;
+    margin-bottom: 17px;
+    border-bottom: 1px solid #edf2f1;
+}
+.privacy-control-field label {
+    display: block;
+    margin-bottom: 4px;
+    color: #334b49;
+    font-size: 12px;
+    font-weight: 800;
+}
+.privacy-control-field small {
+    display: block;
+    margin-bottom: 9px;
+    color: #82918f;
+    font-size: 10px;
+    line-height: 1.45;
+}
+.privacy-control-field select {
+    width: 100%;
+    min-height: 42px;
+    padding: 0 12px;
+    border: 1px solid #d9e7e4;
+    border-radius: 11px;
+    outline: none;
+    background: #fbfdfc;
+    color: #405552;
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+}
+.privacy-control-field select:focus {
+    border-color: #82bbb3;
+    box-shadow: 0 0 0 3px rgba(15, 118, 110, .08);
+}
+.privacy-drawer-footer {
+    position: sticky;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+    padding-top: 18px;
+    background: #fff;
+}
+.privacy-save-status {
+    margin-right: auto;
+    font-size: 10px;
+    font-weight: 700;
+}
+.privacy-save-status.is-success { color: #21846f; }
+.privacy-save-status.is-error { color: #b45353; }
+.privacy-save-button {
+    min-height: 42px;
+    padding: 0 17px;
+    border: 1px solid #0f766e;
+    border-radius: 11px;
+    background: #0f766e;
+    color: #fff;
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 800;
+    cursor: pointer;
+}
+.privacy-save-button:disabled { opacity: .7; cursor: wait; }
+body.privacy-drawer-open { overflow: hidden; }
+
+@media (max-width: 480px) {
+    .privacy-drawer-panel { width: 100%; }
+    .privacy-drawer-head { padding: 22px 20px 17px; }
+    .privacy-control-form { padding: 18px 20px 22px; }
+    .privacy-drawer-head h2 { font-size: 19px; }
+    .privacy-drawer-footer { padding-top: 15px; }
+}
+
+
+/* Privacy Control Center: apply the saved blur-photo preference. */
+.profile-photo-blurred {
+    filter: blur(16px) !important;
+    transform: scale(1.035);
+}
+
+.profile-media-photo {
+    overflow: hidden;
+}
+
+.profile-media-photo .profile-photo-blurred {
+    width: calc(100% + 4%);
+    height: calc(100% + 4%);
 }
