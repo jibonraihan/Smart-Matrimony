@@ -95,17 +95,36 @@ function sm_directional_match_score(array $preferences, array $profile, array $t
     $weighted = 0.0;
     $used_weight = 0.0;
 
-    // Age — 12%
+    // Age — 8%
     $age_score = sm_match_range_score(
         sm_match_date_age($profile['date_of_birth'] ?? null),
         $preferences['min_age'] ?? null,
         $preferences['max_age'] ?? null
     );
-    if ($age_score !== null) { $weighted += $age_score * 0.12; $used_weight += 0.12; }
+    if ($age_score !== null) { $weighted += $age_score * 0.08; $used_weight += 0.08; }
 
-    // Height — 7%
+    // Height — 5%
     $height_score = sm_match_range_score($profile['height_cm'] ?? null, $preferences['min_height_cm'] ?? null, $preferences['max_height_cm'] ?? null);
-    if ($height_score !== null) { $weighted += $height_score * 0.07; $used_weight += 0.07; }
+    if ($height_score !== null) { $weighted += $height_score * 0.05; $used_weight += 0.05; }
+
+    // Skin Colour / Complexion — 10%
+    // Complexion is a categorical preference: an exact match satisfies it;
+    // a different complexion does not. Missing preference/profile data is ignored.
+    $skin_colour_score = null;
+    $preferred_complexion = sm_normalize_match_value($preferences['complexion'] ?? '');
+    $actual_complexion = sm_normalize_match_value($profile['complexion'] ?? '');
+    if ($preferred_complexion !== '' && $actual_complexion !== '') {
+        $skin_colour_score = ($preferred_complexion === $actual_complexion) ? 100.0 : 0.0;
+    }
+    if ($skin_colour_score !== null) { $weighted += $skin_colour_score * 0.10; $used_weight += 0.10; }
+
+    // Weight — 4%
+    $weight_score = sm_match_range_score(
+        $profile['weight_kg'] ?? null,
+        $preferences['min_weight_kg'] ?? null,
+        $preferences['max_weight_kg'] ?? null
+    );
+    if ($weight_score !== null) { $weighted += $weight_score * 0.04; $used_weight += 0.04; }
 
     // Religion — 10%
     $religion_score = sm_match_exact_score($preferences['religion'] ?? null, $profile['religion'] ?? null);
@@ -134,21 +153,21 @@ function sm_directional_match_score(array $preferences, array $profile, array $t
     $islamic_score = sm_match_category($islamic_scores);
     if ($islamic_score !== null) { $weighted += $islamic_score * 0.10; $used_weight += 0.10; }
 
-    // Marital Status — 12%
+    // Marital Status — 10%
     $marital_score = sm_match_exact_score($preferences['marital_status'] ?? null, $profile['marital_status'] ?? null);
-    if ($marital_score !== null) { $weighted += $marital_score * 0.12; $used_weight += 0.12; }
+    if ($marital_score !== null) { $weighted += $marital_score * 0.10; $used_weight += 0.10; }
 
-    // Education — 12%
+    // Education — 10%
     $education_score = sm_match_exact_score($preferences['education'] ?? null, $profile['highest_education'] ?? null);
-    if ($education_score !== null) { $weighted += $education_score * 0.12; $used_weight += 0.12; }
+    if ($education_score !== null) { $weighted += $education_score * 0.10; $used_weight += 0.10; }
 
-    // Profession — 12%
+    // Profession — 10%
     $profession_score = sm_match_exact_score($preferences['profession'] ?? null, $profile['profession'] ?? null);
-    if ($profession_score !== null) { $weighted += $profession_score * 0.12; $used_weight += 0.12; }
+    if ($profession_score !== null) { $weighted += $profession_score * 0.10; $used_weight += 0.10; }
 
-    // Location — 12%
+    // Location — 10%
     $location_score = sm_match_location_score($preferences, $profile);
-    if ($location_score !== null) { $weighted += $location_score * 0.12; $used_weight += 0.12; }
+    if ($location_score !== null) { $weighted += $location_score * 0.10; $used_weight += 0.10; }
 
     // Lifestyle / Personality — 8%
     $lifestyle_scores = [];

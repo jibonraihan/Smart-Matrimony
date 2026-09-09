@@ -24,8 +24,30 @@ $profileResult = mysqli_stmt_get_result($profileStmt);
 $user = mysqli_fetch_assoc($profileResult);
 
 if (!$user) {
-    header('Location: step1.php');
-    exit();
+    $user = [
+    'smoking_status' => '',
+    'prayer_status' => '',
+    'fasting_status' => '',
+    'religious_practice' => '',
+    'quran_reading' => '',
+    'halal_lifestyle' => '',
+    'mahram_maintained' => '',
+    'islamic_knowledge' => '',
+    'islamic_activities' => '',
+    'hijab_status' => '',
+    'hijab_details' => '',
+    'beard_status' => '',
+    'diet_preference' => '',
+    'tea_coffee' => '',
+    'sleep_pattern' => '',
+    'social_nature' => '',
+    'spending_style' => '',
+    'travel_interest' => '',
+    'pets' => '',
+    'free_time_interests' => '',
+    'personality_type' => '',
+    'gender' => '',
+    ];
 }
 
 /* Load health profile */
@@ -133,21 +155,12 @@ if (isset($_POST['save_step3'])) {
     /* Keep the existing gender-specific fields consistent. */
     if (($user['gender'] ?? '') === 'Male') {
         $hijab_status = 'Not Applicable';
-    } elseif (strcasecmp((string)($user['gender'] ?? ''), 'Female') === 0) {
+    } elseif (($user['gender'] ?? '') === 'Female') {
         $beard_status = 'Not Applicable';
     } else {
         $beard_status = 'Not Applicable';
         $hijab_status = 'Not Applicable';
     }
-
-    /* Hijab is stored as VARCHAR, so it must not be tied to the current
-     * dropdown list for server-side validation. This keeps existing saved
-     * values valid even if an option is renamed/removed, while still
-     * validating the submitted value as safe text. The dropdown itself is
-     * generated from includes/dropdowns.php, so its current options remain
-     * the source of the UI choices.
-     */
-    $invalid_hijab = (strlen($hijab_status) > 100);
 
     if ($mahram_input === 'Yes') {
         $mahram_maintained = 1;
@@ -157,7 +170,7 @@ if (isset($_POST['save_step3'])) {
         $mahram_maintained = null;
     }
 
-    if ($invalid_dropdown || $invalid_interest || $invalid_mahram || $invalid_hijab) {
+    if ($invalid_dropdown || $invalid_interest || $invalid_mahram) {
         $error = 'Please select valid options from the available lists.';
     } elseif ($required_missing) {
         $error = 'Please fill all required fields marked with *.';
@@ -220,20 +233,6 @@ if (isset($_POST['save_step3'])) {
 
             if (!mysqli_stmt_execute($update)) {
                 throw new Exception('Profile update failed.');
-            }
-
-            /* Targeted safeguard: persist the selected female hijab status explicitly. */
-            if (strcasecmp((string)($user['gender'] ?? ''), 'Female') === 0) {
-                $hijabUpdate = mysqli_prepare($conn, 'UPDATE user_profiles SET hijab_status=? WHERE user_id=?');
-                if (!$hijabUpdate) {
-                    throw new Exception('Hijab status update preparation failed.');
-                }
-                mysqli_stmt_bind_param($hijabUpdate, 'si', $hijab_status, $user_id);
-                if (!mysqli_stmt_execute($hijabUpdate)) {
-                    mysqli_stmt_close($hijabUpdate);
-                    throw new Exception('Hijab status update failed.');
-                }
-                mysqli_stmt_close($hijabUpdate);
             }
 
             $healthCheck = mysqli_prepare($conn, 'SELECT health_profile_id FROM health_profiles WHERE user_id=? LIMIT 1');

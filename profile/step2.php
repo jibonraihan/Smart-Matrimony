@@ -443,7 +443,7 @@ $completion = sm_get_profile_completion($conn, $user_id);
                     </div>
 
                     <div class="step2-field">
-                        <label for="family_purdah_environment">Purdah Environment in Family <span class="required">*</span></label>
+                        <label for="family_purdah_environment">Pordah Environment in Family <span class="required">*</span></label>
                         <textarea id="family_purdah_environment" name="family_purdah_environment" rows="3" maxlength="2000" placeholder="Describe the purdah environment in your family" required><?= htmlspecialchars($user['family_purdah_environment'] ?? '') ?></textarea>
                     </div>
 

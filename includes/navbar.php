@@ -42,7 +42,7 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                         class="nav-link"
                         href="<?= BASE_URL; ?>">
 
-                        Home
+                        Public-Home
 
                     </a>
 

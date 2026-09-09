@@ -818,6 +818,12 @@ include '../includes/header.php';
                         <?php if ($partner_preferences['min_height_cm'] !== null || $partner_preferences['max_height_cm'] !== null): ?>
                             <div><span>Height Range</span><strong><?= htmlspecialchars(format_height_feet_inches($partner_preferences['min_height_cm'])); ?><?= $partner_preferences['max_height_cm'] !== null ? ' – ' . htmlspecialchars(format_height_feet_inches($partner_preferences['max_height_cm'])) : '+'; ?></strong></div>
                         <?php endif; ?>
+                        <?php if ($partner_preferences['min_weight_kg'] !== null || $partner_preferences['max_weight_kg'] !== null): ?>
+                            <div><span>Weight Range</span><strong><?= $partner_preferences['min_weight_kg'] !== null ? rtrim(rtrim(number_format((float)$partner_preferences['min_weight_kg'], 2, '.', ''), '0'), '.') : 'Any'; ?><?= $partner_preferences['max_weight_kg'] !== null ? ' – ' . rtrim(rtrim(number_format((float)$partner_preferences['max_weight_kg'], 2, '.', ''), '0'), '.') : '+'; ?> kg</strong></div>
+                        <?php endif; ?>
+                        <?php if (!empty($partner_preferences['complexion'])): ?>
+                            <div><span>Complexion</span><strong><?= htmlspecialchars($partner_preferences['complexion']); ?></strong></div>
+                        <?php endif; ?>
                         <?php if (!empty($partner_preferences['religion'])): ?><div><span>Religion</span><strong><?= htmlspecialchars($partner_preferences['religion']); ?></strong></div><?php endif; ?>
                         <?php if (!empty($partner_preferences['madhhab'])): ?><div><span>Madhhab</span><strong><?= htmlspecialchars($partner_preferences['madhhab']); ?></strong></div><?php endif; ?>
                         <?php if (!empty($partner_preferences['prayer_status'])): ?><div><span>Prayer</span><strong><?= htmlspecialchars($partner_preferences['prayer_status']); ?></strong></div><?php endif; ?>

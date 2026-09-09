@@ -213,8 +213,8 @@ if (isset($_POST['save_step5'])) {
 
             if (!in_array($extension, $allowed_extensions, true) || !in_array($mime, $allowed_mime, true)) {
                 $error = 'Only JPG, JPEG and WEBP images are allowed.';
-            } elseif ($file_size > 5 * 1024 * 1024) {
-                $error = 'Maximum photo size is 5 MB.';
+            } elseif ($file_size > 20 * 1024 * 1024) {
+                $error = 'Maximum photo size is 20 MB.';
             } else {
                 $saved = resizeAndSaveImage($file_tmp, $user_id);
                 if ($saved === false) {
@@ -672,7 +672,7 @@ $preview = ($hasPhoto && $profile_media_id > 0) ? 'media.php?id=' . $profile_med
     const status = document.getElementById('photoStatus');
     const removePhotoButton = document.getElementById('removePhotoButton');
     const defaultPreview = preview.getAttribute('src') || '';
-    const maxSize = 5 * 1024 * 1024;
+    const maxSize = 20 * 1024 * 1024;
     const allowed = ['image/jpeg', 'image/png', 'image/webp'];
 
     function openPicker() { input.click(); }

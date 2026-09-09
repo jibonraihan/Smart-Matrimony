@@ -634,9 +634,9 @@ include 'includes/header.php';
             </a>
 
             <div class="topbar-actions">
-                <a href="<?= BASE_URL; ?>index.php" class="topbar-home">
+                <a class="topbar-home">
                     <i class="fa-solid fa-house"></i>
-                    <span>Public Home</span>
+                    <span>User's Dashboard</span>
                 </a>
 
                 <button class="menu-toggle" type="button" id="dashboardMenuToggle" aria-label="Open menu" aria-expanded="false">
@@ -938,7 +938,7 @@ include 'includes/header.php';
                                 <option value="">Any Division</option>
                                 <?php foreach ($divisions as $division): ?>
                                     <option value="<?= (int) $division['id']; ?>" <?= $division_id === (int) $division['id'] ? 'selected' : ''; ?>>
-                                        <?= htmlspecialchars($division['name_bn']); ?>
+                                        <?= htmlspecialchars($division['name_en']); ?>
                                     </option>
                                 <?php endforeach; ?>
                             </select>

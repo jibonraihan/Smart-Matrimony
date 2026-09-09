@@ -4,10 +4,6 @@ require_once '../includes/functions.php';
 require_once '../includes/dropdowns.php';
 require_once '../includes/profile_completion.php';
 
-/* Step 4 location dropdown options. Keep these aligned with user_profiles enum values. */
-$area_type_options = ['Urban', 'Rural', 'Semi-Urban'];
-$residence_type_options = ['Own House', 'Family House', 'Rented', 'Other'];
-
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -19,6 +15,20 @@ if (!isset($_SESSION['user_id'])) {
 
 $user_id = (int) $_SESSION['user_id'];
 $error = '';
+
+/* Residential Details dropdown options. */
+$area_type_options = [
+    'Urban',
+    'Rural',
+    'Semi-Urban'
+];
+
+$residence_type_options = [
+    'Own House',
+    'Family House',
+    'Rented',
+    'Other'
+];
 
 /* Load existing location data. */
 $stmt = mysqli_prepare($conn, '
@@ -79,8 +89,18 @@ if ($user && !empty($user['division_id']) && !empty($user['district_id']) && !em
 }
 
 if (!$user) {
-    header('Location: step1.php');
-    exit();
+    $user = [
+    'country' => '',
+    'division_id' => '',
+    'district_id' => '',
+    'upazila_id' => '',
+    'area' => '',
+    'area_type' => '',
+    'residence_type' => '',
+    'post_office' => '',
+    'postal_code' => '',
+    'permanent_hometown' => '',
+    ];
 }
 
 if (isset($_POST['save_step4'])) {
@@ -261,7 +281,7 @@ include '../includes/navbar.php';
                                     while ($row = mysqli_fetch_assoc($divisions)):
                                     ?>
                                         <option value="<?= (int) $row['id'] ?>" <?= ((int)($user['division_id'] ?? 0) === (int)$row['id']) ? 'selected' : '' ?>>
-                                            <?= htmlspecialchars($row['name_bn']) ?>
+                                            <?= htmlspecialchars($row['name_en']) ?>
                                         </option>
                                     <?php endwhile; ?>
                                 </select>

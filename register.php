@@ -122,10 +122,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     ) {
         $error = "Please fill all required fields.";
     }
-    elseif (!preg_match("/^[A-Za-z ]+$/", $first_name)) {
+    elseif (!preg_match("/^[A-Za-z. ]+$/", $first_name)) {
         $error = "Invalid first name.";
     }
-    elseif (!preg_match("/^[A-Za-z ]+$/", $last_name)) {
+    elseif (!preg_match("/^[A-Za-z. ]+$/", $last_name)) {
         $error = "Invalid last name.";
     }
     elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
