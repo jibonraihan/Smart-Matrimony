@@ -88,12 +88,26 @@ function sm_match_category(array $scores): ?float
     return array_sum($scores) / count($scores);
 }
 
-function sm_directional_match_score(array $preferences, array $profile, array $trait_preferences, array $trait_answers): ?float
+function sm_directional_match_breakdown(array $preferences, array $profile, array $trait_preferences, array $trait_answers): ?array
 {
     if (!$preferences) return null;
 
     $weighted = 0.0;
     $used_weight = 0.0;
+    $details = [];
+
+    $add_detail = static function (array &$details, string $key, string $label, float $weight, ?float $score, string $icon) use (&$weighted, &$used_weight): void {
+        $details[$key] = [
+            'label' => $label,
+            'weight' => $weight,
+            'score' => $score,
+            'icon' => $icon,
+        ];
+        if ($score !== null) {
+            $weighted += $score * ($weight / 100.0);
+            $used_weight += ($weight / 100.0);
+        }
+    };
 
     // Age — 8%
     $age_score = sm_match_range_score(
@@ -101,34 +115,15 @@ function sm_directional_match_score(array $preferences, array $profile, array $t
         $preferences['min_age'] ?? null,
         $preferences['max_age'] ?? null
     );
-    if ($age_score !== null) { $weighted += $age_score * 0.08; $used_weight += 0.08; }
+    $add_detail($details, 'age', 'Age', 8.0, $age_score, 'fa-cake-candles');
 
     // Height — 5%
     $height_score = sm_match_range_score($profile['height_cm'] ?? null, $preferences['min_height_cm'] ?? null, $preferences['max_height_cm'] ?? null);
-    if ($height_score !== null) { $weighted += $height_score * 0.05; $used_weight += 0.05; }
-
-    // Skin Colour / Complexion — 10%
-    // Complexion is a categorical preference: an exact match satisfies it;
-    // a different complexion does not. Missing preference/profile data is ignored.
-    $skin_colour_score = null;
-    $preferred_complexion = sm_normalize_match_value($preferences['complexion'] ?? '');
-    $actual_complexion = sm_normalize_match_value($profile['complexion'] ?? '');
-    if ($preferred_complexion !== '' && $actual_complexion !== '') {
-        $skin_colour_score = ($preferred_complexion === $actual_complexion) ? 100.0 : 0.0;
-    }
-    if ($skin_colour_score !== null) { $weighted += $skin_colour_score * 0.10; $used_weight += 0.10; }
-
-    // Weight — 4%
-    $weight_score = sm_match_range_score(
-        $profile['weight_kg'] ?? null,
-        $preferences['min_weight_kg'] ?? null,
-        $preferences['max_weight_kg'] ?? null
-    );
-    if ($weight_score !== null) { $weighted += $weight_score * 0.04; $used_weight += 0.04; }
+    $add_detail($details, 'height', 'Height', 5.0, $height_score, 'fa-ruler-vertical');
 
     // Religion — 10%
     $religion_score = sm_match_exact_score($preferences['religion'] ?? null, $profile['religion'] ?? null);
-    if ($religion_score !== null) { $weighted += $religion_score * 0.10; $used_weight += 0.10; }
+    $add_detail($details, 'religion', 'Religion', 10.0, $religion_score, 'fa-mosque');
 
     // Islamic Practice — 10%
     $islamic_scores = [];
@@ -150,24 +145,23 @@ function sm_directional_match_score(array $preferences, array $profile, array $t
             $islamic_scores[] = sm_match_exact_score($preferences[$pref_field], $profile[$profile_field] ?? null);
         }
     }
-    $islamic_score = sm_match_category($islamic_scores);
-    if ($islamic_score !== null) { $weighted += $islamic_score * 0.10; $used_weight += 0.10; }
+    $add_detail($details, 'islamic_practice', 'Islamic Practice', 10.0, sm_match_category($islamic_scores), 'fa-star-and-crescent');
 
     // Marital Status — 10%
     $marital_score = sm_match_exact_score($preferences['marital_status'] ?? null, $profile['marital_status'] ?? null);
-    if ($marital_score !== null) { $weighted += $marital_score * 0.10; $used_weight += 0.10; }
+    $add_detail($details, 'marital_status', 'Marital Status', 10.0, $marital_score, 'fa-ring');
 
     // Education — 10%
     $education_score = sm_match_exact_score($preferences['education'] ?? null, $profile['highest_education'] ?? null);
-    if ($education_score !== null) { $weighted += $education_score * 0.10; $used_weight += 0.10; }
+    $add_detail($details, 'education', 'Education', 10.0, $education_score, 'fa-graduation-cap');
 
     // Profession — 10%
     $profession_score = sm_match_exact_score($preferences['profession'] ?? null, $profile['profession'] ?? null);
-    if ($profession_score !== null) { $weighted += $profession_score * 0.10; $used_weight += 0.10; }
+    $add_detail($details, 'profession', 'Profession', 10.0, $profession_score, 'fa-briefcase');
 
     // Location — 10%
     $location_score = sm_match_location_score($preferences, $profile);
-    if ($location_score !== null) { $weighted += $location_score * 0.10; $used_weight += 0.10; }
+    $add_detail($details, 'location', 'Location', 10.0, $location_score, 'fa-location-dot');
 
     // Lifestyle / Personality — 8%
     $lifestyle_scores = [];
@@ -180,8 +174,7 @@ function sm_directional_match_score(array $preferences, array $profile, array $t
             $lifestyle_scores[] = $accept || in_array($smoker, ['never', 'quit'], true) ? 100.0 : 0.0;
         }
     }
-    $lifestyle_score = sm_match_category($lifestyle_scores);
-    if ($lifestyle_score !== null) { $weighted += $lifestyle_score * 0.08; $used_weight += 0.08; }
+    $add_detail($details, 'lifestyle', 'Lifestyle', 8.0, sm_match_category($lifestyle_scores), 'fa-person-running');
 
     // Trait / Q&A compatibility — 5%
     $trait_scores = [];
@@ -190,20 +183,94 @@ function sm_directional_match_score(array $preferences, array $profile, array $t
         if ($actual_answer === null || trim((string) $actual_answer) === '') continue;
         $trait_scores[] = sm_match_exact_score($preferred_answer, $actual_answer);
     }
-    $trait_score = sm_match_category($trait_scores);
-    if ($trait_score !== null) { $weighted += $trait_score * 0.05; $used_weight += 0.05; }
+    $add_detail($details, 'qna', 'Q&A', 5.0, sm_match_category($trait_scores), 'fa-circle-question');
+
+    // Skin Colour / Complexion — 10%
+    $skin_colour_score = null;
+    $preferred_complexion = sm_normalize_match_value($preferences['complexion'] ?? '');
+    $actual_complexion = sm_normalize_match_value($profile['complexion'] ?? '');
+    if ($preferred_complexion !== '' && $actual_complexion !== '') {
+        $skin_colour_score = ($preferred_complexion === $actual_complexion) ? 100.0 : 0.0;
+    }
+    $add_detail($details, 'skin_colour', 'Skin Colour', 10.0, $skin_colour_score, 'fa-palette');
+
+    // Weight — 4%
+    $weight_score = sm_match_range_score(
+        $profile['weight_kg'] ?? null,
+        $preferences['min_weight_kg'] ?? null,
+        $preferences['max_weight_kg'] ?? null
+    );
+    $add_detail($details, 'weight', 'Weight', 4.0, $weight_score, 'fa-weight-scale');
 
     if ($used_weight <= 0) return null;
-    return max(0.0, min(100.0, $weighted / $used_weight));
+    return [
+        'score' => max(0.0, min(100.0, $weighted / $used_weight)),
+        'details' => $details,
+    ];
+}
+
+function sm_directional_match_score(array $preferences, array $profile, array $trait_preferences, array $trait_answers): ?float
+{
+    $breakdown = sm_directional_match_breakdown($preferences, $profile, $trait_preferences, $trait_answers);
+    return $breakdown === null ? null : (float) $breakdown['score'];
+}
+
+function sm_calculate_mutual_match_breakdown(array $viewer_preferences, array $viewer_profile, array $candidate_preferences, array $candidate_profile, array $viewer_trait_preferences = [], array $viewer_trait_answers = [], array $candidate_trait_preferences = [], array $candidate_trait_answers = []): ?array
+{
+    $forward = sm_directional_match_breakdown($viewer_preferences, $candidate_profile, $viewer_trait_preferences, $candidate_trait_answers);
+    $reverse = sm_directional_match_breakdown($candidate_preferences, $viewer_profile, $candidate_trait_preferences, $viewer_trait_answers);
+
+    if ($forward === null && $reverse === null) return null;
+
+    $categories = [];
+    $keys = array_unique(array_merge(array_keys($forward['details'] ?? []), array_keys($reverse['details'] ?? [])));
+    foreach ($keys as $key) {
+        $f = $forward['details'][$key] ?? null;
+        $r = $reverse['details'][$key] ?? null;
+        $category_score = null;
+        if (($f['score'] ?? null) !== null && ($r['score'] ?? null) !== null) {
+            $category_score = ($f['score'] + $r['score']) / 2.0;
+        } elseif (($f['score'] ?? null) !== null) {
+            $category_score = $f['score'];
+        } elseif (($r['score'] ?? null) !== null) {
+            $category_score = $r['score'];
+        }
+        $categories[$key] = [
+            'label' => $f['label'] ?? $r['label'] ?? $key,
+            'weight' => $f['weight'] ?? $r['weight'] ?? 0,
+            'icon' => $f['icon'] ?? $r['icon'] ?? 'fa-circle',
+            'forward' => $f['score'] ?? null,
+            'reverse' => $r['score'] ?? null,
+            'score' => $category_score,
+        ];
+    }
+
+    $forward_score = $forward['score'] ?? null;
+    $reverse_score = $reverse['score'] ?? null;
+    $final = null;
+    if ($forward_score === null) $final = $reverse_score;
+    elseif ($reverse_score === null) $final = $forward_score;
+    else $final = ($forward_score + $reverse_score) / 2.0;
+
+    return [
+        'score' => $final === null ? null : max(0.0, min(100.0, $final)),
+        'forward_score' => $forward_score,
+        'reverse_score' => $reverse_score,
+        'categories' => $categories,
+    ];
 }
 
 function sm_calculate_mutual_match_score(array $viewer_preferences, array $viewer_profile, array $candidate_preferences, array $candidate_profile, array $viewer_trait_preferences = [], array $viewer_trait_answers = [], array $candidate_trait_preferences = [], array $candidate_trait_answers = []): ?int
 {
-    $forward = sm_directional_match_score($viewer_preferences, $candidate_profile, $viewer_trait_preferences, $candidate_trait_answers);
-    $reverse = sm_directional_match_score($candidate_preferences, $viewer_profile, $candidate_trait_preferences, $viewer_trait_answers);
-
-    if ($forward === null && $reverse === null) return null;
-    if ($forward === null) return (int) round($reverse);
-    if ($reverse === null) return (int) round($forward);
-    return (int) round(($forward + $reverse) / 2);
+    $breakdown = sm_calculate_mutual_match_breakdown(
+        $viewer_preferences,
+        $viewer_profile,
+        $candidate_preferences,
+        $candidate_profile,
+        $viewer_trait_preferences,
+        $viewer_trait_answers,
+        $candidate_trait_preferences,
+        $candidate_trait_answers
+    );
+    return ($breakdown === null || $breakdown['score'] === null) ? null : (int) round($breakdown['score']);
 }

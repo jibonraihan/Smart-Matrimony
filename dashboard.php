@@ -434,6 +434,7 @@ if ($search_submitted && in_array($target_gender, ['Male', 'Female'], true)) {
    Existing search filtering/pagination remains unchanged.
 --------------------------------------------------------- */
 $dashboard_match_scores = [];
+$dashboard_match_details = [];
 if (!empty($results)) {
     $viewer_profile_stmt = mysqli_prepare($conn, "SELECT * FROM user_profiles WHERE user_id = ? LIMIT 1");
     $viewer_profile = [];
@@ -479,21 +480,7 @@ if (!empty($results)) {
             mysqli_stmt_close($pref_stmt);
         }
 
-        $trait_pref_stmt = mysqli_prepare($conn, "SELECT user_id, question_id, preferred_answer FROM partner_trait_preferences WHERE user_id IN ($placeholders)");
-        if ($trait_pref_stmt) {
-            $ids_for_trait = $candidate_ids;
-            $refs = [];
-            foreach ($ids_for_trait as $key => $value) $refs[$key] = &$ids_for_trait[$key];
-            mysqli_stmt_bind_param($trait_pref_stmt, $types, ...$refs);
-            mysqli_stmt_execute($trait_pref_stmt);
-            $trait_result = mysqli_stmt_get_result($trait_pref_stmt);
-            while ($trait_row = mysqli_fetch_assoc($trait_result)) {
-                $candidate_trait_preferences[(int) $trait_row['user_id']][(int) $trait_row['question_id']] = $trait_row['preferred_answer'];
-            }
-            mysqli_stmt_close($trait_pref_stmt);
-        }
-
-        $trait_answer_stmt = mysqli_prepare($conn, "SELECT user_id, question_id, answer FROM user_trait_answers WHERE user_id IN ($placeholders)");
+        $trait_answer_stmt = mysqli_prepare($conn, "SELECT uta.user_id, uta.question_id, uta.answer FROM user_trait_answers uta INNER JOIN trait_questions tq ON tq.question_id = uta.question_id WHERE uta.user_id IN ($placeholders) AND tq.gender = 'Both'");
         if ($trait_answer_stmt) {
             $ids_for_answers = $candidate_ids;
             $refs = [];
@@ -508,19 +495,8 @@ if (!empty($results)) {
         }
     }
 
-    $viewer_trait_preferences = [];
     $viewer_trait_answers = [];
-    $viewer_trait_stmt = mysqli_prepare($conn, "SELECT question_id, preferred_answer FROM partner_trait_preferences WHERE user_id = ?");
-    if ($viewer_trait_stmt) {
-        mysqli_stmt_bind_param($viewer_trait_stmt, 'i', $user_id);
-        mysqli_stmt_execute($viewer_trait_stmt);
-        $viewer_trait_result = mysqli_stmt_get_result($viewer_trait_stmt);
-        while ($row = mysqli_fetch_assoc($viewer_trait_result)) {
-            $viewer_trait_preferences[(int) $row['question_id']] = $row['preferred_answer'];
-        }
-        mysqli_stmt_close($viewer_trait_stmt);
-    }
-    $viewer_answer_stmt = mysqli_prepare($conn, "SELECT question_id, answer FROM user_trait_answers WHERE user_id = ?");
+    $viewer_answer_stmt = mysqli_prepare($conn, "SELECT uta.question_id, uta.answer FROM user_trait_answers uta INNER JOIN trait_questions tq ON tq.question_id = uta.question_id WHERE uta.user_id = ? AND tq.gender = 'Both'");
     if ($viewer_answer_stmt) {
         mysqli_stmt_bind_param($viewer_answer_stmt, 'i', $user_id);
         mysqli_stmt_execute($viewer_answer_stmt);
@@ -531,9 +507,16 @@ if (!empty($results)) {
         mysqli_stmt_close($viewer_answer_stmt);
     }
 
+    // Q&A matching uses only questions marked as common to both genders.
+    // Each user's own answer is compared directly with the other user's answer.
+    $viewer_trait_preferences = $viewer_trait_answers;
+    foreach ($candidate_trait_answers as $candidate_id => $answers) {
+        $candidate_trait_preferences[$candidate_id] = $answers;
+    }
+
     foreach ($results as $candidate_row) {
         $candidate_id = (int) $candidate_row['user_id'];
-        $dashboard_match_scores[$candidate_id] = sm_calculate_mutual_match_score(
+        $dashboard_match_details[$candidate_id] = sm_calculate_mutual_match_breakdown(
             $viewer_preferences,
             $viewer_profile,
             $candidate_preferences[$candidate_id] ?? [],
@@ -543,6 +526,9 @@ if (!empty($results)) {
             $candidate_trait_preferences[$candidate_id] ?? [],
             $candidate_trait_answers[$candidate_id] ?? []
         );
+        $dashboard_match_scores[$candidate_id] = $dashboard_match_details[$candidate_id]['score'] !== null
+            ? (int) round($dashboard_match_details[$candidate_id]['score'])
+            : null;
     }
 }
 
@@ -634,9 +620,9 @@ include 'includes/header.php';
             </a>
 
             <div class="topbar-actions">
-                <a class="topbar-home">
+                <a href="<?= BASE_URL; ?>index.php" class="topbar-home">
                     <i class="fa-solid fa-house"></i>
-                    <span>User's Dashboard</span>
+                    <span>Public Home</span>
                 </a>
 
                 <button class="menu-toggle" type="button" id="dashboardMenuToggle" aria-label="Open menu" aria-expanded="false">
@@ -938,7 +924,7 @@ include 'includes/header.php';
                                 <option value="">Any Division</option>
                                 <?php foreach ($divisions as $division): ?>
                                     <option value="<?= (int) $division['id']; ?>" <?= $division_id === (int) $division['id'] ? 'selected' : ''; ?>>
-                                        <?= htmlspecialchars($division['name_en']); ?>
+                                        <?= htmlspecialchars($division['name_bn']); ?>
                                     </option>
                                 <?php endforeach; ?>
                             </select>
@@ -1260,9 +1246,14 @@ include 'includes/header.php';
                                             </p>
                                             <?php $match_score = $dashboard_match_scores[$target_id] ?? null; ?>
                                             <?php if ($match_score !== null): ?>
-                                                <span class="profile-match-badge" title="Mutual compatibility score">
-                                                    <i class="fa-solid fa-heart"></i> <?= (int) $match_score; ?>% Match
-                                                </span>
+                                                <div class="profile-match-wrap">
+                                                    <span class="profile-match-badge" title="Mutual compatibility score">
+                                                        <i class="fa-solid fa-heart"></i> <?= (int) $match_score; ?>% Match
+                                                    </span>
+                                                    <button type="button" class="profile-match-details-button" data-match-details="<?= htmlspecialchars(json_encode($dashboard_match_details[$target_id] ?? null, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), ENT_QUOTES, 'UTF-8'); ?>" aria-label="View match details">
+                                                        View Match Details
+                                                    </button>
+                                                </div>
                                             <?php else: ?>
                                                 <span class="profile-match-badge is-unavailable" title="Add partner preferences to calculate a compatibility score">
                                                     <i class="fa-regular fa-heart"></i> Match —
@@ -1436,6 +1427,29 @@ include 'includes/header.php';
     </main>
 </div>
 
+<div class="match-details-modal" id="matchDetailsModal" aria-hidden="true">
+    <div class="match-details-backdrop" data-match-close></div>
+    <section class="match-details-dialog" role="dialog" aria-modal="true" aria-labelledby="matchDetailsTitle">
+        <button type="button" class="match-details-close" data-match-close aria-label="Close match details"><i class="fa-solid fa-xmark"></i></button>
+        <div class="match-details-head">
+            <span class="match-details-icon"><i class="fa-solid fa-heart"></i></span>
+            <div>
+                <span class="section-kicker">COMPATIBILITY BREAKDOWN</span>
+                <h3 id="matchDetailsTitle">Match Details</h3>
+                <p>See how the compatibility score was calculated.</p>
+            </div>
+        </div>
+        <div class="match-details-overview">
+            <div><strong id="matchDetailsOverall">—%</strong><span>Overall Match</span></div>
+            <div><strong id="matchDetailsForward">—%</strong><span>You → Them</span></div>
+            <div><strong id="matchDetailsReverse">—%</strong><span>Them → You</span></div>
+        </div>
+        <div class="match-details-list" id="matchDetailsList"></div>
+        <p class="match-details-note">Scores are calculated from the current mutual compatibility rules. Missing information is not treated as a mismatch.</p>
+    </section>
+</div>
+
+<script src="<?= BASE_URL ?>assets/js/dashboard-match-details.js"></script>
 <script>
 (function () {
     const menu = document.getElementById('dashboardMenu');
