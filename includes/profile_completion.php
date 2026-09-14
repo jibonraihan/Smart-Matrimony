@@ -1,10 +1,5 @@
 <?php
-/**
- * Smart Matrimony - Central profile completion checker.
- *
- * Completion is based on actual saved required data, not the page the user
- * has visited. No database structure changes are required.
- */
+
 function sm_is_filled($value): bool
 {
     return $value !== null && trim((string) $value) !== '';

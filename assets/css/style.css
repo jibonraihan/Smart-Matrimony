@@ -614,3 +614,705 @@ hr{
     }
 
 }
+/* =========================================================
+   SMART MATRIMONY GLOBAL NAVBAR — refreshed header
+   Keeps the existing Bootstrap navbar behavior while adding
+   a polished, responsive project-wide header.
+========================================================= */
+.smart-navbar {
+    position: relative;
+    z-index: 1030;
+    background: linear-gradient(135deg, #0f766e 0%, #0b625d 55%, #09534f 100%) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, .10);
+    box-shadow: 0 8px 28px rgba(15, 118, 110, .16) !important;
+}
+
+.smart-navbar-container {
+    min-height: 76px;
+    gap: 22px;
+}
+
+.smart-navbar-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 11px;
+    min-width: max-content;
+    color: #fff !important;
+    text-decoration: none;
+    padding: 4px 0;
+}
+
+.smart-navbar-logo {
+    width: 44px;
+    height: 44px;
+    flex: 0 0 44px;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    border-radius: 13px;
+    background: linear-gradient(145deg, rgba(255,255,255,.20), rgba(255,255,255,.07));
+    border: 1px solid rgba(255,255,255,.28);
+    box-shadow: 0 5px 16px rgba(0,0,0,.15), inset 0 1px 0 rgba(255,255,255,.18);
+}
+
+.smart-navbar-logo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.smart-navbar-title {
+    font-size: 19px;
+    line-height: 1;
+    font-weight: 750;
+    letter-spacing: -.25px;
+    white-space: nowrap;
+}
+
+.smart-navbar-collapse {
+    align-items: center;
+}
+
+.smart-navbar-nav {
+    align-items: center;
+    gap: 4px;
+    margin-inline: auto;
+}
+
+.smart-nav-link {
+    position: relative;
+    display: inline-flex !important;
+    align-items: center;
+    gap: 7px;
+    min-height: 42px;
+    padding: 9px 13px !important;
+    border-radius: 11px;
+    color: rgba(255,255,255,.88) !important;
+    font-size: 13px;
+    font-weight: 600;
+    transition: background .2s ease, color .2s ease, transform .2s ease;
+}
+
+.smart-nav-link i {
+    font-size: 12px;
+    opacity: .9;
+}
+
+.smart-nav-link:hover,
+.smart-nav-link:focus-visible,
+.smart-nav-link.active {
+    color: #fff !important;
+    background: rgba(255,255,255,.12);
+}
+
+.smart-nav-link:hover {
+    transform: translateY(-1px);
+}
+
+.smart-nav-link.active::after {
+    content: '';
+    position: absolute;
+    left: 13px;
+    right: 13px;
+    bottom: 4px;
+    height: 2px;
+    border-radius: 99px;
+    background: #d4af37;
+}
+
+.smart-navbar-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-left: 14px;
+}
+
+.smart-user-greeting {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 40px;
+    padding: 6px 10px;
+    border: 1px solid rgba(255,255,255,.15);
+    border-radius: 11px;
+    color: rgba(255,255,255,.92) !important;
+    font-size: 12px;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.smart-user-greeting:hover {
+    background: rgba(255,255,255,.08);
+    color: #fff !important;
+}
+
+.smart-user-greeting-icon {
+    width: 27px;
+    height: 27px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: rgba(255,255,255,.15);
+    font-size: 11px;
+}
+
+.smart-nav-btn {
+    min-height: 40px;
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 8px 14px !important;
+    border-radius: 11px !important;
+    font-size: 12px;
+    font-weight: 700 !important;
+    transition: transform .2s ease, box-shadow .2s ease, background .2s ease;
+}
+
+.smart-nav-btn:hover {
+    transform: translateY(-1px);
+}
+
+.smart-nav-login {
+    color: #fff !important;
+    background: rgba(255,255,255,.07) !important;
+    border: 1px solid rgba(255,255,255,.38) !important;
+}
+
+.smart-nav-login:hover,
+.smart-nav-login:focus-visible {
+    background: rgba(255,255,255,.15) !important;
+}
+
+.smart-nav-register {
+    color: #fff !important;
+    background: linear-gradient(135deg, #d4af37, #b99120) !important;
+    border: 1px solid rgba(255,255,255,.10) !important;
+    box-shadow: 0 5px 14px rgba(0,0,0,.12);
+}
+
+.smart-nav-register:hover,
+.smart-nav-register:focus-visible {
+    background: linear-gradient(135deg, #e1be4e, #c49d29) !important;
+}
+
+.smart-nav-logout {
+    color: #fff !important;
+    background: rgba(255,255,255,.08) !important;
+    border: 1px solid rgba(255,255,255,.28) !important;
+}
+
+.smart-nav-logout:hover,
+.smart-nav-logout:focus-visible {
+    background: rgba(255,255,255,.16) !important;
+}
+
+.smart-navbar-toggler {
+    width: 44px;
+    height: 42px;
+    display: grid;
+    place-items: center;
+    padding: 0 !important;
+    border: 1px solid rgba(255,255,255,.25) !important;
+    border-radius: 11px !important;
+    box-shadow: none !important;
+}
+
+.smart-navbar-toggler:focus {
+    box-shadow: 0 0 0 3px rgba(212,175,55,.22) !important;
+}
+
+.smart-menu-icon {
+    width: 20px;
+    display: grid;
+    gap: 4px;
+}
+
+.smart-menu-icon span {
+    display: block;
+    width: 100%;
+    height: 2px;
+    border-radius: 99px;
+    background: #fff;
+}
+
+@media (max-width: 991.98px) {
+    .smart-navbar-container {
+        min-height: 68px;
+    }
+
+    .smart-navbar-collapse {
+        margin: 9px 0 12px;
+        padding: 10px;
+        border: 1px solid rgba(255,255,255,.12);
+        border-radius: 16px;
+        background: rgba(5, 74, 70, .42);
+        box-shadow: 0 14px 30px rgba(0,0,0,.12);
+        backdrop-filter: blur(12px);
+    }
+
+    .smart-navbar-nav {
+        width: 100%;
+        gap: 3px;
+        margin: 0;
+    }
+
+    .smart-nav-link {
+        width: 100%;
+        justify-content: flex-start;
+        min-height: 43px;
+        padding: 10px 12px !important;
+    }
+
+    .smart-nav-link.active::after {
+        left: auto;
+        right: 12px;
+        bottom: 9px;
+        width: 4px;
+        height: 24px;
+    }
+
+    .smart-navbar-actions {
+        width: 100%;
+        margin: 9px 0 0;
+        padding-top: 10px;
+        border-top: 1px solid rgba(255,255,255,.12);
+        justify-content: stretch;
+    }
+
+    .smart-navbar-actions > * {
+        flex: 1 1 0;
+    }
+
+    .smart-user-greeting {
+        justify-content: center;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .smart-navbar-title {
+        font-size: 17px;
+    }
+
+    .smart-navbar-logo {
+        width: 40px;
+        height: 40px;
+        flex-basis: 40px;
+        border-radius: 12px;
+    }
+
+    .smart-navbar-container {
+        gap: 12px;
+    }
+
+    .smart-navbar-actions {
+        flex-wrap: wrap;
+    }
+
+    .smart-navbar-actions > * {
+        flex: 1 1 calc(50% - 4px);
+    }
+}
+
+/* =========================================================
+   SMART MATRIMONY — SERVICES NAV DROPDOWN
+========================================================= */
+.smart-nav-services {
+    position: relative;
+}
+
+.smart-nav-services-toggle {
+    cursor: pointer;
+}
+
+.smart-services-chevron {
+    font-size: 8px !important;
+    transition: transform .2s ease;
+}
+
+.smart-nav-services:hover .smart-services-chevron,
+.smart-nav-services:focus-within .smart-services-chevron,
+.smart-nav-services.is-open .smart-services-chevron {
+    transform: rotate(180deg);
+}
+
+.smart-services-dropdown {
+    position: absolute;
+    top: calc(100% + 9px);
+    left: 50%;
+    width: 315px;
+    padding: 10px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+    transform: translate(-50%, 7px);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    border: 1px solid rgba(15,118,110,.12);
+    border-radius: 17px;
+    background: rgba(255,255,255,.98);
+    box-shadow: 0 20px 45px rgba(15,23,42,.16);
+    backdrop-filter: blur(16px);
+    transition: opacity .18s ease, transform .18s ease, visibility .18s ease;
+}
+
+.smart-services-dropdown::before {
+    content: '';
+    position: absolute;
+    top: -6px;
+    left: 50%;
+    width: 12px;
+    height: 12px;
+    transform: translateX(-50%) rotate(45deg);
+    background: #fff;
+    border-left: 1px solid rgba(15,118,110,.10);
+    border-top: 1px solid rgba(15,118,110,.10);
+}
+
+.smart-nav-services:hover .smart-services-dropdown,
+.smart-nav-services:focus-within .smart-services-dropdown,
+.smart-nav-services.is-open .smart-services-dropdown {
+    transform: translate(-50%, 0);
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
+
+.smart-services-dropdown-head {
+    grid-column: 1 / -1;
+    padding: 8px 9px 9px;
+    margin-bottom: 2px;
+    border-bottom: 1px solid #edf2f1;
+}
+
+.smart-services-dropdown-head strong {
+    display: block;
+    color: #172033;
+    font-size: 11px;
+    font-weight: 800;
+}
+
+.smart-services-dropdown-head small {
+    display: block;
+    margin-top: 2px;
+    color: #94a3b8;
+    font-size: 8px;
+}
+
+.smart-services-dropdown > a {
+    min-height: 39px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 9px;
+    border-radius: 10px;
+    color: #475569;
+    text-decoration: none;
+    font-size: 9px;
+    font-weight: 700;
+    transition: background .18s ease, color .18s ease, transform .18s ease;
+}
+
+.smart-services-dropdown > a i:first-child {
+    width: 24px;
+    height: 24px;
+    display: grid;
+    place-items: center;
+    flex: 0 0 24px;
+    border-radius: 8px;
+    background: #edf8f6;
+    color: #0f766e;
+    font-size: 10px;
+}
+
+.smart-services-dropdown > a:hover,
+.smart-services-dropdown > a:focus-visible {
+    background: #f1f9f7;
+    color: #0f766e;
+    transform: translateX(2px);
+}
+
+.smart-services-dropdown .smart-services-all {
+    grid-column: 1 / -1;
+    margin-top: 3px;
+    justify-content: center;
+    color: #fff;
+    background: linear-gradient(135deg,#0f766e,#0b5f5a);
+}
+
+.smart-services-dropdown .smart-services-all i:first-child {
+    background: rgba(255,255,255,.14);
+    color: #fff;
+}
+
+.smart-services-dropdown .smart-services-all i:last-child {
+    width: auto;
+    height: auto;
+    margin-left: auto;
+    background: transparent;
+    color: #fff;
+    font-size: 8px;
+}
+
+.smart-services-dropdown .smart-services-all:hover,
+.smart-services-dropdown .smart-services-all:focus-visible {
+    color: #fff;
+    background: linear-gradient(135deg,#0b665f,#09534f);
+}
+
+@media (max-width: 991.98px) {
+    /* Keep the mobile/tablet service menu floating over the page.
+       It must NOT increase the navbar/collapse height when opened. */
+    .smart-navbar,
+    .smart-navbar-container,
+    .smart-navbar-collapse,
+    .smart-navbar-nav {
+        overflow: visible !important;
+    }
+
+    .smart-nav-services {
+        position: relative;
+        width: 100%;
+    }
+
+    .smart-nav-services-toggle {
+        justify-content: flex-start;
+        width: 100%;
+    }
+
+    .smart-services-dropdown {
+        /* Float above the page on small/medium screens. This keeps the
+           Bootstrap collapse height stable while the menu is open. */
+        position: fixed;
+        top: var(--smart-services-mobile-top, 120px);
+        left: var(--smart-services-mobile-left, 20px);
+        width: min(315px, calc(100vw - 40px));
+        margin: 0;
+        padding: 8px;
+        transform: translateY(-4px);
+        display: grid;
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+        z-index: 2000;
+        border: 1px solid rgba(15,118,110,.12);
+        border-radius: 15px;
+        background: rgba(255,255,255,.98);
+        box-shadow: 0 18px 38px rgba(15,23,42,.20);
+        backdrop-filter: blur(14px);
+        transition: opacity .18s ease, transform .18s ease, visibility .18s ease;
+    }
+
+    .smart-services-dropdown::before {
+        display: block;
+        left: 24px;
+    }
+
+    .smart-nav-services.is-open .smart-services-dropdown {
+        display: grid;
+        transform: translateY(0);
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
+    }
+
+    .smart-services-dropdown-head {
+        padding-top: 6px;
+    }
+
+    .smart-services-dropdown > a {
+        min-height: 37px;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .smart-services-dropdown {
+        width: min(305px, calc(100vw - 28px));
+    }
+
+    .smart-services-dropdown > a {
+        min-height: 36px;
+        font-size: 9px;
+    }
+}
+
+/* =========================================================
+   SMART MATRIMONY — RESPONSIVE HEADER FINAL ALIGNMENT
+   Keep the Services hit-area limited to its content and keep
+   the primary navigation on one horizontal line on compact
+   screens without changing the desktop/full-view behavior.
+========================================================= */
+@media (max-width: 991.98px) {
+    .smart-navbar-nav {
+        width: 100%;
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 3px !important;
+        margin: 0 !important;
+    }
+
+    .smart-navbar-nav > .nav-item {
+        flex: 0 0 auto !important;
+        width: auto !important;
+        min-width: 0;
+    }
+
+    .smart-nav-link {
+        width: auto !important;
+        min-height: 40px;
+        justify-content: center !important;
+        white-space: nowrap;
+        padding: 8px 8px !important;
+        gap: 5px;
+        font-size: 11px;
+    }
+
+    /* Only the actual Services link is hoverable/clickable,
+       not the full row width. */
+    .smart-nav-services {
+        width: auto !important;
+        flex: 0 0 auto !important;
+    }
+
+    .smart-nav-services-toggle {
+        width: auto !important;
+        display: inline-flex !important;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .smart-navbar-nav {
+        gap: 1px !important;
+    }
+
+    .smart-nav-link {
+        min-height: 39px;
+        padding: 7px 6px !important;
+        gap: 4px;
+        font-size: 10px;
+    }
+
+    .smart-nav-link i {
+        font-size: 10px;
+    }
+
+    .smart-services-chevron {
+        font-size: 7px !important;
+    }
+}
+
+/* =========================================================
+   SMART MATRIMONY — MOBILE/TABLET HEADER POLISH
+   Scoped to <=991.98px only. Desktop remains unchanged.
+========================================================= */
+@media (max-width: 991.98px) {
+    /* Keep the active marker compact and horizontal on smaller screens. */
+    .smart-nav-link.active::after {
+        left: 12px !important;
+        right: 12px !important;
+        bottom: 4px !important;
+        top: auto !important;
+        width: auto !important;
+        height: 2px !important;
+        border-radius: 99px !important;
+    }
+
+    /* The Services item itself must be only as wide as its link content. */
+    .smart-nav-services {
+        position: static !important;
+        width: auto !important;
+        max-width: max-content !important;
+        flex: 0 0 auto !important;
+    }
+
+    .smart-nav-services-toggle {
+        width: auto !important;
+        max-width: max-content !important;
+        flex: 0 0 auto !important;
+    }
+
+    /* On compact screens, tapping Services controls the dropdown.
+       Do not let the parent hover state accidentally open it. */
+    .smart-nav-services:hover .smart-services-dropdown,
+    .smart-nav-services:focus-within .smart-services-dropdown {
+        opacity: 0 !important;
+        visibility: hidden !important;
+        pointer-events: none !important;
+        transform: translate(-50%, -4px) !important;
+    }
+
+    .smart-nav-services.is-open .smart-services-dropdown {
+        opacity: 1 !important;
+        visibility: visible !important;
+        pointer-events: auto !important;
+        transform: translate(-50%, 0) !important;
+    }
+
+    /* Keep the floating dropdown safely inside the viewport. */
+    .smart-services-dropdown {
+        left: 50% !important;
+        width: min(315px, calc(100vw - 28px)) !important;
+        max-width: calc(100vw - 28px) !important;
+        transform: translate(-50%, -4px) !important;
+        box-sizing: border-box !important;
+    }
+
+    .smart-nav-services.is-open .smart-services-dropdown {
+        left: 50% !important;
+        transform: translate(-50%, 0) !important;
+    }
+
+    /* The arrow remains centered with the dropdown rather than following
+       the old left-anchored mobile position. */
+    .smart-services-dropdown::before {
+        left: 50% !important;
+    }
+
+    /* Keep Bootstrap from animating the navbar's calculated height.
+       That height animation causes the brief oversized flash on open and
+       the delayed/stranded buttons seen during close. Animate the contents
+       instead, while the final header height changes cleanly in one step. */
+    .smart-navbar-collapse.collapsing {
+        height: auto !important;
+        overflow: visible !important;
+        transition: none !important;
+    }
+
+    .smart-navbar-collapse .smart-navbar-nav,
+    .smart-navbar-collapse .smart-navbar-actions {
+        opacity: 1;
+        transform: translateY(0);
+        transition: opacity .16s ease, transform .16s ease;
+    }
+
+    .smart-navbar-collapse.collapsing .smart-navbar-nav,
+    .smart-navbar-collapse.collapsing .smart-navbar-actions {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+
+    .smart-navbar-collapse.collapse:not(.show) .smart-navbar-nav,
+    .smart-navbar-collapse.collapse:not(.show) .smart-navbar-actions {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+
+    .smart-navbar-collapse.collapse.show .smart-navbar-nav,
+    .smart-navbar-collapse.collapse.show .smart-navbar-actions {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (max-width: 575.98px) {
+    .smart-services-dropdown {
+        width: calc(100vw - 24px) !important;
+        max-width: calc(100vw - 24px) !important;
+    }
+}

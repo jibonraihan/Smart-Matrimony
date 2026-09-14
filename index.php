@@ -4,6 +4,10 @@ $page_css = 'assets/css/index.css';
 
 require_once 'config/db.php';
 
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 /* =========================================================
    DYNAMIC HOMEPAGE STATISTICS
 ========================================================= */
@@ -124,6 +128,60 @@ if ($stmt) {
 
     mysqli_stmt_close($stmt);
 
+}
+
+/* =========================================================
+   PUBLIC WEDDING SERVICES
+   Loaded here so visitors can explore packages without logging in.
+========================================================= */
+$home_services = [];
+$home_service_result = mysqli_query($conn, "
+    SELECT service_id, service_name, description
+    FROM services
+    ORDER BY service_id
+");
+if ($home_service_result) {
+    while ($row = mysqli_fetch_assoc($home_service_result)) {
+        $home_services[] = $row;
+    }
+}
+
+$home_service_packages = [];
+$home_package_result = mysqli_query($conn, "
+    SELECT sp.provider_id, sp.service_id, sp.provider_name, sp.package_name,
+           sp.package_details, sp.image, sp.price, sp.location, sp.rating, sp.review_count
+    FROM service_providers sp
+    WHERE sp.status = 'Active'
+    ORDER BY sp.service_id, sp.rating DESC, sp.review_count DESC, sp.provider_id DESC
+");
+if ($home_package_result) {
+    while ($row = mysqli_fetch_assoc($home_package_result)) {
+        $home_service_packages[(int) $row['service_id']][] = $row;
+    }
+}
+
+$home_service_icons = [
+    'Photography' => 'fa-camera-retro',
+    'Catering' => 'fa-utensils',
+    'Decoration' => 'fa-wand-magic-sparkles',
+    'Car Rental' => 'fa-car',
+    'Makeup Artist' => 'fa-brush',
+    'Wedding Planner' => 'fa-clipboard-list',
+    'Convention Center' => 'fa-building-columns',
+    'Resort / Lawn' => 'fa-tree',
+    'Mehendi Artist' => 'fa-hand-sparkles',
+    'Wedding Flowers' => 'fa-seedling',
+    'Basor Ghor Decoration' => 'fa-bed',
+    'Wedding Dress' => 'fa-shirt',
+    'Groom Dress' => 'fa-user-tie',
+    'Bridal Accessories' => 'fa-gem',
+    'Sound & Lighting' => 'fa-lightbulb',
+    'Invitation & Printing' => 'fa-envelope-open-text'
+];
+
+$home_is_logged_in = isset($_SESSION['user_id']);
+if ($home_is_logged_in && empty($_SESSION['cart_csrf'])) {
+    $_SESSION['cart_csrf'] = bin2hex(random_bytes(24));
 }
 
 include 'includes/header.php';
@@ -661,45 +719,6 @@ include 'includes/navbar.php';
             </div>
 
 
-            <!-- =========================
-                 ISLAMIC REMINDER
-            ========================== -->
-
-            <div
-                class="islamic-reminder"
-                data-aos="fade-up"
-            >
-
-                <div class="reminder-icon">
-
-                    <i class="fa-solid fa-heart"></i>
-
-                </div>
-
-
-                <div class="reminder-content">
-
-                    <span>
-                        A Gentle Reminder
-                    </span>
-
-                    <h4>
-                        Seek a marriage built on
-                        character, responsibility and mercy.
-                    </h4>
-
-                    <p>
-
-                        A meaningful matrimonial journey begins
-                        with sincere intention, good character,
-                        responsibility and respect.
-
-                    </p>
-
-                </div>
-
-            </div>
-
         </div>
 
     </section>
@@ -1054,37 +1073,55 @@ include 'includes/navbar.php';
 
             <!-- Feature Bottom Note -->
 
-            <div
-                class="features-bottom-note"
-                data-aos="fade-up"
-            >
-
-                <div class="features-bottom-icon">
-
-                    <i class="fa-solid fa-shield-heart"></i>
-
-                </div>
-
-                <div>
-
-                    <strong>
-                        Designed with trust in mind.
-                    </strong>
-
-                    <span>
-                        From account verification to
-                        respectful communication.
-                    </span>
-
-                </div>
-
-            </div>
+            
 
         </div>
 
     </section>
 
-        <!-- =========================
+    <!-- =========================
+         WEDDING SERVICES
+    ========================== -->
+    <section id="home-services" class="home-services-section">
+        <div class="container">
+            <div class="home-services-heading" data-aos="fade-up">
+                <div>
+                    <span class="home-services-label"><i class="fa-solid fa-layer-group"></i> Smart Wedding Services</span>
+                    <h2>Everything you need for your <span>special day.</span></h2>
+                    <p>Explore available wedding services and discover packages from our current provider catalog.</p>
+                </div>
+                <div class="home-services-count">
+                    <strong><?= count($home_services); ?></strong>
+                    <span>Service Categories</span>
+                </div>
+            </div>
+
+            <div class="home-service-grid">
+                <?php foreach ($home_services as $service): ?>
+                    <?php $service_id = (int) $service['service_id']; ?>
+                    <?php $package_count = count($home_service_packages[$service_id] ?? []); ?>
+                    <button type="button" class="home-service-card" data-service-id="<?= $service_id; ?>" data-service-name="<?= htmlspecialchars($service['service_name'], ENT_QUOTES, 'UTF-8'); ?>">
+                        <span class="home-service-icon"><i class="fa-solid <?= htmlspecialchars($home_service_icons[$service['service_name']] ?? 'fa-heart'); ?>"></i></span>
+                        <span class="home-service-copy">
+                            <strong><?= htmlspecialchars($service['service_name']); ?></strong>
+                            <small><?= htmlspecialchars($service['description'] ?? 'Wedding-related service'); ?></small>
+                        </span>
+                        <span class="home-service-meta">
+                            <?= $package_count; ?> <?= $package_count === 1 ? 'package' : 'packages'; ?>
+                            <i class="fa-solid fa-arrow-right"></i>
+                        </span>
+                    </button>
+                <?php endforeach; ?>
+            </div>
+
+            <div class="home-services-note">
+                <span><i class="fa-solid fa-shield-heart"></i></span>
+                <div><strong>Browse freely, book securely.</strong><p>Anyone can explore service packages. Login or registration is required when adding a package to your service cart.</p></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- =========================
          DYNAMIC STATISTICS
     ========================== -->
     <section
@@ -1487,31 +1524,7 @@ include 'includes/navbar.php';
 
             <!-- Bottom Message -->
 
-            <div
-                class="how-it-works-note"
-                data-aos="fade-up"
-            >
-
-                <div class="how-note-icon">
-
-                    <i class="fa-solid fa-heart"></i>
-
-                </div>
-
-                <div class="how-note-content">
-
-                    <strong>
-                        Take your time. Choose with care.
-                    </strong>
-
-                    <span>
-                        A matrimonial journey is about finding
-                        compatibility, trust and mutual respect.
-                    </span>
-
-                </div>
-
-            </div>
+            
 
         </div>
 
@@ -1641,8 +1654,38 @@ include 'includes/navbar.php';
 
 </main>
 
-<?php
+<!-- =========================
+     SERVICE PACKAGE MODAL
+========================== -->
+<div class="service-package-modal" id="servicePackageModal" aria-hidden="true">
+    <div class="service-package-backdrop" data-service-modal-close></div>
+    <div class="service-package-dialog" role="dialog" aria-modal="true" aria-labelledby="servicePackageTitle">
+        <button type="button" class="service-package-close" data-service-modal-close aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+        <div class="service-package-header">
+            <span class="home-services-label"><i class="fa-solid fa-layer-group"></i> Available Packages</span>
+            <h2 id="servicePackageTitle">Wedding Service</h2>
+            <p id="servicePackageDescription">Explore available packages and provider details.</p>
+        </div>
+        <div class="service-package-body">
+            <button type="button" class="service-package-nav service-package-prev" id="servicePackagePrev" aria-label="Previous package"><i class="fa-solid fa-chevron-left"></i></button>
+            <div class="service-package-card-wrap" id="servicePackageContent"></div>
+            <button type="button" class="service-package-nav service-package-next" id="servicePackageNext" aria-label="Next package"><i class="fa-solid fa-chevron-right"></i></button>
+        </div>
+        <div class="service-package-footer">
+            <span id="servicePackageCounter"></span>
+            <a href="<?= BASE_URL; ?>login.php" class="service-login-link" id="serviceLoginLink"><i class="fa-solid fa-right-to-bracket"></i> Login to continue</a>
+        </div>
+    </div>
+</div>
 
-include 'includes/footer.php';
+<script>
+    window.SMART_SERVICE_DATA = <?= json_encode($home_services, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
+    window.SMART_SERVICE_PACKAGES = <?= json_encode($home_service_packages, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
+    window.SMART_SERVICE_ICONS = <?= json_encode($home_service_icons, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
+    window.SMART_SERVICE_LOGGED_IN = <?= $home_is_logged_in ? 'true' : 'false'; ?>;
+    window.SMART_SERVICE_BASE_URL = <?= json_encode(BASE_URL); ?>;
+    window.SMART_SERVICE_CART_CSRF = <?= json_encode($home_is_logged_in ? ($_SESSION['cart_csrf'] ?? '') : ''); ?>;
+</script>
+<script src="<?= BASE_URL; ?>assets/js/home-services.js?v=1"></script>
 
-?>
+<?php include 'includes/footer.php'; ?>
