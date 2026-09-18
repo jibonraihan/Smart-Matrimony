@@ -246,6 +246,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     elseif (!preg_match("/[a-z]/", $password)) {
         $error = "Password must contain at least one lowercase letter.";
     }
+    elseif (!preg_match("/[0-9]/", $password)) {
+        $error = "Password must contain at least one number.";
+    }
     elseif (!preg_match("/[^A-Za-z0-9]/", $password)) {
         $error = "Password must contain at least one special character.";
     }
@@ -1032,7 +1035,7 @@ Email Address
 
     <div id="passwordStrength" class="password-strength mt-2"></div>
 
-    <div class="password-requirements" id="passwordRequirements">
+    <div class="password-requirements password-requirements-compact" id="passwordRequirements">
 
         <div class="password-requirement" data-rule="length">
             <i class="fa-solid fa-circle-xmark"></i>
@@ -1047,6 +1050,11 @@ Email Address
         <div class="password-requirement" data-rule="lower">
             <i class="fa-solid fa-circle-xmark"></i>
             <span>One lowercase letter (a-z)</span>
+        </div>
+
+        <div class="password-requirement" data-rule="number">
+            <i class="fa-solid fa-circle-xmark"></i>
+            <span>One number (0-9)</span>
         </div>
 
         <div class="password-requirement" data-rule="special">
@@ -1098,7 +1106,7 @@ Email Address
     <label class="form-check-label" for="terms">
 
         I agree to the
-        <a href="#">Terms & Conditions</a>
+        <a href="<?= BASE_URL; ?>terms.php">Terms &amp; Conditions</a>
 
     </label>
 
@@ -1196,6 +1204,37 @@ Create Account
 
 </div>
 
+<style>
+.password-requirements-compact {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    column-gap: 14px;
+    row-gap: 4px;
+    padding: 8px 12px !important;
+}
+.password-requirements-compact .password-requirement {
+    min-width: 0;
+    margin: 0 !important;
+    gap: 6px;
+    font-size: 12px;
+    line-height: 1.25;
+    white-space: nowrap;
+}
+.password-requirements-compact .password-requirement i {
+    font-size: 12px;
+    flex-shrink: 0;
+}
+@media (max-width: 600px) {
+    .password-requirements-compact {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        column-gap: 10px;
+    }
+    .password-requirements-compact .password-requirement {
+        white-space: normal;
+    }
+}
+</style>
+
 <script>
 
 document.querySelectorAll(".toggle-password").forEach(function(icon){
@@ -1234,6 +1273,7 @@ const requirementElements = {
     length: document.querySelector('[data-rule="length"]'),
     upper: document.querySelector('[data-rule="upper"]'),
     lower: document.querySelector('[data-rule="lower"]'),
+    number: document.querySelector('[data-rule="number"]'),
     special: document.querySelector('[data-rule="special"]')
 };
 
@@ -1256,6 +1296,7 @@ function updatePasswordStatus() {
         length: value.length >= 8,
         upper: /[A-Z]/.test(value),
         lower: /[a-z]/.test(value),
+        number: /[0-9]/.test(value),
         special: /[^A-Za-z0-9]/.test(value)
     };
 
@@ -1274,7 +1315,7 @@ function updatePasswordStatus() {
 
         strength.textContent = "";
 
-    }else if(fulfilled === 4){
+    }else if(fulfilled === 5){
 
         strength.textContent = "Password Strength: Strong";
         strength.style.color = "#16a34a";

@@ -507,6 +507,12 @@ include 'includes/navbar.php';
 
                         </form>
 
+                        <div class="forgot-password-wrap">
+                            <a href="forgot_password.php" class="forgot-password-link">
+                                Forgot Password?
+                            </a>
+                        </div>
+
 
 
                         <!-- SOCIAL DIVIDER -->

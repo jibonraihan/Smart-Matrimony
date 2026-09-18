@@ -215,3 +215,63 @@ function send_verification_email(
         return false;
     }
 }
+
+/**
+ * Send a password reset OTP email.
+ */
+function send_password_reset_email(
+    $toEmail,
+    $firstName,
+    $resetCode
+) {
+    $mail = new PHPMailer(true);
+
+    try {
+        $mail->isSMTP();
+        $mail->Host = 'smtp.gmail.com';
+        $mail->SMTPAuth = true;
+        $mail->Username = 'mddinar31@gmail.com';
+        $mail->Password = 'hrrx wwwm fotp mjmi';
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        $mail->Port = 587;
+        $mail->CharSet = 'UTF-8';
+
+        $mail->setFrom('mddinar31@gmail.com', 'Smart Matrimony');
+        $mail->addAddress($toEmail, $firstName);
+        $mail->isHTML(true);
+        $mail->Subject = 'Smart Matrimony - Password Reset Code';
+
+        $safeFirstName = htmlspecialchars($firstName, ENT_QUOTES, 'UTF-8');
+        $safeCode = htmlspecialchars($resetCode, ENT_QUOTES, 'UTF-8');
+
+        $mail->Body = '
+        <div style="margin:0;padding:40px 15px;background:#f8fafc;font-family:Arial,Helvetica,sans-serif;">
+            <div style="max-width:520px;margin:auto;background:#ffffff;padding:35px;border-radius:18px;box-shadow:0 10px 35px rgba(15,23,42,.08);">
+                <h2 style="margin:0 0 15px;color:#0f766e;">Smart Matrimony</h2>
+                <p style="color:#334155;font-size:15px;">Hello ' . $safeFirstName . ',</p>
+                <p style="color:#64748b;line-height:1.7;">We received a request to reset the password for your Smart Matrimony account.</p>
+                <p style="color:#64748b;line-height:1.7;">Please use the following verification code to continue:</p>
+                <div style="margin:25px 0;padding:22px;text-align:center;background:#f0fdf4;border-radius:14px;">
+                    <div style="font-size:32px;font-weight:700;letter-spacing:8px;color:#0f766e;">' . $safeCode . '</div>
+                </div>
+                <p style="color:#64748b;font-size:14px;">This verification code is valid for 2 minutes.</p>
+                <p style="color:#94a3b8;font-size:13px;margin-top:25px;">If you did not request a password reset, you can safely ignore this email.</p>
+                <hr style="border:0;border-top:1px solid #e2e8f0;margin:25px 0;">
+                <p style="margin:0;color:#94a3b8;font-size:12px;">Smart Matrimony</p>
+            </div>
+        </div>';
+
+        $mail->AltBody =
+            "Hello {$firstName},\n\n" .
+            "Your Smart Matrimony password reset code is: {$resetCode}\n\n" .
+            "This code is valid for 2 minutes.\n\n" .
+            "If you did not request a password reset, you can safely ignore this email.\n\n" .
+            "Smart Matrimony";
+
+        $mail->send();
+        return true;
+    } catch (Exception $e) {
+        error_log('Smart Matrimony Password Reset SMTP Error: ' . $mail->ErrorInfo);
+        return false;
+    }
+}

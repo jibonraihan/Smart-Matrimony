@@ -9,7 +9,7 @@ $isHomePage = $currentPage === 'index.php';
 
 $navItems = [
     [
-        'label' => 'Home',
+        'label' => 'Public Home',
         'icon' => 'fa-house',
         'href' => BASE_URL . ($isHomePage ? '#' : 'index.php'),
         'match' => $currentPage === 'index.php',
@@ -17,15 +17,14 @@ $navItems = [
     [
         'label' => 'About',
         'icon' => 'fa-circle-info',
-        'href' => BASE_URL . 'index.php#islamic-guidance',
-        'match' => false,
+        'href' => BASE_URL . 'about.php',
+        'match' => $currentPage === 'about.php',
     ],
     [
         'label' => 'Services',
         'icon' => 'fa-layer-group',
-        'href' => '#',
+        'href' => BASE_URL . 'index.php#features',
         'match' => false,
-        'dropdown' => true,
     ],
     [
         'label' => 'Contact',
@@ -66,43 +65,15 @@ $navItems = [
 
             <ul class="navbar-nav smart-navbar-nav">
                 <?php foreach ($navItems as $item): ?>
-                    <?php if (!empty($item['dropdown'])): ?>
-                        <li class="nav-item smart-nav-services">
-                            <a
-                                class="nav-link smart-nav-link smart-nav-services-toggle"
-                                href="<?= htmlspecialchars($item['href'], ENT_QUOTES, 'UTF-8'); ?>"
-                                aria-haspopup="true"
-                                aria-expanded="false">
-                                <i class="fa-solid <?= htmlspecialchars($item['icon'], ENT_QUOTES, 'UTF-8'); ?>" aria-hidden="true"></i>
-                                <span><?= htmlspecialchars($item['label']); ?></span>
-                                <i class="fa-solid fa-chevron-down smart-services-chevron" aria-hidden="true"></i>
-                            </a>
-                            <div class="smart-services-dropdown" aria-label="Wedding service categories">
-                                <div class="smart-services-dropdown-head">
-                                    <strong>Explore Wedding Services</strong>
-                                    <small>Browse packages &amp; providers</small>
-                                </div>
-                                <a href="<?= BASE_URL; ?>index.php?service=1#home-services" data-home-service="1"><i class="fa-solid fa-camera-retro"></i><span>Photography</span></a>
-                                <a href="<?= BASE_URL; ?>index.php?service=7#home-services" data-home-service="7"><i class="fa-solid fa-building-columns"></i><span>Convention Center</span></a>
-                                <a href="<?= BASE_URL; ?>index.php?service=3#home-services" data-home-service="3"><i class="fa-solid fa-wand-magic-sparkles"></i><span>Decoration</span></a>
-                                <a href="<?= BASE_URL; ?>index.php?service=15#home-services" data-home-service="15"><i class="fa-solid fa-lightbulb"></i><span>Sound &amp; Lighting</span></a>
-                                <a href="<?= BASE_URL; ?>index.php?service=5#home-services" data-home-service="5"><i class="fa-solid fa-brush"></i><span>Makeup Artist</span></a>
-                                <a href="<?= BASE_URL; ?>index.php?service=12#home-services" data-home-service="12"><i class="fa-solid fa-shirt"></i><span>Wedding Dress</span></a>
-                                <a href="<?= BASE_URL; ?>index.php?service=4#home-services" data-home-service="4"><i class="fa-solid fa-car"></i><span>Car Rental</span></a>
-                                <a class="smart-services-all" href="<?= BASE_URL; ?>index.php#home-services"><i class="fa-solid fa-table-cells-large"></i><span>All Services</span><i class="fa-solid fa-arrow-right"></i></a>
-                            </div>
-                        </li>
-                    <?php else: ?>
-                        <li class="nav-item">
-                            <a
-                                class="nav-link smart-nav-link<?= $item['match'] ? ' active' : ''; ?>"
-                                href="<?= htmlspecialchars($item['href'], ENT_QUOTES, 'UTF-8'); ?>"
-                                <?= $item['match'] ? 'aria-current="page"' : ''; ?>>
-                                <i class="fa-solid <?= htmlspecialchars($item['icon'], ENT_QUOTES, 'UTF-8'); ?>" aria-hidden="true"></i>
-                                <span><?= htmlspecialchars($item['label']); ?></span>
-                            </a>
-                        </li>
-                    <?php endif; ?>
+                    <li class="nav-item">
+                        <a
+                            class="nav-link smart-nav-link<?= $item['match'] ? ' active' : ''; ?>"
+                            href="<?= htmlspecialchars($item['href'], ENT_QUOTES, 'UTF-8'); ?>"
+                            <?= $item['match'] ? 'aria-current="page"' : ''; ?>>
+                            <i class="fa-solid <?= htmlspecialchars($item['icon'], ENT_QUOTES, 'UTF-8'); ?>" aria-hidden="true"></i>
+                            <span><?= htmlspecialchars($item['label']); ?></span>
+                        </a>
+                    </li>
                 <?php endforeach; ?>
             </ul>
 
