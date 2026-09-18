@@ -650,7 +650,7 @@ hr{
     place-items: center;
     overflow: hidden;
     border-radius: 13px;
-    background: linear-gradient(145deg, rgba(255,255,255,.20), rgba(255,255,255,.07));
+    background: #ffffff;
     border: 1px solid rgba(255,255,255,.28);
     box-shadow: 0 5px 16px rgba(0,0,0,.15), inset 0 1px 0 rgba(255,255,255,.18);
 }
@@ -1314,5 +1314,262 @@ hr{
     .smart-services-dropdown {
         width: calc(100vw - 24px) !important;
         max-width: calc(100vw - 24px) !important;
+    }
+}
+
+/* =========================================================
+   FOOTER — CONTACT & FEEDBACK ENHANCEMENTS
+========================================================= */
+
+.footer-support-links .footer-email-link {
+    align-items: flex-start;
+    max-width: 245px;
+}
+
+.footer-support-links .footer-email-link span {
+    overflow-wrap: anywhere;
+}
+
+.footer-links a i {
+    width: 14px;
+    text-align: center;
+    color: #4fb8ad;
+}
+
+.footer-links a:hover i {
+    color: #ffffff;
+}
+
+.footer-action-link {
+    cursor: pointer;
+}
+
+/* Modal */
+.footer-modal-open {
+    overflow: hidden;
+}
+
+.footer-form-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .22s ease, visibility .22s ease;
+}
+
+.footer-form-modal.is-open {
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.footer-form-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(8, 28, 32, .68);
+    backdrop-filter: blur(5px);
+}
+
+.footer-form-dialog {
+    position: relative;
+    z-index: 1;
+    width: min(100%, 620px);
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
+    padding: 30px;
+    border: 1px solid rgba(29, 117, 110, .16);
+    border-radius: 22px;
+    background: #ffffff;
+    box-shadow: 0 28px 80px rgba(0, 0, 0, .28);
+    transform: translateY(12px) scale(.98);
+    transition: transform .22s ease;
+}
+
+.footer-form-modal.is-open .footer-form-dialog {
+    transform: translateY(0) scale(1);
+}
+
+.footer-form-close {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    width: 36px;
+    height: 36px;
+    border: 0;
+    border-radius: 50%;
+    color: #547074;
+    background: #eef5f4;
+    cursor: pointer;
+    transition: .2s ease;
+}
+
+.footer-form-close:hover {
+    color: #ffffff;
+    background: #1d756e;
+    transform: rotate(90deg);
+}
+
+.footer-form-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 54px;
+    height: 54px;
+    margin-bottom: 13px;
+    border-radius: 16px;
+    color: #1d756e;
+    background: linear-gradient(135deg, #e8f6f3, #f5fbfa);
+    font-size: 22px;
+}
+
+.footer-form-kicker {
+    color: #1d756e;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 1.4px;
+}
+
+.footer-form-dialog h2 {
+    margin: 4px 0 5px;
+    color: #17383d;
+    font-size: 24px;
+    font-weight: 750;
+}
+
+.footer-form-dialog > p {
+    margin: 0 0 20px;
+    color: #718487;
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.footer-message-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.footer-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+}
+
+.footer-field {
+    position: relative;
+}
+
+.footer-field label {
+    display: block;
+    margin: 0 0 7px;
+    color: #29484c;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.footer-input-wrap {
+    position: relative;
+}
+
+.footer-input-wrap i {
+    position: absolute;
+    top: 50%;
+    left: 13px;
+    color: #7d999b;
+    font-size: 13px;
+    transform: translateY(-50%);
+}
+
+.footer-input-wrap input,
+.footer-field textarea {
+    width: 100%;
+    border: 1px solid #dce8e7;
+    border-radius: 11px;
+    outline: none;
+    background: #fbfdfd;
+    color: #234146;
+    font-family: inherit;
+    font-size: 12px;
+    transition: border-color .2s ease, box-shadow .2s ease, background .2s ease;
+}
+
+.footer-input-wrap input {
+    height: 44px;
+    padding: 0 13px 0 36px;
+}
+
+.footer-field textarea {
+    min-height: 125px;
+    resize: vertical;
+    padding: 12px 13px;
+    line-height: 1.6;
+}
+
+.footer-input-wrap input:focus,
+.footer-field textarea:focus {
+    border-color: #55a9a0;
+    background: #ffffff;
+    box-shadow: 0 0 0 3px rgba(29, 117, 110, .09);
+}
+
+.footer-character-count {
+    margin-top: 5px;
+    color: #8aa0a2;
+    text-align: right;
+    font-size: 9px;
+}
+
+.footer-submit-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    min-height: 45px;
+    margin-top: 1px;
+    border: 0;
+    border-radius: 11px;
+    color: #ffffff;
+    background: linear-gradient(135deg, #1d756e, #245f65);
+    box-shadow: 0 8px 20px rgba(29, 117, 110, .18);
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform .2s ease, box-shadow .2s ease;
+}
+
+.footer-submit-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 11px 25px rgba(29, 117, 110, .24);
+}
+
+@media (max-width: 576px) {
+    .footer-form-modal {
+        padding: 12px;
+    }
+
+    .footer-form-dialog {
+        max-height: calc(100vh - 24px);
+        padding: 24px 18px 20px;
+        border-radius: 18px;
+    }
+
+    .footer-form-grid {
+        grid-template-columns: 1fr;
+        gap: 13px;
+    }
+
+    .footer-form-dialog h2 {
+        font-size: 21px;
+    }
+
+    .footer-form-dialog > p {
+        font-size: 11px;
     }
 }

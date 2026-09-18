@@ -90,6 +90,103 @@ function generate_verification_code()
     );
 }
 
+/*
+ * Check whether the email domain is configured to receive mail.
+ * This does not prove that the individual mailbox exists; the OTP
+ * verification remains the final ownership check.
+ */
+function email_domain_can_receive_mail($email)
+{
+    $domain = strtolower(trim((string) substr(strrchr($email, '@'), 1)));
+
+    if ($domain === '' || !function_exists('checkdnsrr')) {
+        return true;
+    }
+
+    if (checkdnsrr($domain, 'MX')) {
+        return true;
+    }
+
+    // Some valid domains accept mail through their A/AAAA record without MX.
+    return checkdnsrr($domain, 'A') || checkdnsrr($domain, 'AAAA');
+}
+
+/**
+ * Detect common typos of major email-provider domains before sending OTP.
+ * DNS/MX validation cannot tell whether a domain such as gma.com or gil.com
+ * was intended to be gmail.com, so this lightweight heuristic protects users
+ * from common provider-name typos without blocking normal custom domains.
+ */
+function email_domain_typo_suggestion($email)
+{
+    $domain = strtolower(trim((string) substr(strrchr($email, '@'), 1)));
+
+    if ($domain === '') {
+        return null;
+    }
+
+    $commonDomains = [
+        'gmail.com',
+        'yahoo.com',
+        'hotmail.com',
+        'outlook.com',
+        'live.com',
+        'icloud.com',
+        'proton.me',
+        'protonmail.com',
+        'aol.com',
+        'mail.com',
+        'gmx.com',
+        'yandex.com'
+    ];
+
+    // Never flag an exact known provider domain.
+    if (in_array($domain, $commonDomains, true)) {
+        return null;
+    }
+
+    /*
+     * High-confidence Gmail typos. These are common enough that a DNS/MX
+     * check alone is not useful: some typo domains are real domains and can
+     * still accept mail. We prefer preventing an obvious provider typo over
+     * silently sending an OTP to the wrong domain.
+     */
+    $knownTypos = [
+        'gma.com'   => 'gmail.com',
+        'gil.com'   => 'gmail.com',
+        'gmai.com'  => 'gmail.com',
+        'gmal.com'  => 'gmail.com',
+        'gmial.com' => 'gmail.com',
+        'gmail.co'  => 'gmail.com',
+        'gmail.cm'  => 'gmail.com',
+        'gmil.com'  => 'gmail.com'
+    ];
+
+    if (isset($knownTypos[$domain])) {
+        return $knownTypos[$domain];
+    }
+
+    $bestMatch = null;
+    $bestDistance = PHP_INT_MAX;
+
+    foreach ($commonDomains as $commonDomain) {
+        $distance = levenshtein($domain, $commonDomain);
+
+        if ($distance < $bestDistance) {
+            $bestDistance = $distance;
+            $bestMatch = $commonDomain;
+        }
+    }
+
+    // Only flag very close provider-name typos. A distance of 1–2 is
+    // intentionally conservative so normal business/custom domains remain valid.
+    if ($bestMatch !== null && $bestDistance <= 2) {
+        return $bestMatch;
+    }
+
+    return null;
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $first_name = trim($_POST['first_name'] ?? '');
@@ -122,14 +219,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     ) {
         $error = "Please fill all required fields.";
     }
-    elseif (!preg_match("/^[A-Za-z. ]+$/", $first_name)) {
+    elseif (!preg_match("/^[A-Za-z ]+$/", $first_name)) {
         $error = "Invalid first name.";
     }
-    elseif (!preg_match("/^[A-Za-z. ]+$/", $last_name)) {
+    elseif (!preg_match("/^[A-Za-z ]+$/", $last_name)) {
         $error = "Invalid last name.";
     }
     elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $error = "Invalid email address.";
+    }
+    elseif (($suggestedEmailDomain = email_domain_typo_suggestion($email)) !== null) {
+        $error = "This email domain looks like a typo. Please check your email address. Did you mean @" . $suggestedEmailDomain . "?";
+    }
+    elseif (!email_domain_can_receive_mail($email)) {
+        $error = "This email domain cannot receive emails. Please check your email address.";
     }
     elseif (!preg_match("/^01[3-9][0-9]{8}$/", $mobile)) {
         $error = "Invalid mobile number.";
@@ -155,31 +258,80 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     else {
 
         $duplicate = false;
+        $pendingUserId = null;
+        $pendingVerificationId = null;
 
-        $check = mysqli_prepare(
+        /*
+         * Handle the two possible existing-user cases separately:
+         * 1) Active/Suspended accounts are genuine duplicates.
+         * 2) An Inactive account with an unverified verification record is
+         *    a pending registration and should be reused instead of creating
+         *    another user with the same email.
+         */
+        $emailCheck = mysqli_prepare(
             $conn,
-            "SELECT user_id
+            "SELECT user_id, account_status, mobile
              FROM users
              WHERE email=?
-             OR mobile=?
              LIMIT 1"
         );
 
-        mysqli_stmt_bind_param(
-            $check,
-            "ss",
-            $email,
-            $mobile
-        );
+        mysqli_stmt_bind_param($emailCheck, "s", $email);
+        mysqli_stmt_execute($emailCheck);
+        $emailResult = mysqli_stmt_get_result($emailCheck);
+        $existingEmailUser = mysqli_fetch_assoc($emailResult);
+        mysqli_stmt_close($emailCheck);
 
-        mysqli_stmt_execute($check);
-        mysqli_stmt_store_result($check);
+        if ($existingEmailUser) {
+            $existingEmailUserId = (int) $existingEmailUser['user_id'];
 
-        if (mysqli_stmt_num_rows($check) > 0) {
-            $duplicate = true;
+            if (($existingEmailUser['account_status'] ?? '') === 'Inactive') {
+                $pendingCheck = mysqli_prepare(
+                    $conn,
+                    "SELECT verification_id, verified_at
+                     FROM email_verifications
+                     WHERE user_id=?
+                     LIMIT 1"
+                );
+
+                mysqli_stmt_bind_param($pendingCheck, "i", $existingEmailUserId);
+                mysqli_stmt_execute($pendingCheck);
+                $pendingResult = mysqli_stmt_get_result($pendingCheck);
+                $pendingVerification = mysqli_fetch_assoc($pendingResult);
+                mysqli_stmt_close($pendingCheck);
+
+                if ($pendingVerification && empty($pendingVerification['verified_at'])) {
+                    $pendingUserId = $existingEmailUserId;
+                    $pendingVerificationId = (int) $pendingVerification['verification_id'];
+                } else {
+                    $duplicate = true;
+                }
+            } else {
+                $duplicate = true;
+            }
         }
 
-        mysqli_stmt_close($check);
+        /* Mobile may not belong to another user. The pending account itself
+         * is allowed to update its mobile when the same email is being resumed. */
+        if (!$duplicate) {
+            $mobileCheck = mysqli_prepare(
+                $conn,
+                "SELECT user_id
+                 FROM users
+                 WHERE mobile=?
+                 LIMIT 1"
+            );
+
+            mysqli_stmt_bind_param($mobileCheck, "s", $mobile);
+            mysqli_stmt_execute($mobileCheck);
+            $mobileResult = mysqli_stmt_get_result($mobileCheck);
+            $mobileUser = mysqli_fetch_assoc($mobileResult);
+            mysqli_stmt_close($mobileCheck);
+
+            if ($mobileUser && (int) $mobileUser['user_id'] !== (int) ($pendingUserId ?? 0)) {
+                $duplicate = true;
+            }
+        }
 
         /*
          * Also protect the provider ID from being linked twice.
@@ -219,6 +371,99 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($duplicate) {
             $error = "Email or Mobile already exists.";
+        }
+        elseif ($pendingUserId !== null && $pendingVerificationId !== null) {
+
+            /*
+             * Resume the existing unverified registration. No duplicate user
+             * is created; the submitted registration details replace the
+             * pending details and a fresh verification code is issued.
+             * The transaction keeps the user + verification record in sync
+             * if the mail operation or either database update fails.
+             */
+            $hash = password_hash($password, PASSWORD_DEFAULT);
+
+            $verification_code = generate_verification_code();
+            $code_hash = password_hash($verification_code, PASSWORD_DEFAULT);
+            $expires_at = date('Y-m-d H:i:s', time() + 120);
+            $last_sent_at = date('Y-m-d H:i:s');
+
+            mysqli_begin_transaction($conn);
+            $pendingTransactionOk = true;
+
+            $updateUser = mysqli_prepare(
+                $conn,
+                "UPDATE users
+                 SET first_name=?, last_name=?, gender=?, mobile=?, password=?, account_status='Inactive'
+                 WHERE user_id=?"
+            );
+
+            if (!$updateUser) {
+                $pendingTransactionOk = false;
+            } else {
+                mysqli_stmt_bind_param(
+                    $updateUser,
+                    "sssssi",
+                    $first_name,
+                    $last_name,
+                    $gender,
+                    $mobile,
+                    $hash,
+                    $pendingUserId
+                );
+
+                if (!mysqli_stmt_execute($updateUser)) {
+                    $pendingTransactionOk = false;
+                }
+
+                mysqli_stmt_close($updateUser);
+            }
+
+            if ($pendingTransactionOk) {
+                $verificationUpdate = mysqli_prepare(
+                    $conn,
+                    "UPDATE email_verifications
+                     SET email=?, code_hash=?, expires_at=?, last_sent_at=?, verified_at=NULL
+                     WHERE verification_id=?"
+                );
+
+                if (!$verificationUpdate) {
+                    $pendingTransactionOk = false;
+                } else {
+                    mysqli_stmt_bind_param(
+                        $verificationUpdate,
+                        "ssssi",
+                        $email,
+                        $code_hash,
+                        $expires_at,
+                        $last_sent_at,
+                        $pendingVerificationId
+                    );
+
+                    if (!mysqli_stmt_execute($verificationUpdate)) {
+                        $pendingTransactionOk = false;
+                    }
+
+                    mysqli_stmt_close($verificationUpdate);
+                }
+            }
+
+            if ($pendingTransactionOk) {
+                /* Send using the newly generated code before committing. */
+                if (!send_verification_email($email, $first_name, $verification_code)) {
+                    $pendingTransactionOk = false;
+                }
+            }
+
+            if ($pendingTransactionOk) {
+                mysqli_commit($conn);
+                $_SESSION['pending_verification_user_id'] = $pendingUserId;
+                header("Location: verify_email.php");
+                exit();
+            }
+
+            mysqli_rollback($conn);
+            $error = "We could not send the verification email. Please try again.";
         }
         else {
 
