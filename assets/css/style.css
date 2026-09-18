@@ -1573,3 +1573,14 @@ hr{
         font-size: 11px;
     }
 }
+
+
+/* =========================================================
+   SMART MATRIMONY — STICKY HEADER
+   Keep the completed responsive header visible while scrolling.
+========================================================= */
+.smart-navbar {
+    position: sticky !important;
+    top: 0;
+    z-index: 1030;
+}
