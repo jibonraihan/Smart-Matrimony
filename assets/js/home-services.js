@@ -139,6 +139,13 @@
             ? escapeHtml(pkg.package_details)
             : 'Package details will be provided by the service provider.';
 
+        const discount = Math.max(0, Math.min(100, Number(pkg.discount_percent || 0)));
+        const originalPrice = Number(pkg.price || 0);
+        const finalPrice = Number(pkg.final_price ?? (originalPrice * (1 - discount / 100)));
+        const priceMarkup = discount > 0
+            ? `<div class="service-modal-price-stack"><del>${money(originalPrice)}</del><strong>${money(finalPrice)}</strong><span>${discount.toLocaleString('en-BD', { maximumFractionDigits: 2 })}% OFF</span></div>`
+            : `<strong>${money(finalPrice)}</strong>`;
+
         const addAction = loggedIn
             ? `<form method="post" action="${baseUrl}cart.php" class="service-modal-cart-form">
                     <input type="hidden" name="csrf" value="${escapeHtml(csrf)}">
@@ -161,14 +168,14 @@
                             <h3>${escapeHtml(pkg.package_name || pkg.provider_name)}</h3>
                             <p><i class="fa-solid fa-building-user"></i> ${escapeHtml(pkg.provider_name)}</p>
                         </div>
-                        <strong>${money(pkg.price)}</strong>
+                        ${priceMarkup}
                     </div>
                     <div class="service-modal-package-facts">
                         ${pkg.location ? `<span><i class="fa-solid fa-location-dot"></i>${escapeHtml(pkg.location)}</span>` : ''}
                         <span><i class="fa-solid fa-list-check"></i>${details}</span>
                     </div>
                     <div class="service-modal-package-bottom">
-                        <div><small>Package Price</small><strong>${money(pkg.price)}</strong></div>
+                        <div><small>Package Price</small>${priceMarkup}</div>
                         ${addAction}
                     </div>
                 </div>

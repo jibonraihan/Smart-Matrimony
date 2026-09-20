@@ -39,7 +39,7 @@ if (!$service) {
 
 $providers = [];
 $stmt = mysqli_prepare($conn, '
-    SELECT provider_id, provider_name, package_name, package_details, price,
+    SELECT provider_id, provider_name, package_name, package_details, price, discount_percent,
            contact_number, location, rating, review_count, image
     FROM service_providers
     WHERE service_id = ? AND status = \'Active\'
@@ -130,7 +130,13 @@ include '../includes/header.php';
                                     <?php if (!empty($provider['package_details'])): ?><span><i class="fa-solid fa-list-check"></i><?= htmlspecialchars($provider['package_details']); ?></span><?php endif; ?>
                                 </div>
                                 <div class="provider-bottom">
-                                    <div class="provider-price"><small>Starting from</small><strong>৳<?= number_format((float) $provider['price'], 2); ?></strong></div>
+                                    <div class="provider-price">
+                                        <?php $provider_discount = max(0, min(100, (float)($provider['discount_percent'] ?? 0))); $provider_final = (float)$provider['price'] * (1 - ($provider_discount / 100)); ?>
+                                        <small>Starting from</small>
+                                        <?php if ($provider_discount > 0): ?><del>৳<?= number_format((float)$provider['price'], 2); ?></del><?php endif; ?>
+                                        <strong>৳<?= number_format($provider_final, 2); ?></strong>
+                                        <?php if ($provider_discount > 0): ?><em><?= rtrim(rtrim(number_format($provider_discount, 2), '0'), '.'); ?>% OFF</em><?php endif; ?>
+                                    </div>
                                     <form method="post" action="<?= BASE_URL; ?>cart.php">
                                         <input type="hidden" name="csrf" value="<?= htmlspecialchars($_SESSION['cart_csrf']); ?>">
                                         <input type="hidden" name="action" value="add">

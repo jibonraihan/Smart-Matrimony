@@ -63,15 +63,27 @@ if ($home_service_result) {
 
 $home_service_packages = [];
 $home_package_result = mysqli_query($conn, "
-    SELECT sp.provider_id, sp.service_id, sp.provider_name, sp.package_name,
-           sp.package_details, sp.image, sp.price, sp.location, sp.rating, sp.review_count
+    SELECT sp.provider_id, sp.service_id, s.service_name, sp.provider_name, sp.package_name,
+           sp.package_details, sp.image, sp.price, sp.discount_percent, sp.location, sp.rating, sp.review_count
     FROM service_providers sp
+    INNER JOIN services s ON s.service_id = sp.service_id
     WHERE sp.status = 'Active'
     ORDER BY sp.service_id, sp.rating DESC, sp.review_count DESC, sp.provider_id DESC
 ");
 if ($home_package_result) {
     while ($row = mysqli_fetch_assoc($home_package_result)) {
+        $row['discount_percent'] = max(0, min(100, (float) $row['discount_percent']));
+        $row['final_price'] = round((float) $row['price'] * (1 - ($row['discount_percent'] / 100)), 2);
         $home_service_packages[(int) $row['service_id']][] = $row;
+    }
+}
+
+$home_featured_packages = [];
+$home_max_discount = 0;
+foreach ($home_service_packages as $service_packages) {
+    foreach ($service_packages as $package) {
+        $home_featured_packages[] = $package;
+        $home_max_discount = max($home_max_discount, (float) ($package['discount_percent'] ?? 0));
     }
 }
 
@@ -1084,6 +1096,82 @@ include 'includes/navbar.php';
     <!-- =========================
          DYNAMIC STATISTICS
     ========================== -->
+    <!-- =========================
+         FEATURED SERVICE PACKAGES
+         This showcase is independent from the existing
+         Smart Wedding Services section below.
+    ========================= -->
+    <section id="featured-packages" class="featured-packages-section">
+        <div class="container">
+            <div class="featured-packages-offer" data-aos="fade-up">
+                <div class="featured-offer-icon"><i class="fa-solid fa-tags"></i></div>
+                <div>
+                    <span class="featured-offer-kicker">SPECIAL OFFER</span>
+                    <strong><?= $home_max_discount > 0 ? 'Save up to ' . rtrim(rtrim(number_format($home_max_discount, 2), '0'), '.') . '% on selected packages' : 'Explore our latest wedding service packages'; ?></strong>
+                    <small>Discounts are managed by our Event Managers and applied automatically to package pricing.</small>
+                </div>
+            </div>
+
+            <div class="featured-packages-heading" data-aos="fade-up">
+                <div>
+                    <span class="featured-packages-label"><i class="fa-solid fa-gift"></i> Featured Packages</span>
+                    <h2>Plan Your Day with <span>Smart Wedding Services.</span></h2>
+                    <p>Explore active packages from our service providers. Swipe, use the arrows, or let the showcase move automatically.</p>
+                </div>
+                <a class="featured-packages-view-all" href="#home-services">
+                    View All Services <i class="fa-solid fa-arrow-right"></i>
+                </a>
+            </div>
+
+            <?php if ($home_featured_packages): ?>
+                <div class="featured-packages-carousel" data-package-carousel>
+                    <button type="button" class="featured-package-nav featured-package-prev" data-package-prev aria-label="Previous package"><i class="fa-solid fa-chevron-left"></i></button>
+                    <div class="featured-package-viewport">
+                        <div class="featured-package-track" data-package-track>
+                            <?php foreach ($home_featured_packages as $package): ?>
+                                <?php
+                                    $discount = (float) ($package['discount_percent'] ?? 0);
+                                    $original_price = (float) $package['price'];
+                                    $final_price = (float) ($package['final_price'] ?? $original_price);
+                                ?>
+                                <article class="featured-package-card" data-package-card>
+                                    <div class="featured-package-image">
+                                        <?php if (!empty($package['image'])): ?>
+                                            <img src="<?= BASE_URL; ?>uploads/services/<?= htmlspecialchars($package['image']); ?>" alt="<?= htmlspecialchars($package['package_name'] ?: $package['provider_name']); ?>" loading="lazy">
+                                        <?php else: ?>
+                                            <div class="featured-package-image-fallback"><i class="fa-solid fa-ring"></i></div>
+                                        <?php endif; ?>
+                                        <span class="featured-package-service"><?= htmlspecialchars($package['service_name'] ?? 'Wedding Service'); ?></span>
+                                        <?php if ($discount > 0): ?><span class="featured-package-discount"><?= rtrim(rtrim(number_format($discount, 2), '0'), '.'); ?>% OFF</span><?php endif; ?>
+                                    </div>
+                                    <div class="featured-package-body">
+                                        <div class="featured-package-rating"><i class="fa-solid fa-star"></i> <?= number_format((float) $package['rating'], 1); ?> <small>(<?= (int) $package['review_count']; ?>)</small></div>
+                                        <h3><?= htmlspecialchars($package['package_name'] ?: $package['provider_name']); ?></h3>
+                                        <p class="featured-package-provider"><i class="fa-solid fa-building-user"></i> <?= htmlspecialchars($package['provider_name']); ?></p>
+                                        <p class="featured-package-details"><?= htmlspecialchars($package['package_details'] ?: 'A curated wedding service package for your special day.'); ?></p>
+                                        <div class="featured-package-price">
+                                            <?php if ($discount > 0): ?><del>৳<?= number_format($original_price, 0); ?></del><?php endif; ?>
+                                            <strong>৳<?= number_format($final_price, 0); ?></strong>
+                                            <?php if ($discount > 0): ?><span>after discount</span><?php endif; ?>
+                                        </div>
+                                    </div>
+                                </article>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+                    <button type="button" class="featured-package-nav featured-package-next" data-package-next aria-label="Next package"><i class="fa-solid fa-chevron-right"></i></button>
+                </div>
+                <div class="featured-package-dots" data-package-dots aria-label="Package pagination"></div>
+            <?php else: ?>
+                <div class="featured-packages-empty">
+                    <i class="fa-regular fa-folder-open"></i>
+                    <strong>No active service packages yet.</strong>
+                    <span>New packages added by Event Managers will appear here automatically.</span>
+                </div>
+            <?php endif; ?>
+        </div>
+    </section>
+
     <section id="statistics" class="statistics-section">
         <div class="container">
             <div class="statistics-heading text-center" data-aos="fade-up">
@@ -1650,5 +1738,6 @@ include 'includes/navbar.php';
     window.SMART_SERVICE_CART_CSRF = <?= json_encode($home_is_logged_in ? ($_SESSION['cart_csrf'] ?? '') : ''); ?>;
 </script>
 <script src="<?= BASE_URL; ?>assets/js/home-services.js?v=1"></script>
+<script src="<?= BASE_URL; ?>assets/js/home-packages.js?v=1"></script>
 
 <?php include 'includes/footer.php'; ?>

@@ -79,7 +79,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         mysqli_begin_transaction($conn);
         try {
             $items = [];
-            $stmt = mysqli_prepare($conn, "SELECT ci.provider_id, ci.quantity, sp.price, sp.manager_id
+            $stmt = mysqli_prepare($conn, "SELECT ci.provider_id, ci.quantity, sp.price, sp.discount_percent, sp.manager_id
                 FROM service_cart_items ci
                 INNER JOIN service_providers sp ON sp.provider_id = ci.provider_id
                 WHERE ci.user_id = ? AND sp.status = 'Active' FOR UPDATE");
@@ -94,7 +94,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $total = 0.0;
             $manager_ids = [];
             foreach ($items as $item) {
-                $total += ((float) $item['price'] * (int) $item['quantity']);
+                $discount = max(0, min(100, (float)($item['discount_percent'] ?? 0)));
+                $final_price = round((float) $item['price'] * (1 - ($discount / 100)), 2);
+                $total += ($final_price * (int) $item['quantity']);
                 if (!empty($item['manager_id'])) $manager_ids[(int) $item['manager_id']] = true;
             }
             $manager_id = count($manager_ids) === 1 ? (int) array_key_first($manager_ids) : null;
@@ -110,11 +112,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $booking_id = mysqli_insert_id($conn);
             mysqli_stmt_close($stmt);
 
-            $stmt = mysqli_prepare($conn, 'INSERT INTO booking_details (booking_id, provider_id, quantity, event_date, special_instruction) VALUES (?, ?, ?, ?, ?)');
+            $stmt = mysqli_prepare($conn, 'INSERT INTO booking_details (booking_id, provider_id, quantity, unit_price, event_date, special_instruction) VALUES (?, ?, ?, ?, ?, ?)');
             foreach ($items as $item) {
                 $provider_id = (int) $item['provider_id'];
                 $quantity = (int) $item['quantity'];
-                mysqli_stmt_bind_param($stmt, 'iiiss', $booking_id, $provider_id, $quantity, $event_date, $special_instruction);
+                $discount = max(0, min(100, (float)($item['discount_percent'] ?? 0)));
+                $unit_price = round((float) $item['price'] * (1 - ($discount / 100)), 2);
+                mysqli_stmt_bind_param($stmt, 'iiidss', $booking_id, $provider_id, $quantity, $unit_price, $event_date, $special_instruction);
                 mysqli_stmt_execute($stmt);
             }
             mysqli_stmt_close($stmt);
@@ -138,7 +142,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $items = [];
 $total = 0.0;
 $stmt = mysqli_prepare($conn, "SELECT ci.cart_item_id, ci.quantity,
-        sp.provider_id, sp.provider_name, sp.package_name, sp.price, sp.location, sp.image,
+        sp.provider_id, sp.provider_name, sp.package_name, sp.price, sp.discount_percent, sp.location, sp.image,
         s.service_id, s.service_name
     FROM service_cart_items ci
     INNER JOIN service_providers sp ON sp.provider_id = ci.provider_id
@@ -149,7 +153,9 @@ mysqli_stmt_bind_param($stmt, 'i', $user_id);
 mysqli_stmt_execute($stmt);
 $result = mysqli_stmt_get_result($stmt);
 while ($row = mysqli_fetch_assoc($result)) {
-    $row['line_total'] = (float) $row['price'] * (int) $row['quantity'];
+    $row['discount_percent'] = max(0, min(100, (float)($row['discount_percent'] ?? 0)));
+    $row['final_price'] = round((float) $row['price'] * (1 - ($row['discount_percent'] / 100)), 2);
+    $row['line_total'] = $row['final_price'] * (int) $row['quantity'];
     $total += $row['line_total'];
     $items[] = $row;
 }
@@ -205,7 +211,11 @@ include 'includes/header.php';
                                 <h3><?= htmlspecialchars($item['package_name'] ?: $item['provider_name']); ?></h3>
                                 <p><?= htmlspecialchars($item['provider_name']); ?><?= !empty($item['location']) ? ' · ' . htmlspecialchars($item['location']) : ''; ?></p>
                             </div>
-                            <div class="cart-item-price">৳<?= number_format((float) $item['price'], 2); ?></div>
+                            <div class="cart-item-price">
+                                <?php if ((float)$item['discount_percent'] > 0): ?><del>৳<?= number_format((float)$item['price'], 2); ?></del><?php endif; ?>
+                                <strong>৳<?= number_format((float)$item['final_price'], 2); ?></strong>
+                                <?php if ((float)$item['discount_percent'] > 0): ?><small><?= rtrim(rtrim(number_format((float)$item['discount_percent'], 2), '0'), '.'); ?>% OFF</small><?php endif; ?>
+                            </div>
                             <form method="post" class="cart-quantity-form">
                                 <input type="hidden" name="csrf" value="<?= htmlspecialchars($csrf); ?>">
                                 <input type="hidden" name="action" value="update">

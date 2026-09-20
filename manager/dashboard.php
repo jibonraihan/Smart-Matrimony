@@ -129,13 +129,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $package_name = trim($_POST['package_name'] ?? '');
                 $package_details = trim($_POST['package_details'] ?? '');
                 $price = (float) ($_POST['price'] ?? 0);
+                $discount_percent = max(0, min(100, (float) ($_POST['discount_percent'] ?? 0)));
                 $contact_number = trim($_POST['contact_number'] ?? '');
                 $location = trim($_POST['location'] ?? '');
                 $rating = max(0, min(5, (float) ($_POST['rating'] ?? 0)));
                 $review_count = max(0, (int) ($_POST['review_count'] ?? 0));
                 $status = ($_POST['status'] ?? 'Active') === 'Inactive' ? 'Inactive' : 'Active';
 
-                if ($service_id <= 0 || $provider_name === '' || $package_name === '' || $price < 0) {
+                if ($service_id <= 0 || $provider_name === '' || $package_name === '' || $price < 0 || $discount_percent < 0 || $discount_percent > 100) {
                     throw new RuntimeException('Please complete the required package fields.');
                 }
 
@@ -155,8 +156,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $image = $upload['name'];
                     }
 
-                    $stmt = mysqli_prepare($conn, 'UPDATE service_providers SET service_id=?, provider_name=?, package_name=?, package_details=?, price=?, contact_number=?, location=?, rating=?, review_count=?, status=?, image=? WHERE provider_id=? AND manager_id=?');
-                    mysqli_stmt_bind_param($stmt, 'isssdssdiisii', $service_id, $provider_name, $package_name, $package_details, $price, $contact_number, $location, $rating, $review_count, $status, $image, $provider_id, $manager_id);
+                    $stmt = mysqli_prepare($conn, 'UPDATE service_providers SET service_id=?, provider_name=?, package_name=?, package_details=?, price=?, discount_percent=?, contact_number=?, location=?, rating=?, review_count=?, status=?, image=? WHERE provider_id=? AND manager_id=?');
+                    mysqli_stmt_bind_param($stmt, 'isssddssdissii', $service_id, $provider_name, $package_name, $package_details, $price, $discount_percent, $contact_number, $location, $rating, $review_count, $status, $image, $provider_id, $manager_id);
                     mysqli_stmt_execute($stmt);
                     mysqli_stmt_close($stmt);
 
@@ -166,8 +167,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $message = 'Package updated successfully.';
                 } else {
                     $image = $upload['name'] ?? null;
-                    $stmt = mysqli_prepare($conn, 'INSERT INTO service_providers (service_id, provider_name, package_name, package_details, price, contact_number, location, rating, review_count, manager_id, status, image) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)');
-                    mysqli_stmt_bind_param($stmt, 'isssdssdiiss', $service_id, $provider_name, $package_name, $package_details, $price, $contact_number, $location, $rating, $review_count, $manager_id, $status, $image);
+                    $stmt = mysqli_prepare($conn, 'INSERT INTO service_providers (service_id, provider_name, package_name, package_details, price, discount_percent, contact_number, location, rating, review_count, manager_id, status, image) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)');
+                    mysqli_stmt_bind_param($stmt, 'isssddssdiiss', $service_id, $provider_name, $package_name, $package_details, $price, $discount_percent, $contact_number, $location, $rating, $review_count, $manager_id, $status, $image);
                     mysqli_stmt_execute($stmt);
                     mysqli_stmt_close($stmt);
                     $message = 'Package added successfully.';
@@ -321,6 +322,7 @@ include '../includes/header.php';
                         <div><label>Provider / Business name *</label><input name="provider_name" required maxlength="150" value="<?= htmlspecialchars($edit_package['provider_name'] ?? ''); ?>" placeholder="e.g. Noor Photography"></div>
                         <div><label>Package name *</label><input name="package_name" required maxlength="150" value="<?= htmlspecialchars($edit_package['package_name'] ?? ''); ?>" placeholder="e.g. Premium Wedding Package"></div>
                         <div><label>Price (৳) *</label><input name="price" type="number" min="0" step="0.01" required value="<?= htmlspecialchars($edit_package['price'] ?? ''); ?>" placeholder="25000"></div>
+                        <div><label>Discount (%)</label><input name="discount_percent" type="number" min="0" max="100" step="0.01" value="<?= htmlspecialchars($edit_package['discount_percent'] ?? '0'); ?>" placeholder="10"><small class="field-help">Set 0 for no discount. Maximum 100%.</small></div>
                         <div><label>Location</label><input name="location" maxlength="255" value="<?= htmlspecialchars($edit_package['location'] ?? ''); ?>" placeholder="Dhaka, Bangladesh"></div>
                         <div><label>Contact number</label><input name="contact_number" maxlength="20" value="<?= htmlspecialchars($edit_package['contact_number'] ?? ''); ?>" placeholder="01XXXXXXXXX"></div>
                         <div class="full-field"><label>Package image</label><input name="package_image" type="file" accept="image/jpeg,image/png,image/webp"><small class="field-help">JPG, PNG or WebP · max 10 MB<?= !empty($edit_package['image']) ? ' · current image will remain if no new image is selected' : ''; ?></small></div>
@@ -344,7 +346,12 @@ include '../includes/header.php';
                             <article class="package-row package-row-rich">
                                 <div class="package-thumb"><?php if (!empty($p['image'])): ?><img src="<?= $upload_web . rawurlencode($p['image']); ?>" alt=""><?php else: ?><i class="fa-solid fa-ring"></i><?php endif; ?></div>
                                 <div class="package-info"><span><?= htmlspecialchars($p['service_name']); ?></span><h3><?= htmlspecialchars($p['package_name'] ?: $p['provider_name']); ?></h3><p><?= htmlspecialchars($p['provider_name']); ?><?= $p['location'] ? ' · '.htmlspecialchars($p['location']) : ''; ?></p></div>
-                                <div class="package-meta"><strong>৳<?= number_format((float)$p['price'], 0); ?></strong><span class="status-pill <?= strtolower($p['status']); ?>"><?= htmlspecialchars($p['status']); ?></span></div>
+                                <div class="package-meta"><div>
+                                    <?php $p_discount = max(0, min(100, (float)($p['discount_percent'] ?? 0))); $p_final = (float)$p['price'] * (1 - ($p_discount / 100)); ?>
+                                    <?php if ($p_discount > 0): ?><small class="manager-old-price">৳<?= number_format((float)$p['price'], 0); ?></small><?php endif; ?>
+                                    <strong>৳<?= number_format($p_final, 0); ?></strong>
+                                    <?php if ($p_discount > 0): ?><span class="manager-discount-pill"><?= rtrim(rtrim(number_format($p_discount, 2), '0'), '.'); ?>% OFF</span><?php endif; ?>
+                                </div><span class="status-pill <?= strtolower($p['status']); ?>"><?= htmlspecialchars($p['status']); ?></span></div>
                                 <div class="package-actions">
                                     <a class="icon-edit" href="<?= htmlspecialchars($manager_url('dashboard.php', ['edit' => (int)$p['provider_id']], 'package-form')); ?>" title="Edit package"><i class="fa-solid fa-pen"></i></a>
                                     <form method="post"

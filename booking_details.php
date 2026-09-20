@@ -62,7 +62,7 @@ if (!$booking) {
 $items = [];
 $stmt = mysqli_prepare($conn, "
     SELECT bd.detail_id, bd.quantity, bd.event_date, bd.special_instruction,
-           sp.provider_id, sp.provider_name, sp.package_name, sp.package_details, sp.price,
+           sp.provider_id, sp.provider_name, sp.package_name, sp.package_details, sp.price, bd.unit_price,
            sp.location, sp.image, s.service_name
     FROM booking_details bd
     INNER JOIN service_providers sp ON sp.provider_id = bd.provider_id
@@ -124,7 +124,7 @@ include 'includes/header.php';
                         <p><?= htmlspecialchars($item['provider_name']); ?><?= !empty($item['location']) ? ' · ' . htmlspecialchars($item['location']) : ''; ?></p>
                         <?php if (!empty($item['package_details'])): ?><small><?= htmlspecialchars($item['package_details']); ?></small><?php endif; ?>
                     </div>
-                    <div class="detail-item-side"><small>Event date</small><strong><?= date('d M Y', strtotime($item['event_date'])); ?></strong><span class="detail-qty">Qty: <?= (int)($item['quantity'] ?? 1); ?></span><b>৳<?= number_format((float) $item['price'] * (int)($item['quantity'] ?? 1), 2); ?></b></div>
+                    <div class="detail-item-side"><small>Event date</small><strong><?= date('d M Y', strtotime($item['event_date'])); ?></strong><span class="detail-qty">Qty: <?= (int)($item['quantity'] ?? 1); ?></span><b>৳<?= number_format((float)($item['unit_price'] ?? $item['price']) * (int)($item['quantity'] ?? 1), 2); ?></b></div>
                 </article>
                 <?php if (!empty($item['special_instruction'])): ?>
                     <div class="booking-instruction"><i class="fa-solid fa-note-sticky"></i><div><strong>Special instruction</strong><p><?= nl2br(htmlspecialchars($item['special_instruction'])); ?></p></div></div>
