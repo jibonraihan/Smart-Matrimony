@@ -1584,3 +1584,144 @@ hr{
     top: 0;
     z-index: 1030;
 }
+
+
+/* =========================================================
+   SMART MATRIMONY BRAND HEADER — TITLE IMAGE
+   Header-only branding update.
+========================================================= */
+.smart-navbar-brand {
+    gap: 12px;
+}
+.smart-navbar-logo {
+    width: 52px;
+    height: 52px;
+    flex-basis: 52px;
+    border-radius: 15px;
+    padding: 5px;
+    box-sizing: border-box;
+    background: linear-gradient(145deg, #ffffff 0%, #f0fbf8 100%);
+}
+.smart-navbar-title {
+    display: inline-flex;
+    align-items: center;
+    height: 40px;
+    line-height: 0;
+}
+.smart-navbar-title img {
+    display: block;
+    width: auto;
+    height: 34px;
+    max-width: 190px;
+    object-fit: contain;
+}
+@media (max-width: 991.98px) {
+    .smart-navbar-logo {
+        width: 48px;
+        height: 48px;
+        flex-basis: 48px;
+    }
+    .smart-navbar-title img {
+        height: 31px;
+        max-width: 175px;
+    }
+}
+@media (max-width: 575.98px) {
+    .smart-navbar-brand {
+        gap: 9px;
+    }
+    .smart-navbar-logo {
+        width: 44px;
+        height: 44px;
+        flex-basis: 44px;
+        border-radius: 13px;
+        padding: 4px;
+    }
+    .smart-navbar-title {
+        height: 32px;
+    }
+    .smart-navbar-title img {
+        height: 25px;
+        max-width: 142px;
+    }
+}
+
+/* Header branding size refinement — header only. */
+.smart-navbar-brand { gap: 14px; }
+.smart-navbar-logo {
+    width: 64px;
+    height: 64px;
+    flex-basis: 64px;
+    border-radius: 17px;
+    padding: 5px;
+}
+.smart-navbar-title {
+    display: inline-flex;
+    align-items: center;
+    line-height: 0;
+}
+.smart-navbar-title img {
+    display: block;
+    width: auto;
+    height: 48px;
+    max-width: 255px;
+    object-fit: contain;
+}
+@media (max-width: 900px) {
+    .smart-navbar-logo {
+        width: 58px;
+        height: 58px;
+        flex-basis: 58px;
+    }
+    .smart-navbar-title img {
+        height: 42px;
+        max-width: 220px;
+    }
+}
+@media (max-width: 560px) {
+    .smart-navbar-brand { gap: 9px; }
+    .smart-navbar-logo {
+        width: 50px;
+        height: 50px;
+        flex-basis: 50px;
+        border-radius: 14px;
+        padding: 4px;
+    }
+    .smart-navbar-title img {
+        height: 34px;
+        max-width: 175px;
+    }
+}
+
+/* Header-only: increase title image size. */
+.smart-navbar-title img {
+    height: 58px;
+    max-width: 310px;
+}
+@media (max-width: 900px) {
+    .smart-navbar-title img {
+        height: 50px;
+        max-width: 270px;
+    }
+}
+@media (max-width: 560px) {
+    .smart-navbar-title img {
+        height: 42px;
+        max-width: 215px;
+    }
+}
+
+/* =========================================================
+   HEADER-ONLY: preserve the complete logo artwork
+   Shared public/login/register header only.
+========================================================= */
+.smart-navbar-logo img {
+    object-fit: contain !important;
+    padding: 2px;
+    box-sizing: border-box;
+}
+@media (max-width: 575.98px) {
+    .smart-navbar-logo img {
+        padding: 1px;
+    }
+}

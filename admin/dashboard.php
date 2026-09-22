@@ -1,6 +1,11 @@
 <?php
+// Select the Admin session BEFORE config/db.php, because config.php starts
+// a PHP session automatically when no session is active.
+if (session_status() === PHP_SESSION_NONE) {
+  session_name('SMART_ADMIN_SESSION');
+  session_start();
+}
 require_once '../config/db.php';
-if (session_status() === PHP_SESSION_NONE) { session_name('SMART_ADMIN_SESSION'); session_start(); }
 if (empty($_SESSION['admin_user_id'])) { header('Location: login.php'); exit; }
 $admin_id=(int)$_SESSION['admin_user_id'];
 if (empty($_SESSION['admin_csrf'])) $_SESSION['admin_csrf']=bin2hex(random_bytes(32));

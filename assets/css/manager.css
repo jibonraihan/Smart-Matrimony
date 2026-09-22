@@ -2,4 +2,474 @@
 @media(max-width:900px){.manager-stats{grid-template-columns:1fr 1fr}.manager-grid{grid-template-columns:1fr}.manager-welcome{align-items:start;flex-direction:column}.manager-topbar-inner{height:auto;padding:15px 0}.manager-top-actions a:first-child{display:none}.package-row-rich{grid-template-columns:52px 1fr auto}.package-actions{grid-column:2/-1;justify-content:flex-end}}
 @media(max-width:560px){.manager-container{width:min(100% - 24px,1180px)}.manager-stats{grid-template-columns:1fr}.form-grid{grid-template-columns:1fr}.full-field{grid-column:auto}.manager-brand-link small{display:none}.manager-top-actions a{padding:8px 10px}.manager-welcome h1{font-size:28px}.manager-auth-card{padding:25px}.package-row{grid-template-columns:38px 1fr auto 30px}.package-row-rich{grid-template-columns:46px 1fr}.package-thumb{width:46px;height:46px}.package-meta{grid-column:2/-1;justify-content:space-between}.package-actions{grid-column:2/-1;justify-content:flex-start}.status-pill{font-size:8px}}
 
-.manager-old-price{display:block;color:#a0aab8;font-size:9px;text-decoration:line-through}.manager-discount-pill{display:inline-flex;margin-left:5px;padding:3px 6px;border-radius:999px;background:#eaf8f3;color:#247442;font-size:8px;font-weight:800}
+/* Booking management */
+.manager-alert.warning{background:#fff8e8;color:#946b10}
+.booking-panel-heading{margin-bottom:14px}
+.booking-tabs{display:flex;gap:8px;overflow-x:auto;padding:2px 1px 12px;margin-bottom:10px;scrollbar-width:thin}
+.booking-tab{flex:0 0 auto;display:inline-flex;align-items:center;gap:9px;padding:10px 13px;border:1px solid #e0ebe9;border-radius:11px;background:#fff;color:#5f7088;text-decoration:none;font-size:12px;font-weight:700;transition:.18s ease}
+.booking-tab:hover{border-color:#a8d4cf;color:#0d7f78;background:#f7fcfb}
+.booking-tab b{min-width:22px;height:22px;padding:0 6px;border-radius:20px;background:#f1f5f5;display:grid;place-items:center;font-size:10px;color:#6d7b8f}
+.booking-tab.is-active{background:#0d7f78;border-color:#0d7f78;color:#fff;box-shadow:0 7px 18px rgba(13,127,120,.14)}
+.booking-tab.is-active b{background:rgba(255,255,255,.18);color:#fff}
+.booking-tab.pending.is-active{background:#9b741d;border-color:#9b741d}
+.booking-tab.cancelled.is-active{background:#a43e3e;border-color:#a43e3e}
+.booking-table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.booking-table{min-width:980px}
+.booking-actions{display:flex;flex-wrap:wrap;gap:6px;min-width:180px}
+.booking-action-form{margin:0}
+.booking-action-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:0;border-radius:9px;padding:8px 10px;font:inherit;font-size:10px;font-weight:800;cursor:pointer;white-space:nowrap;transition:.18s ease}
+.booking-action-btn.confirm{background:#e8f7ef;color:#24734e}
+.booking-action-btn.confirm:hover{background:#d8f1e4}
+.booking-action-btn.complete{background:#eaf4ff;color:#276497}
+.booking-action-btn.complete:hover{background:#dcecff}
+.booking-action-btn.cancel{background:#fff0f0;color:#a33b3b}
+.booking-action-btn.cancel:hover{background:#ffe4e4}
+.booking-action-btn.delete{background:#f4f5f6;color:#6b7280}
+.booking-action-btn.delete:hover{background:#eceff1;color:#a33b3b}
+.booking-action-btn.email-retry{background:#fff7e4;color:#946b10}
+.booking-action-btn.email-retry:hover{background:#ffefc8}
+.booking-email-state{display:block;margin-top:6px;font-size:9px;font-weight:700}
+.booking-email-state.sent{color:#287450}
+.booking-email-state.pending{color:#8b741b}
+.booking-email-state.failed{color:#a33b3b}
+.booking-reason{margin-top:8px;padding:8px 9px;border-radius:9px;background:#fff7f7;border:1px solid #f2dddd;max-width:250px}
+.booking-reason strong{font-size:9px!important;color:#a33b3b!important;margin-bottom:3px}
+.booking-reason span{display:block;color:#68768a;font-size:9px;line-height:1.5}
+.booking-cancel-modal{position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center;padding:20px;box-sizing:border-box}
+.booking-cancel-modal.is-open{display:flex}
+.booking-modal-backdrop{position:absolute;inset:0;background:rgba(15,23,42,.48);backdrop-filter:blur(3px)}
+.booking-modal-card{position:relative;width:min(520px,100%);background:#fff;border:1px solid #e1ecea;border-radius:20px;padding:25px;box-shadow:0 28px 80px rgba(15,23,42,.2);z-index:1}
+.booking-modal-close{position:absolute;top:12px;right:12px;width:32px;height:32px;border:0;border-radius:9px;background:#f4f7f7;color:#64748b;cursor:pointer}
+.booking-modal-card h3{font-size:22px;margin:8px 38px 5px 0;color:#18243d}
+.booking-modal-customer{margin:0 0 20px;color:#718097;font-size:12px}
+.booking-modal-card label{display:block;font-size:11px;font-weight:800;color:#41516b;margin:0 0 7px}
+.booking-modal-card textarea{display:block;width:100%;box-sizing:border-box;border:1px solid #dce8e6;border-radius:11px;padding:12px;font:inherit;font-size:12px;color:#243451;resize:vertical;outline:none}
+.booking-modal-card textarea:focus{border-color:#49a9a2;box-shadow:0 0 0 3px rgba(13,127,120,.08)}
+.booking-modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
+.booking-modal-secondary{border:1px solid #dce8e6;background:#fff;color:#627188;border-radius:9px;padding:9px 12px;font:inherit;font-size:11px;font-weight:700;cursor:pointer}
+.booking-modal-secondary:hover{background:#f7faf9}
+.booking-empty{padding:42px 15px}
+
+@media(max-width:900px){
+    .booking-table{min-width:900px}
+    .booking-actions{min-width:150px}
+}
+
+@media(max-width:700px){
+    .booking-panel{padding:17px}
+    .booking-tabs{gap:6px}
+    .booking-tab{padding:9px 11px;font-size:11px}
+    .booking-table-wrap{overflow:visible}
+    .booking-table{min-width:0;width:100%;display:block}
+    .booking-table thead{display:none}
+    .booking-table tbody,.booking-table tr{display:block;width:100%}
+    .booking-table tr{background:#fff;border:1px solid #e5eeed;border-radius:14px;padding:10px;margin-bottom:10px;box-sizing:border-box}
+    .booking-table td{display:grid;grid-template-columns:88px minmax(0,1fr);gap:9px;padding:9px 4px;border-bottom:1px solid #f0f3f3;vertical-align:middle;font-size:11px}
+    .booking-table td:last-child{border-bottom:0;padding-bottom:4px}
+    .booking-table td::before{content:attr(data-label);font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.35px;color:#8a97a8;padding-top:2px}
+    .booking-table td>strong,.booking-table td>small,.booking-table td>.booking-items,.booking-table td>.status-pill,.booking-table td>.booking-reason,.booking-table td>.booking-actions,.booking-table td>.booking-email-state{grid-column:2}
+    .booking-table td>small{margin-top:0}
+    .booking-items{gap:3px}
+    .booking-actions{min-width:0;width:100%;display:flex;gap:6px}
+    .booking-action-btn{font-size:9px;padding:8px 9px}
+    .booking-email-state{margin-top:5px}
+    .booking-modal-card{padding:22px 18px}
+    .booking-modal-actions{flex-direction:column-reverse}
+    .booking-modal-actions>*{width:100%}
+}
+
+@media(max-width:420px){
+    .booking-panel-heading h2{font-size:19px}
+    .booking-table td{grid-template-columns:76px minmax(0,1fr);gap:7px}
+    .booking-action-btn{width:100%}
+    .booking-actions{display:grid;grid-template-columns:1fr 1fr}
+    .booking-action-form{min-width:0}
+    .booking-action-form .booking-action-btn{width:100%}
+    .booking-action-form:last-child:only-child{grid-column:1/-1}
+}
+
+.booking-scope-note{display:block;color:#8290a4;font-size:9px;margin-top:5px;line-height:1.4}.booking-tab b{min-width:20px}
+
+/* Shared Manager Dashboard */
+.manager-stats-five{grid-template-columns:repeat(5,1fr)}
+.manager-identity{display:inline-flex;align-items:center;gap:7px;color:#fff;font-size:12px;font-weight:700;padding:8px 11px;border-radius:11px;background:rgba(255,255,255,.1)}
+.manager-identity small{font-size:10px;opacity:.78;font-weight:600}
+.catalog-tabs{display:flex;gap:7px;overflow-x:auto;padding:2px 1px 12px;margin-bottom:4px;scrollbar-width:thin}
+.catalog-tab{display:inline-flex;align-items:center;gap:7px;white-space:nowrap;padding:9px 12px;border:1px solid #e0ebe9;border-radius:10px;background:#fff;color:#5f7088;text-decoration:none;font-size:11px;font-weight:800}
+.catalog-tab:hover{border-color:#a8d4cf;color:#0d7f78;background:#f7fcfb}
+.catalog-tab b{min-width:20px;height:20px;padding:0 5px;border-radius:18px;background:#f1f5f5;display:grid;place-items:center;font-size:9px;color:#6d7b8f}
+.catalog-tab.is-active{background:#0d7f78;border-color:#0d7f78;color:#fff}
+.catalog-tab.is-active b{background:rgba(255,255,255,.18);color:#fff}
+.package-owner{display:block;margin-top:6px!important;color:#0d7f78!important;font-size:10px!important;font-weight:700}
+.package-owner em{font-style:normal;color:#8492a5;font-weight:600;font-size:9px}
+.catalog-owner-note{display:inline-flex;align-items:center;padding:6px 8px;border-radius:8px;background:#f4f7f7;color:#8a97a8;font-size:9px;font-weight:700}
+@media(max-width:1080px){.manager-stats-five{grid-template-columns:repeat(3,1fr)}.manager-identity{display:none}}
+@media(max-width:700px){.manager-stats-five{grid-template-columns:1fr 1fr}.catalog-tabs{margin-bottom:2px}.package-owner{font-size:9px!important}}
+@media(max-width:560px){.manager-stats-five{grid-template-columns:1fr}.manager-top-actions{gap:6px}.manager-top-actions a{font-size:11px}.catalog-tab{padding:8px 10px;font-size:10px}}
+
+.package-details-preview{display:block!important;margin-top:4px;color:#64748b!important;font-size:9px!important;line-height:1.45;max-width:420px}
+
+/* =========================================================
+   Manager Dashboard — Option B catalog layout
+   Scoped to the new catalog/modal only. Existing booking styles
+   and mobile booking workflow remain unchanged.
+   ========================================================= */
+.manager-welcome-actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.manager-secondary-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 15px;border:1px solid #dce8e6;border-radius:12px;background:#fff;color:#47627a;text-decoration:none;font-size:13px;font-weight:800;cursor:pointer}
+.manager-secondary-btn:hover{border-color:#a8d4cf;color:#0d7f78;background:#f7fcfb}
+.manager-catalog-section{margin-top:0}
+.catalog-panel{padding:24px;margin-bottom:22px}
+.catalog-panel .manager-panel-heading{margin-bottom:15px}
+.catalog-panel .catalog-tabs{overflow-x:visible;scrollbar-width:none}
+.package-catalog-scroll{max-height:720px;overflow-y:auto;overflow-x:hidden;padding:1px 4px 4px 1px;scrollbar-width:thin;scrollbar-color:#aab9b8 transparent;overscroll-behavior-y:auto;overscroll-behavior-x:contain}
+.package-catalog-scroll::-webkit-scrollbar{width:8px}
+.package-catalog-scroll::-webkit-scrollbar-track{background:transparent}
+.package-catalog-scroll::-webkit-scrollbar-thumb{background:#aab9b8;border-radius:20px}
+.package-catalog-scroll.is-loading{opacity:.58;pointer-events:none}
+.package-card{min-width:0;background:#fff;border:1px solid #e2eceb;border-radius:16px;padding:13px;display:flex;flex-direction:column;gap:10px;box-sizing:border-box;overflow:hidden;transition:border-color .18s ease,box-shadow .18s ease}
+.package-card:hover{border-color:#cbdedb;box-shadow:0 8px 24px rgba(17,66,70,.06)}
+.package-card-main{display:grid;grid-template-columns:74px minmax(0,1fr);gap:13px;align-items:start;min-width:0}
+.package-card .package-thumb{width:74px;height:74px;border-radius:13px;flex:0 0 74px}
+.package-card .package-info{min-width:0}
+.package-card .package-info>span{font-size:10px;line-height:1.35}
+.package-card .package-info h3{font-size:16px;line-height:1.2;margin:3px 0 5px;font-weight:800;overflow-wrap:anywhere}
+.package-card .package-info p{font-size:10px;line-height:1.45;overflow-wrap:anywhere}
+.package-card .package-details-preview{max-width:none;font-size:10px!important;line-height:1.45;overflow-wrap:anywhere;white-space:normal}
+.package-card .package-owner{font-size:10px!important;line-height:1.4;overflow-wrap:anywhere}
+.package-card-footer{display:flex;align-items:center;justify-content:space-between;gap:14px;min-width:0;border-top:1px solid #edf2f1;padding-top:9px}
+.package-price-group{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;min-width:0}
+.package-price-group strong{font-size:18px;line-height:1.15;color:#14213d;white-space:nowrap}
+.manager-old-price{font-size:10px;color:#8a97a8;text-decoration:line-through;white-space:nowrap}
+.manager-discount-pill{font-size:9px;font-weight:800;color:#0d7f78;white-space:nowrap}
+.package-card-right{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:nowrap;min-width:0}
+.package-card-right>.status-pill{flex:0 0 auto}
+.package-card .package-actions{display:flex;align-items:center;gap:6px;flex:0 0 auto}
+.package-card .package-actions form{margin:0;display:flex}
+.package-card .icon-edit,.package-card .icon-status,.package-card .icon-danger{width:32px;height:32px;border-radius:9px}
+.package-card .catalog-owner-note{white-space:nowrap}
+.catalog-empty{min-height:180px;display:grid;place-items:center;align-content:center}
+
+/* Package modal */
+body.manager-modal-open{overflow:hidden}
+.package-modal{position:fixed;inset:0;z-index:10000;display:none;align-items:center;justify-content:center;padding:20px;box-sizing:border-box}
+.package-modal.is-open{display:flex}
+.package-modal-backdrop{position:absolute;inset:0;background:rgba(15,23,42,.5);backdrop-filter:blur(4px)}
+.package-modal-card{position:relative;width:min(820px,100%);max-height:min(92vh,900px);overflow:auto;background:#fff;border:1px solid #e1ecea;border-radius:22px;padding:27px;box-shadow:0 28px 90px rgba(15,23,42,.22);z-index:1;box-sizing:border-box;scrollbar-width:thin}
+.package-modal-close{position:absolute;right:14px;top:14px;width:34px;height:34px;border:0;border-radius:10px;background:#f3f7f7;color:#64748b;cursor:pointer}
+.package-modal-card h2{font-size:24px;margin:6px 42px 5px 0;color:#18243d}
+.package-modal-copy{margin:0 0 20px;color:#718097;font-size:12px}
+.package-modal-form .form-grid{gap:12px 14px}
+.package-modal-form .package-details-field{margin-top:13px}
+.package-current-image{display:flex;align-items:center;gap:10px;margin-top:12px;padding:8px 10px;border:1px solid #e5eeed;border-radius:11px;color:#7d8da0;font-size:10px}
+.package-current-image img{width:48px;height:48px;object-fit:cover;border-radius:9px}
+.package-modal-actions{display:flex;justify-content:flex-end;align-items:center;gap:8px;margin-top:18px}
+.package-modal-actions .manager-primary-btn.is-busy{opacity:.7;cursor:wait}
+.package-modal-error{margin-top:12px;padding:10px 12px;border-radius:10px;background:#fff0f0;color:#a43131;font-size:11px}
+
+@media(min-width:901px){
+    .catalog-panel{width:100%;box-sizing:border-box}
+    .package-catalog-scroll{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;align-content:start}
+}
+@media(max-width:900px){
+    .manager-welcome-actions{width:100%}
+    .package-catalog-scroll{max-height:680px}
+    .package-card-main{grid-template-columns:68px minmax(0,1fr)}
+    .package-card .package-thumb{width:68px;height:68px;flex-basis:68px}
+}
+@media(max-width:700px){
+    .catalog-panel{padding:18px}
+    .package-catalog-scroll{max-height:620px;padding-right:2px}
+    .package-card{padding:11px;border-radius:14px}
+    .package-card-main{grid-template-columns:58px minmax(0,1fr);gap:10px}
+    .package-card .package-thumb{width:58px;height:58px;flex-basis:58px;border-radius:11px}
+    .package-card .package-info h3{font-size:14px}
+    .package-card-footer{gap:10px}
+    .package-price-group strong{font-size:16px}
+    .package-card-right{gap:6px}
+    .package-card .icon-edit,.package-card .icon-status,.package-card .icon-danger{width:30px;height:30px}
+}
+@media(max-width:560px){
+    .manager-welcome-actions{display:grid;grid-template-columns:1fr 1fr;width:100%}
+    .manager-welcome-actions .manager-primary-btn,.manager-welcome-actions .manager-secondary-btn{width:100%;box-sizing:border-box;padding:11px 10px;font-size:11px}
+    .catalog-panel{padding:16px}
+    .package-catalog-scroll{max-height:560px}
+    .package-card-main{grid-template-columns:54px minmax(0,1fr);gap:9px}
+    .package-card .package-thumb{width:54px;height:54px;flex-basis:54px}
+    .package-card-footer{align-items:center;gap:8px}
+    .package-price-group{gap:4px;max-width:52%}
+    .package-price-group strong{font-size:15px}
+    .manager-old-price{font-size:9px}
+    .manager-discount-pill{font-size:8px}
+    .package-card-right{gap:5px}
+    .package-card .status-pill{font-size:8px;padding:4px 6px}
+    .package-card .icon-edit,.package-card .icon-status,.package-card .icon-danger{width:29px;height:29px}
+    .package-card .catalog-owner-note{font-size:8px;padding:5px 6px}
+    .package-modal{padding:10px}
+    .package-modal-card{max-height:94vh;padding:21px 16px;border-radius:18px}
+    .package-modal-card h2{font-size:21px}
+    .package-modal-actions{flex-direction:column-reverse}
+    .package-modal-actions>*{width:100%;box-sizing:border-box}
+}
+@media(max-width:390px){
+    .manager-welcome-actions{grid-template-columns:1fr}
+    .package-card-footer{flex-wrap:wrap}
+    .package-price-group{max-width:none;flex:1 1 100%}
+    .package-card-right{width:100%;justify-content:flex-end}
+}
+
+/* Targeted mobile manager header + booking package owner polish. */
+.manager-brand-title{display:flex;align-items:center;gap:10px}
+.manager-mobile-name{display:none}
+.booking-package-item{display:block}
+.booking-package-manager{color:#0d7f78;font-weight:800}
+@media(max-width:560px){
+    .manager-topbar-inner{min-height:68px;height:auto;padding:10px 0;gap:8px;align-items:center}
+    .manager-brand-link{display:flex;flex:1 1 auto;min-width:0;flex-direction:column;align-items:flex-start;justify-content:center;gap:3px;font-size:17px;line-height:1.05}
+    .manager-brand-title{gap:7px;white-space:nowrap}
+    .manager-brand-link i{font-size:17px}
+    .manager-brand-link>small.manager-mobile-name{display:block;margin:0;font-size:9px;line-height:1.15;opacity:.9;font-weight:700;white-space:nowrap}
+    .manager-mobile-name em{font-style:normal;opacity:.72;font-weight:600}
+    .manager-top-actions{flex:0 0 auto;display:flex;align-items:center;gap:5px;white-space:nowrap}
+    .manager-top-actions .manager-identity{display:none}
+    .manager-top-actions a{display:inline-flex!important;align-items:center;justify-content:center;gap:4px;padding:8px 8px;border-radius:9px;font-size:9px;line-height:1;white-space:nowrap}
+}
+@media(max-width:390px){
+    .manager-topbar-inner{gap:6px}
+    .manager-brand-link{font-size:16px}
+    .manager-brand-link>small.manager-mobile-name{font-size:8px}
+    .manager-top-actions{gap:4px}
+    .manager-top-actions a{padding:8px 6px;font-size:8px}
+}
+
+/* Customer booking package manager owner — explicit final color rule. */
+.booking-table td[data-label="Packages"] .booking-items .booking-package-item .booking-package-manager,
+.booking-table .booking-package-manager {
+    color: #0b8f83 !important;
+    -webkit-text-fill-color: #0b8f83 !important;
+    font-weight: 800 !important;
+    opacity: 1 !important;
+    text-decoration: none !important;
+}
+
+/* Manager header logo + mobile manager identity — header-only update */
+.manager-brand-link{gap:10px;min-width:0}
+.manager-brand-logo{width:42px;height:42px;flex:0 0 42px;display:grid;place-items:center;padding:5px;box-sizing:border-box;border-radius:13px;background:rgba(255,255,255,.95);border:1px solid rgba(255,255,255,.45);box-shadow:0 6px 18px rgba(4,45,48,.16);overflow:hidden}
+.manager-brand-logo img{width:100%;height:100%;display:block;object-fit:contain}
+.manager-brand-copy{display:flex;flex-direction:column;justify-content:center;min-width:0}
+.manager-brand-title{display:block;font-size:20px;font-weight:850;letter-spacing:-.45px;line-height:1.05;color:#fff;text-shadow:0 1px 10px rgba(0,0,0,.12)}
+.manager-mobile-manager{display:none!important}
+
+@media(max-width:900px){
+    .manager-topbar-inner{gap:10px}
+    .manager-top-actions{flex:0 0 auto}
+    .manager-top-actions a:first-child{display:inline-flex}
+    .manager-top-actions a{white-space:nowrap;line-height:1}
+}
+
+@media(max-width:560px){
+    .manager-topbar-inner{padding:11px 0;align-items:center}
+    .manager-brand-link{gap:8px;flex:1 1 auto;min-width:0}
+    .manager-brand-logo{width:38px;height:38px;flex-basis:38px;border-radius:11px;padding:4px}
+    .manager-brand-title{font-size:16px;letter-spacing:-.3px}
+    .manager-mobile-manager{display:block!important;margin-top:3px;font-size:9px;line-height:1.15;font-weight:700;letter-spacing:.1px;color:rgba(255,255,255,.9);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .manager-mobile-manager span{font-weight:600;opacity:.78}
+    .manager-top-actions{gap:5px;align-items:center}
+    .manager-top-actions a{padding:8px 8px;border-radius:9px;font-size:9px;gap:4px;display:inline-flex;align-items:center;justify-content:center}
+    .manager-top-actions a i{font-size:9px;flex:0 0 auto}
+    .manager-top-actions .manager-logout{padding-left:8px;padding-right:8px}
+}
+
+
+/* =========================================================
+   MANAGER HEADER BRANDING — TITLE IMAGE
+   Header-only update. Existing catalog/booking rules remain untouched.
+========================================================= */
+.manager-brand-link {
+    gap: 12px;
+}
+.manager-brand-logo {
+    width: 52px;
+    height: 52px;
+    flex-basis: 52px;
+    padding: 5px;
+    border-radius: 15px;
+    background: linear-gradient(145deg, #ffffff 0%, #f0fbf8 100%);
+}
+.manager-brand-title {
+    display: inline-flex;
+    align-items: center;
+    line-height: 0;
+}
+.manager-brand-title img {
+    display: block;
+    width: auto;
+    height: 34px;
+    max-width: 190px;
+    object-fit: contain;
+}
+@media (max-width: 900px) {
+    .manager-brand-logo {
+        width: 48px;
+        height: 48px;
+        flex-basis: 48px;
+    }
+    .manager-brand-title img {
+        height: 30px;
+        max-width: 170px;
+    }
+}
+@media (max-width: 560px) {
+    .manager-brand-link {
+        gap: 8px;
+    }
+    .manager-brand-logo {
+        width: 44px;
+        height: 44px;
+        flex-basis: 44px;
+        border-radius: 13px;
+        padding: 4px;
+    }
+    .manager-brand-title img {
+        height: 25px;
+        max-width: 140px;
+    }
+}
+
+/* =========================================================
+   MANAGER HEADER — MOBILE BRAND ROW ALIGNMENT
+   Header-only adjustment. No catalog/booking styles changed.
+========================================================= */
+@media (max-width: 560px) {
+    .manager-topbar-inner {
+        flex-wrap: nowrap;
+        align-items: center;
+    }
+
+    .manager-brand-link {
+        flex: 1 1 auto;
+        min-width: 0;
+        flex-direction: row;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 8px;
+    }
+
+    .manager-brand-copy {
+        min-width: 0;
+        flex: 0 1 auto;
+    }
+
+    .manager-brand-title {
+        min-width: 0;
+        max-width: 140px;
+    }
+
+    .manager-brand-title img {
+        width: auto;
+        height: 34px;
+        max-width: 150px;
+    }
+
+    .manager-mobile-manager {
+        display: block !important;
+        margin-top: 3px;
+        font-size: 8.5px;
+        line-height: 1.15;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .manager-top-actions {
+        flex: 0 0 auto;
+        align-self: center;
+        white-space: nowrap;
+    }
+
+    .manager-top-actions a {
+        flex: 0 0 auto;
+        white-space: nowrap;
+    }
+}
+
+@media (max-width: 390px) {
+    .manager-brand-link {
+        gap: 6px;
+    }
+
+    .manager-brand-logo {
+        width: 42px;
+        height: 42px;
+        flex-basis: 42px;
+    }
+
+    .manager-brand-title,
+    .manager-brand-title img {
+        max-width: 132px;
+    }
+
+    .manager-brand-title img {
+        height: 30px;
+    }
+
+    .manager-mobile-manager {
+        font-size: 8px;
+    }
+
+    .manager-top-actions {
+        gap: 4px;
+    }
+
+    .manager-top-actions a {
+        padding: 7px 6px;
+        font-size: 8px;
+    }
+}
+
+/* =========================================================
+   MANAGER HEADER — FINAL EQUAL LOGO/TITLE ALIGNMENT
+   Header-only change. Keep manager name under the title.
+========================================================= */
+.manager-brand-copy{
+    flex:0 1 auto;
+    min-width:0;
+}
+.manager-brand-title{
+    display:inline-flex;
+    align-items:center;
+    line-height:0;
+}
+.manager-brand-title img{
+    display:block;
+    width:auto;
+    height:52px;
+    max-width:210px;
+    object-fit:contain;
+}
+@media (max-width:900px){
+    .manager-brand-title img{
+        height:48px;
+        max-width:190px;
+    }
+}
+@media (max-width:560px){
+    .manager-brand-copy{
+        min-width:0;
+        flex:0 1 auto;
+    }
+    .manager-brand-title img{
+        height:44px;
+        max-width:160px;
+    }
+    .manager-mobile-manager{
+        display:block !important;
+        margin-top:3px;
+    }
+}
+@media (max-width:390px){
+    .manager-brand-title img{
+        height:40px;
+        max-width:145px;
+    }
+}
+

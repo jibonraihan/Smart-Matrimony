@@ -30,7 +30,7 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
   }
  }
 }
-$st=mysqli_prepare($conn,"SELECT p.*,u.email,u.mobile,u.account_status,u.role FROM user_profiles p JOIN users u ON u.user_id=p.user_id WHERE p.profile_id=? AND u.role<>'Admin' LIMIT 1");mysqli_stmt_bind_param($st,'i',$profile_id);mysqli_stmt_execute($st);$p=mysqli_fetch_assoc(mysqli_stmt_get_result($st));mysqli_stmt_close($st);
+$st=mysqli_prepare($conn,"SELECT p.*,u.email,u.mobile,u.account_status,u.role FROM user_profiles p JOIN users u ON u.user_id=p.user_id WHERE p.profile_id=? AND u.role='User' LIMIT 1");mysqli_stmt_bind_param($st,'i',$profile_id);mysqli_stmt_execute($st);$p=mysqli_fetch_assoc(mysqli_stmt_get_result($st));mysqli_stmt_close($st);
 if(!$p){header('Location: dashboard.php');exit;}
 $age='Not informed';if(!empty($p['date_of_birth'])){$dob=new DateTime($p['date_of_birth']);$now=new DateTime();$age=$dob->diff($now)->y.' years';}
 $loc=[];foreach(['area','upazila','district','division'] as $k){if(!empty($p[$k]))$loc[]=$p[$k];}$location=$loc?implode(', ',$loc):'Not informed';

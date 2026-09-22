@@ -44,7 +44,9 @@ $navItems = [
             <span class="smart-navbar-logo">
                 <img src="<?= BASE_URL; ?>assets/images/logo/logo.png" alt="Smart Matrimony Logo">
             </span>
-            <span class="smart-navbar-title">Smart Matrimony</span>
+            <span class="smart-navbar-title" aria-hidden="true">
+                <img src="<?= BASE_URL; ?>assets/images/logo/matrimony_title.png" alt="Smart Matrimony">
+            </span>
         </a>
 
         <button

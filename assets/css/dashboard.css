@@ -2606,3 +2606,161 @@ body.menu-open {
     .match-detail-score { font-size: 8px; }
     .match-detail-score strong { font-size: 9px; }
 }
+
+
+/* =========================================================
+   DASHBOARD HEADER BRANDING — TITLE IMAGE
+   Header-only update.
+========================================================= */
+.dashboard-page .dashboard-brand {
+    gap: 12px;
+    min-width: 0;
+}
+.dashboard-page .dashboard-brand-logo {
+    width: 52px;
+    height: 52px;
+    flex: 0 0 52px;
+    display: grid;
+    place-items: center;
+    padding: 5px;
+    box-sizing: border-box;
+    border-radius: 15px;
+    background: linear-gradient(145deg, #ffffff 0%, #f0fbf8 100%);
+    border: 1px solid rgba(255,255,255,.72);
+    box-shadow: 0 6px 18px rgba(4,45,48,.16);
+    overflow: hidden;
+}
+.dashboard-page .dashboard-brand-logo img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+}
+.dashboard-page .dashboard-brand-title {
+    display: inline-flex;
+    align-items: center;
+    min-width: 0;
+    line-height: 0;
+}
+.dashboard-page .dashboard-brand-title img {
+    display: block;
+    width: auto;
+    height: 34px;
+    max-width: 190px;
+    object-fit: contain;
+}
+@media (max-width: 900px) {
+    .dashboard-page .dashboard-brand-logo {
+        width: 48px;
+        height: 48px;
+        flex-basis: 48px;
+    }
+    .dashboard-page .dashboard-brand-title img {
+        height: 30px;
+        max-width: 170px;
+    }
+}
+@media (max-width: 560px) {
+    .dashboard-page .dashboard-brand {
+        gap: 8px;
+    }
+    .dashboard-page .dashboard-brand-logo {
+        width: 44px;
+        height: 44px;
+        flex-basis: 44px;
+        border-radius: 13px;
+        padding: 4px;
+    }
+    .dashboard-page .dashboard-brand-title img {
+        height: 25px;
+        max-width: 140px;
+    }
+}
+
+/* Header branding size refinement — header only. */
+.dashboard-page .dashboard-brand { gap: 14px; }
+.dashboard-page .dashboard-brand-logo {
+    width: 64px;
+    height: 64px;
+    flex-basis: 64px;
+    border-radius: 17px;
+    padding: 5px;
+}
+.dashboard-page .dashboard-brand-title img {
+    height: 48px;
+    max-width: 255px;
+}
+@media (max-width: 900px) {
+    .dashboard-page .dashboard-brand-logo {
+        width: 58px;
+        height: 58px;
+        flex-basis: 58px;
+    }
+    .dashboard-page .dashboard-brand-title img {
+        height: 42px;
+        max-width: 220px;
+    }
+}
+@media (max-width: 560px) {
+    .dashboard-page .dashboard-brand { gap: 9px; }
+    .dashboard-page .dashboard-brand-logo {
+        width: 50px;
+        height: 50px;
+        flex-basis: 50px;
+        border-radius: 14px;
+        padding: 4px;
+    }
+    .dashboard-page .dashboard-brand-title img {
+        height: 34px;
+        max-width: 175px;
+    }
+}
+
+/* Header-only: increase title image size. */
+.dashboard-page .dashboard-brand-title img {
+    height: 58px;
+    max-width: 310px;
+}
+@media (max-width: 900px) {
+    .dashboard-page .dashboard-brand-title img {
+        height: 50px;
+        max-width: 270px;
+    }
+}
+@media (max-width: 560px) {
+    .dashboard-page .dashboard-brand-title img {
+        height: 42px;
+        max-width: 215px;
+    }
+}
+
+/* Header-only: restore the dashboard logo background to match the other project headers. */
+.dashboard-page .dashboard-brand-logo {
+    background: #ffffff !important;
+    border: 1px solid rgba(255,255,255,.28) !important;
+    box-shadow: 0 5px 16px rgba(0,0,0,.15), inset 0 1px 0 rgba(255,255,255,.18) !important;
+    padding: 5px !important;
+    overflow: hidden !important;
+}
+.dashboard-page .dashboard-brand-logo img {
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
+    object-fit: contain !important;
+}
+
+/* Header-only: title artwork stays transparent; logo keeps its white background. */
+.dashboard-page .dashboard-brand-title img {
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
+    object-fit: contain !important;
+}
+
+
+/* Step 9: Authenticator messages & notices panel */
+.authenticator-messages-section{padding-top:10px}.authenticator-messages-heading{align-items:flex-end}.message-heading-actions{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap}.message-unread-badge,.message-read-state{display:inline-flex;align-items:center;gap:7px;padding:9px 12px;border-radius:999px;font-size:12px;font-weight:800}.message-unread-badge{background:#fff4df;color:#9a6a08;border:1px solid #f1dfb5}.message-read-state{background:#edf8f5;color:var(--dash-primary);border:1px solid #d6ece7}.message-inline-form{display:inline-flex;margin:0}.message-mark-all,.message-mark-read{border:1px solid var(--dash-primary);background:var(--dash-primary);color:#fff;border-radius:11px;padding:9px 12px;font:700 12px/1.2 inherit;cursor:pointer;display:inline-flex;align-items:center;gap:7px}.message-mark-all:hover,.message-mark-read:hover{background:var(--dash-primary-dark);border-color:var(--dash-primary-dark)}.dashboard-message-flash{margin:0 0 14px;display:flex;align-items:center;gap:9px;padding:12px 14px;border-radius:13px;background:#edf8f5;color:var(--dash-primary-dark);border:1px solid #d6ece7;font-size:12px;font-weight:700}.authenticator-message-list{display:grid;gap:12px}.authenticator-message-card{display:grid;grid-template-columns:44px minmax(0,1fr);gap:14px;padding:18px;background:var(--dash-white);border:1px solid var(--dash-border);border-radius:18px;box-shadow:0 10px 28px rgba(15,23,42,.04)}.authenticator-message-card.is-unread{border-color:#c7e5df;background:linear-gradient(135deg,#fbfffe 0%,#f2faf8 100%);box-shadow:0 12px 32px rgba(15,118,110,.08)}.authenticator-message-icon{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;background:#edf8f5;color:var(--dash-primary);font-size:17px}.authenticator-message-card.is-unread .authenticator-message-icon{background:var(--dash-primary);color:#fff}.authenticator-message-content{min-width:0}.authenticator-message-topline{display:flex;align-items:center;justify-content:space-between;gap:12px}.authenticator-message-topline>div{display:flex;align-items:center;gap:8px}.authenticator-message-topline strong{font-size:14px;color:var(--dash-ink)}.authenticator-message-topline time{color:var(--dash-muted);font-size:11px;white-space:nowrap}.message-new-pill{display:inline-flex;padding:3px 7px;border-radius:999px;background:#e9f6f3;color:var(--dash-primary);font-size:9px;font-weight:900;letter-spacing:.4px}.authenticator-message-content p{margin:8px 0 11px;color:#536276;font-size:13px;line-height:1.75;overflow-wrap:anywhere}.message-mark-read{background:#fff;color:var(--dash-primary);border-color:#c9e3df;padding:7px 10px}.message-mark-read:hover{color:#fff}.message-read-label{display:inline-flex;align-items:center;gap:6px;color:#7b8a9e;font-size:11px;font-weight:700}.authenticator-message-empty{display:flex;align-items:center;gap:16px;padding:22px;border:1px dashed #cfe2df;border-radius:18px;background:rgba(255,255,255,.75)}.authenticator-message-empty-icon{width:48px;height:48px;flex:0 0 48px;border-radius:15px;display:grid;place-items:center;background:#edf8f5;color:var(--dash-primary);font-size:19px}.authenticator-message-empty strong{display:block;font-size:14px;color:var(--dash-ink)}.authenticator-message-empty p{margin:4px 0 0;color:var(--dash-muted);font-size:12px;line-height:1.6}@media(max-width:760px){.authenticator-messages-heading{align-items:flex-start}.message-heading-actions{justify-content:flex-start;margin-top:12px}.authenticator-message-topline{align-items:flex-start;flex-direction:column;gap:5px}}@media(max-width:520px){.authenticator-message-card{grid-template-columns:1fr;padding:16px}.authenticator-message-icon{width:40px;height:40px;border-radius:12px}.message-heading-actions{width:100%}.message-mark-all,.message-unread-badge,.message-read-state{width:100%;justify-content:center}.authenticator-message-empty{align-items:flex-start;padding:18px}}

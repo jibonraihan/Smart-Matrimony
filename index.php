@@ -80,8 +80,8 @@ if ($home_package_result) {
 
 $home_featured_packages = [];
 $home_max_discount = 0;
-foreach ($home_service_packages as $service_packages) {
-    foreach ($service_packages as $package) {
+foreach ($home_service_packages as $service_package_group) {
+    foreach ($service_package_group as $package) {
         $home_featured_packages[] = $package;
         $home_max_discount = max($home_max_discount, (float) ($package['discount_percent'] ?? 0));
     }
@@ -1118,9 +1118,14 @@ include 'includes/navbar.php';
                     <h2>Plan Your Day with <span>Smart Wedding Services.</span></h2>
                     <p>Explore active packages from our service providers. Swipe, use the arrows, or let the showcase move automatically.</p>
                 </div>
-                <a class="featured-packages-view-all" href="#home-services">
-                    View All Services <i class="fa-solid fa-arrow-right"></i>
-                </a>
+                <div class="featured-packages-heading-actions">
+                    <a class="featured-packages-view-all" href="#home-services">
+                        View All Services <i class="fa-solid fa-arrow-right"></i>
+                    </a>
+                    <a class="featured-packages-budget-link" href="<?= BASE_URL; ?>services/budget_finder.php">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> Find by Budget
+                    </a>
+                </div>
             </div>
 
             <?php if ($home_featured_packages): ?>
@@ -1169,6 +1174,15 @@ include 'includes/navbar.php';
                     <span>New packages added by Event Managers will appear here automatically.</span>
                 </div>
             <?php endif; ?>
+
+            <div class="featured-budget-cta" data-aos="fade-up">
+                <div class="featured-budget-cta-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+                <div>
+                    <span>SMART BUDGET FINDER</span>
+                    <strong>Build your wedding package around your budget.</strong>
+                </div>
+                <a href="<?= BASE_URL; ?>services/budget_finder.php"><span>Find Packages</span><i class="fa-solid fa-arrow-right"></i></a>
+            </div>
         </div>
     </section>
 
@@ -1507,9 +1521,12 @@ include 'includes/navbar.php';
                     <h2>Everything you need for your <span>special day.</span></h2>
                     <p>Explore available wedding services and discover packages from our current provider catalog.</p>
                 </div>
-                <div class="home-services-count">
-                    <strong><?= count($home_services); ?></strong>
-                    <span>Service Categories</span>
+                <div class="home-services-heading-actions">
+                    <div class="home-services-count">
+                        <strong><?= count($home_services); ?></strong>
+                        <span>Service Categories</span>
+                    </div>
+                    <a href="<?= BASE_URL; ?>services/budget_finder.php" class="home-services-budget-btn"><i class="fa-solid fa-wand-magic-sparkles"></i> Find Packages by Budget</a>
                 </div>
             </div>
 

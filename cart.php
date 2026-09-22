@@ -68,10 +68,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if ($action === 'book') {
-        $event_date = $_POST['event_date'] ?? '';
+        $event_date = trim($_POST['event_date'] ?? '');
         $special_instruction = trim($_POST['special_instruction'] ?? '');
 
-        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $event_date) || $event_date < date('Y-m-d')) {
+        $date_parts = explode('-', $event_date);
+        $valid_event_date = count($date_parts) === 3
+            && preg_match('/^\d{4}-\d{2}-\d{2}$/', $event_date)
+            && ctype_digit($date_parts[0])
+            && ctype_digit($date_parts[1])
+            && ctype_digit($date_parts[2])
+            && checkdate((int)$date_parts[1], (int)$date_parts[2], (int)$date_parts[0])
+            && $event_date >= date('Y-m-d');
+
+        if (!$valid_event_date) {
             header('Location: cart.php?error=date');
             exit;
         }
@@ -99,26 +108,50 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $total += ($final_price * (int) $item['quantity']);
                 if (!empty($item['manager_id'])) $manager_ids[(int) $item['manager_id']] = true;
             }
-            $manager_id = count($manager_ids) === 1 ? (int) array_key_first($manager_ids) : null;
 
-            if ($manager_id !== null) {
+            if (empty($manager_ids)) {
+                throw new RuntimeException('One or more selected packages are not assigned to a manager. Please remove them and try again.');
+            }
+
+            // A shared Manager Dashboard handles the booking globally. Keep the legacy
+            // bookings.manager_id populated only for a single-manager booking; multi-manager
+            // bookings intentionally keep it NULL.
+            $single_manager_id = count($manager_ids) === 1 ? (int) array_key_first($manager_ids) : null;
+
+            $active_manager_stmt = mysqli_prepare($conn, "SELECT COUNT(*) AS total
+                FROM users
+                WHERE user_id=? AND role='Manager' AND account_status='Active'");
+            foreach (array_keys($manager_ids) as $booked_manager_id) {
+                $booked_manager_id = (int) $booked_manager_id;
+                mysqli_stmt_bind_param($active_manager_stmt, 'i', $booked_manager_id);
+                mysqli_stmt_execute($active_manager_stmt);
+                $active_manager = (int)(mysqli_fetch_assoc(mysqli_stmt_get_result($active_manager_stmt))['total'] ?? 0);
+                if ($active_manager !== 1) {
+                    mysqli_stmt_close($active_manager_stmt);
+                    throw new RuntimeException('A selected package is currently assigned to an unavailable manager. Please try again after the package is reassigned.');
+                }
+            }
+            mysqli_stmt_close($active_manager_stmt);
+
+            if ($single_manager_id !== null) {
                 $stmt = mysqli_prepare($conn, "INSERT INTO bookings (user_id, manager_id, total_price, booking_status) VALUES (?, ?, ?, 'Pending')");
-                mysqli_stmt_bind_param($stmt, 'iid', $user_id, $manager_id, $total);
+                mysqli_stmt_bind_param($stmt, 'iid', $user_id, $single_manager_id, $total);
             } else {
-                $stmt = mysqli_prepare($conn, "INSERT INTO bookings (user_id, total_price, booking_status) VALUES (?, ?, 'Pending')");
+                $stmt = mysqli_prepare($conn, "INSERT INTO bookings (user_id, manager_id, total_price, booking_status) VALUES (?, NULL, ?, 'Pending')");
                 mysqli_stmt_bind_param($stmt, 'id', $user_id, $total);
             }
             mysqli_stmt_execute($stmt);
             $booking_id = mysqli_insert_id($conn);
             mysqli_stmt_close($stmt);
 
-            $stmt = mysqli_prepare($conn, 'INSERT INTO booking_details (booking_id, provider_id, quantity, unit_price, event_date, special_instruction) VALUES (?, ?, ?, ?, ?, ?)');
+            $stmt = mysqli_prepare($conn, 'INSERT INTO booking_details (booking_id, provider_id, manager_id, quantity, unit_price, event_date, special_instruction) VALUES (?, ?, ?, ?, ?, ?, ?)');
             foreach ($items as $item) {
                 $provider_id = (int) $item['provider_id'];
+                $item_manager_id = (int) ($item['manager_id'] ?? 0);
                 $quantity = (int) $item['quantity'];
                 $discount = max(0, min(100, (float)($item['discount_percent'] ?? 0)));
                 $unit_price = round((float) $item['price'] * (1 - ($discount / 100)), 2);
-                mysqli_stmt_bind_param($stmt, 'iiidss', $booking_id, $provider_id, $quantity, $unit_price, $event_date, $special_instruction);
+                mysqli_stmt_bind_param($stmt, 'iiiidss', $booking_id, $provider_id, $item_manager_id, $quantity, $unit_price, $event_date, $special_instruction);
                 mysqli_stmt_execute($stmt);
             }
             mysqli_stmt_close($stmt);

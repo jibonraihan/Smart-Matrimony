@@ -25,6 +25,7 @@ if (empty($_SESSION['matching_csrf'])) {
 }
 $matching_csrf = $_SESSION['matching_csrf'];
 
+
 /* Dashboard bookmark action: normal POST + redirect, no AJAX endpoint. */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['dashboard_bookmark_action'])) {
     $posted_csrf = (string) ($_POST['csrf_token'] ?? '');
@@ -176,6 +177,15 @@ mysqli_stmt_execute($booking_package_stmt);
 $booking_package_row = mysqli_fetch_assoc(mysqli_stmt_get_result($booking_package_stmt));
 $booking_package_count = (int) ($booking_package_row['total'] ?? 0);
 mysqli_stmt_close($booking_package_stmt);
+
+/* Notifications badge: keep only the unread count on the main dashboard. */
+$authenticator_unread_count = 0;
+$message_count_stmt = mysqli_prepare($conn, "SELECT COUNT(*) AS total FROM authenticator_messages WHERE user_id=? AND status='Unread'");
+if ($message_count_stmt) {
+    mysqli_stmt_bind_param($message_count_stmt, 'i', $user_id); mysqli_stmt_execute($message_count_stmt);
+    $message_count_row = mysqli_fetch_assoc(mysqli_stmt_get_result($message_count_stmt));
+    $authenticator_unread_count = (int) ($message_count_row['total'] ?? 0); mysqli_stmt_close($message_count_stmt);
+}
 
 /* Current active matches */
 $current_matches_count = 0;
@@ -614,9 +624,13 @@ include 'includes/header.php';
     <header class="dashboard-topbar">
         <div class="dashboard-container topbar-inner">
 
-            <a href="<?= BASE_URL; ?>dashboard.php" class="dashboard-brand">
-                <img src="<?= BASE_URL; ?>assets/images/logo/logo.png" alt="Smart Matrimony">
-                <span>Smart Matrimony</span>
+            <a href="<?= BASE_URL; ?>dashboard.php" class="dashboard-brand" aria-label="Smart Matrimony Dashboard">
+                <span class="dashboard-brand-logo">
+                    <img src="<?= BASE_URL; ?>assets/images/logo/logo.png" alt="Smart Matrimony Logo">
+                </span>
+                <span class="dashboard-brand-title">
+                    <img src="<?= BASE_URL; ?>assets/images/logo/matrimony_title.png" alt="Smart Matrimony">
+                </span>
             </a>
 
             <div class="topbar-actions">
@@ -672,18 +686,7 @@ include 'includes/header.php';
             <a href="<?= BASE_URL; ?>matching/my_matches.php"><i class="fa-solid fa-heart"></i><span>My Matches</span></a>
             <a href="<?= BASE_URL; ?>matching/bookmarks.php"><i class="fa-solid fa-bookmark"></i><span>Bookmarks</span></a>
             <a href="<?= BASE_URL; ?>matching/chat_requests.php"><i class="fa-solid fa-comments"></i><span>Messages</span></a>
-
-            <?php if (($current_user['role'] ?? '') === 'Admin'): ?>
-                <a href="<?= BASE_URL; ?>admin/login.php" target="_blank" rel="noopener"><i class="fa-solid fa-user-shield"></i><span>Admin Login</span></a>
-            <?php endif; ?>
-
-            <?php if (($current_user['role'] ?? '') === 'Manager'): ?>
-                <a href="<?= BASE_URL; ?>manager/login.php" target="_blank" rel="noopener"><i class="fa-solid fa-calendar-check"></i><span>Event Manager</span></a>
-            <?php else: ?>
-                <a href="<?= BASE_URL; ?>manager/login.php" target="_blank" rel="noopener"><i class="fa-solid fa-calendar-check"></i><span>Event Manager Login</span></a>
-            <?php endif; ?>
-
-            <a href="<?= BASE_URL; ?>authenticator/login.php" target="_blank" rel="noopener"><i class="fa-solid fa-user-check"></i><span>Authenticator Login</span></a>
+            <a href="<?= BASE_URL; ?>notifications.php" class="notifications-menu-link"><i class="fa-solid fa-bell"></i><span>Notifications</span><?php if ($authenticator_unread_count > 0): ?><span class="menu-count notifications-menu-count"><?= $authenticator_unread_count; ?></span><?php endif; ?></a>
         </nav>
 
         <div class="menu-footer">

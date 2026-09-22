@@ -117,19 +117,69 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 )
             ) {
 
+                /*
+                 * Unified login: route by the role stored in users.
+                 * The staff dashboards in this project use dedicated session
+                 * names, so switch to the correct session BEFORE redirecting.
+                 */
+                if ($user['role'] === 'Admin') {
+                    $_SESSION = [];
+                    session_write_close();
+
+                    session_name('SMART_ADMIN_SESSION');
+                    session_start();
+                    session_regenerate_id(true);
+
+                    $_SESSION['admin_user_id'] = (int) $user['user_id'];
+                    $_SESSION['admin_name'] = trim($user['first_name'] . ' ' . $user['last_name']);
+                    $_SESSION['admin_csrf'] = bin2hex(random_bytes(32));
+
+                    header('Location: admin/dashboard.php');
+                    exit;
+                }
+
+                if ($user['role'] === 'Authenticator') {
+                    $_SESSION = [];
+                    session_write_close();
+
+                    session_name('SMART_AUTH_SESSION');
+                    session_start();
+                    session_regenerate_id(true);
+
+                    $_SESSION['authenticator_user_id'] = (int) $user['user_id'];
+                    $_SESSION['authenticator_name'] = trim($user['first_name'] . ' ' . $user['last_name']);
+                    $_SESSION['auth_csrf'] = bin2hex(random_bytes(32));
+
+                    header('Location: authenticator/dashboard.php');
+                    exit;
+                }
+
+                if ($user['role'] === 'Manager') {
+                    $_SESSION = [];
+                    session_write_close();
+
+                    session_name('SMART_MANAGER_SESSION');
+                    ini_set('session.use_cookies', '0');
+                    ini_set('session.use_only_cookies', '0');
+                    ini_set('session.use_trans_sid', '0');
+                    $manager_sid = bin2hex(random_bytes(32));
+                    session_id($manager_sid);
+                    session_start();
+
+                    $_SESSION['user_id'] = (int) $user['user_id'];
+                    $_SESSION['role'] = $user['role'];
+                    $_SESSION['manager_id'] = (int) $user['user_id'];
+                    $_SESSION['manager_name'] = trim($user['first_name'] . ' ' . $user['last_name']);
+
+                    header('Location: manager/dashboard.php?manager_sid=' . urlencode($manager_sid));
+                    exit;
+                }
+
                 session_regenerate_id(true);
-
-                $_SESSION['user_id'] =
-                    $user['user_id'];
-
-                $_SESSION['first_name'] =
-                    $user['first_name'];
-
-                $_SESSION['last_name'] =
-                    $user['last_name'];
-
-                $_SESSION['role'] =
-                    $user['role'];
+                $_SESSION['user_id'] = (int) $user['user_id'];
+                $_SESSION['first_name'] = $user['first_name'];
+                $_SESSION['last_name'] = $user['last_name'];
+                $_SESSION['role'] = $user['role'];
 
                 header('Location: home.php');
                 exit;

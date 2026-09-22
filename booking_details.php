@@ -31,13 +31,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (($_POST['action'] ?? '') === 'cancel') {
-        $stmt = mysqli_prepare($conn, "UPDATE bookings SET booking_status='Cancelled' WHERE booking_id=? AND user_id=? AND booking_status='Pending'");
-        mysqli_stmt_bind_param($stmt, 'ii', $booking_id, $user_id);
-        mysqli_stmt_execute($stmt);
-        mysqli_stmt_close($stmt);
-        header('Location: booking_details.php?id=' . $booking_id . '&cancelled=1');
+        mysqli_begin_transaction($conn);
+        try {
+            $stmt = mysqli_prepare($conn, "UPDATE bookings SET booking_status='Cancelled', cancellation_reason='Cancelled by customer.', cancelled_at=NOW(), cancelled_by='Customer' WHERE booking_id=? AND user_id=? AND booking_status='Pending'");
+            mysqli_stmt_bind_param($stmt, 'ii', $booking_id, $user_id);
+            mysqli_stmt_execute($stmt);
+            $changed = mysqli_stmt_affected_rows($stmt) === 1;
+            mysqli_stmt_close($stmt);
+
+            if ($changed) {
+                $stmt = mysqli_prepare($conn, "UPDATE booking_manager_requests SET status='Cancelled', cancellation_reason='Cancelled by customer.', cancelled_at=NOW(), cancelled_by='Customer' WHERE booking_id=? AND status IN ('Pending','Confirmed')");
+                mysqli_stmt_bind_param($stmt, 'i', $booking_id);
+                mysqli_stmt_execute($stmt);
+                mysqli_stmt_close($stmt);
+            }
+            mysqli_commit($conn);
+        } catch (Throwable $e) {
+            mysqli_rollback($conn);
+            $changed = false;
+        }
+        header('Location: booking_details.php?id=' . $booking_id . ($changed ? '&cancelled=1' : '&cancel_failed=1'));
         exit;
     }
+
 }
 
 $booking = null;
@@ -92,6 +108,8 @@ include 'includes/header.php';
             <div class="booking-alert"><i class="fa-solid fa-circle-check"></i> Booking #<?= $booking_id; ?> was submitted successfully and is now pending manager confirmation.</div>
         <?php elseif (isset($_GET['cancelled'])): ?>
             <div class="booking-alert"><i class="fa-solid fa-circle-check"></i> Booking #<?= $booking_id; ?> has been cancelled.</div>
+        <?php elseif (isset($_GET['cancel_failed'])): ?>
+            <div class="booking-alert"><i class="fa-solid fa-circle-exclamation"></i> This booking could not be cancelled. It may already have been updated.</div>
         <?php endif; ?>
 
         <section class="booking-detail-hero">

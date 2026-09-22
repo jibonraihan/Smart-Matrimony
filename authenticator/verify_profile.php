@@ -6,6 +6,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 require_once '../config/db.php';
+require_once '../config/mail.php';
 
 if (empty($_SESSION['authenticator_user_id'])) {
     header('Location: login.php');
@@ -41,7 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['verification_action']
         } else {
             mysqli_begin_transaction($conn);
             try {
-                $check = mysqli_prepare($conn, "SELECT up.profile_id, up.user_id, up.verification_status FROM user_profiles up INNER JOIN users u ON u.user_id=up.user_id WHERE up.profile_id=? AND u.role='User' LIMIT 1");
+                $check = mysqli_prepare($conn, "SELECT up.profile_id, up.user_id, up.verification_status, up.first_name, u.email FROM user_profiles up INNER JOIN users u ON u.user_id=up.user_id WHERE up.profile_id=? AND u.role='User' LIMIT 1");
                 mysqli_stmt_bind_param($check, 'i', $profile_id);
                 mysqli_stmt_execute($check);
                 $target = mysqli_fetch_assoc(mysqli_stmt_get_result($check));
@@ -59,7 +60,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['verification_action']
                 mysqli_stmt_close($log);
 
                 mysqli_commit($conn);
-                $notice = "Profile {$action}. Verification history has been recorded.";
+                $mail_sent = send_verification_status_email(
+                    $target['email'],
+                    $target['first_name'],
+                    $action,
+                    $remarks,
+                    trim($auth['first_name'].' '.$auth['last_name'])
+                );
+                $notice = "Profile {$action}. Verification history has been recorded." . ($mail_sent ? ' The member has been notified by email.' : ' The verification was saved, but the notification email could not be sent.');
             } catch (Throwable $e) {
                 mysqli_rollback($conn);
                 $error = $e->getMessage();

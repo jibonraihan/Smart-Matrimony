@@ -1,12 +1,5 @@
 <?php
-require_once '../config/db.php';
-if (session_status() === PHP_SESSION_NONE) { session_name('SMART_ADMIN_SESSION'); session_start(); }
-if (empty($_SESSION['admin_user_id'])) { header('Location: login.php'); exit; }
-$admin_id = (int) $_SESSION['admin_user_id'];
-if (empty($_SESSION['admin_csrf'])) $_SESSION['admin_csrf'] = bin2hex(random_bytes(32));
-$csrf = $_SESSION['admin_csrf'];
-$message = ''; $error = '';
-
+require_once __DIR__ . '/admin_guard.php';
 function h($v) { return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8'); }
 function money($v) { return number_format((float)$v, 2); }
 function scalar_count(mysqli $conn, string $sql): int { $r=mysqli_query($conn,$sql); if(!$r) return 0; $row=mysqli_fetch_row($r); return (int)($row[0]??0); }
