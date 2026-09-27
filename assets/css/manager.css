@@ -473,3 +473,417 @@ body.manager-modal-open{overflow:hidden}
     }
 }
 
+
+/* =========================================================
+   Manager Dashboard — profile hero + compact overview stats
+   Top-of-page only. Service catalog and booking styles remain unchanged.
+   ========================================================= */
+.manager-profile-hero{
+    position:relative;
+    display:grid;
+    grid-template-columns:245px minmax(0,1fr);
+    align-items:stretch;
+    min-height:285px;
+    overflow:hidden;
+    margin:0 0 14px;
+    border:1px solid #dcebea;
+    border-radius:18px;
+    background:linear-gradient(135deg,#ffffff 0%,#f8fcfb 64%,#edf8f6 100%);
+    box-shadow:0 10px 30px rgba(15,76,73,.045);
+}
+.manager-profile-hero::after{
+    content:"";
+    position:absolute;
+    width:320px;
+    height:320px;
+    right:-120px;
+    bottom:-180px;
+    border-radius:50%;
+    background:rgba(15,139,131,.065);
+    pointer-events:none;
+}
+.manager-hero-photo{
+    position:relative;
+    z-index:1;
+    display:block;
+    width:100%;
+    height:285px;
+    margin:0;
+    padding:0;
+    border:0;
+    border-radius:17px 0 0 17px;
+    overflow:hidden;
+    background:linear-gradient(145deg,#dff3f0,#bfe4df);
+    cursor:pointer;
+}
+.manager-hero-photo img{
+    display:block;
+    width:100%;
+    height:100%;
+    object-fit:cover;
+}
+.manager-hero-photo-fallback{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    width:100%;
+    height:100%;
+    color:#0b706a;
+    font-size:64px;
+    font-weight:900;
+    letter-spacing:-2px;
+}
+.manager-hero-photo-edit{
+    position:absolute;
+    right:12px;
+    bottom:12px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    width:36px;
+    height:36px;
+    border:3px solid #fff;
+    border-radius:50%;
+    background:#0f8b83;
+    color:#fff;
+    font-size:14px;
+    box-shadow:0 7px 18px rgba(8,79,76,.22);
+}
+.manager-hero-copy{
+    position:relative;
+    z-index:1;
+    min-width:0;
+    padding:32px clamp(24px,4vw,48px);
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+}
+.manager-hero-copy h1{
+    margin:7px 0 9px;
+    color:#084f4c;
+    font-size:clamp(31px,4vw,45px);
+    line-height:1.08;
+    letter-spacing:-.8px;
+}
+.manager-hero-lead{
+    margin:0;
+    max-width:780px;
+    color:#5f7776;
+    font-size:14px;
+    line-height:1.65;
+}
+.manager-hero-meta{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    gap:9px 18px;
+    margin-top:19px;
+    color:#466967;
+    font-size:12px;
+}
+.manager-hero-meta>span{
+    display:inline-flex;
+    align-items:center;
+    gap:7px;
+    min-width:0;
+}
+.manager-hero-meta strong{
+    color:#123c3b;
+    font-size:13px;
+}
+.manager-hero-meta-icon{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:23px;
+    height:23px;
+    border-radius:7px;
+    background:#e6f5f3;
+    color:#0a746d;
+    font-size:8px;
+    font-style:normal;
+    font-weight:900;
+    letter-spacing:.2px;
+}
+.manager-profile-edit{
+    display:inline-flex;
+    align-items:center;
+    align-self:flex-start;
+    gap:8px;
+    margin-top:19px;
+    padding:9px 13px;
+    border:1px solid #c6e0dd;
+    border-radius:11px;
+    background:#fff;
+    color:#0b716b;
+    font:800 11px/1 inherit;
+    cursor:pointer;
+    box-shadow:0 5px 15px rgba(15,76,73,.04);
+    transition:background .18s ease,border-color .18s ease,transform .18s ease;
+}
+.manager-profile-edit:hover{background:#eef9f7;border-color:#9ecfc9;transform:translateY(-1px)}
+.manager-profile-edit>span{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:19px;
+    height:19px;
+    border-radius:6px;
+    background:#0f8b83;
+    color:#fff;
+}
+.manager-hero-actions{
+    display:flex;
+    align-items:center;
+    justify-content:flex-end;
+    gap:9px;
+    margin:0 0 15px;
+}
+.manager-hero-actions .manager-primary-btn,
+.manager-hero-actions .manager-secondary-btn{min-height:42px;box-sizing:border-box}
+.manager-overview-stats{
+    display:grid;
+    grid-template-columns:repeat(5,minmax(0,1fr));
+    gap:11px;
+    margin:0 0 22px;
+}
+.manager-overview-card{
+    position:relative;
+    min-width:0;
+    min-height:92px;
+    padding:13px 14px;
+    box-sizing:border-box;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    overflow:hidden;
+    border:1px solid #e0ecea;
+    border-radius:14px;
+    background:#fff;
+    box-shadow:0 7px 20px rgba(15,76,73,.035);
+    transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease;
+}
+.manager-overview-card::after{
+    content:"";
+    position:absolute;
+    right:-30px;
+    bottom:-35px;
+    width:85px;
+    height:85px;
+    border-radius:50%;
+    background:rgba(15,139,131,.045);
+    pointer-events:none;
+}
+.manager-overview-card:hover{
+    transform:translateY(-2px);
+    border-color:#c7dfdc;
+    box-shadow:0 11px 25px rgba(15,76,73,.065);
+}
+.manager-overview-icon{
+    position:relative;
+    z-index:1;
+    width:38px;
+    height:38px;
+    flex:0 0 38px;
+    display:grid;
+    place-items:center;
+    border-radius:11px;
+    background:#eaf7f5;
+    color:#0a746d;
+    font-size:14px;
+}
+.manager-overview-icon.success{background:#e9f8ef;color:#23704a}
+.manager-overview-icon.muted{background:#f1f4f4;color:#667789}
+.manager-overview-icon.info{background:#eaf4ff;color:#276497}
+.manager-overview-icon.danger{background:#fff0f0;color:#a53b3b}
+.manager-overview-icon.money{background:#fff7df;color:#9a6a00}
+.manager-overview-card>div{position:relative;z-index:1;min-width:0}
+.manager-overview-card strong{
+    display:block;
+    color:#073f3c;
+    font-size:22px;
+    line-height:1.05;
+    font-weight:900;
+    letter-spacing:-.3px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+}
+.manager-overview-card small{
+    display:block;
+    margin-top:5px;
+    color:#71858d;
+    font-size:9.5px;
+    line-height:1.35;
+    font-weight:700;
+}
+.manager-overview-card-wide{grid-column:span 1}
+
+/* Manager profile-image modal */
+body.manager-message-modal-open{overflow:hidden}
+.manager-hero-message-actions{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-top:11px}
+.manager-hero-message-btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:36px;padding:8px 12px;border:1px solid #c9e1de;border-radius:10px;background:#fff;color:#0b716b;font:800 11px/1 inherit;cursor:pointer;box-shadow:0 5px 15px rgba(15,76,73,.04);transition:background .18s ease,border-color .18s ease,transform .18s ease}
+.manager-hero-message-btn:hover{background:#eef9f7;border-color:#9ecfc9;transform:translateY(-1px)}
+.manager-hero-message-btn.inbox{background:#0f8b83;border-color:#0f8b83;color:#fff}
+.manager-hero-message-btn.inbox:hover{background:#0b756e;border-color:#0b756e}
+.manager-message-badge{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;border-radius:20px;background:#fff;color:#0b756e;font-size:9px;font-weight:900}
+.manager-message-modal{position:fixed;inset:0;z-index:10020;display:none;align-items:center;justify-content:center;padding:20px;box-sizing:border-box}
+.manager-message-modal.is-open{display:flex}
+.manager-message-modal-backdrop{position:absolute;inset:0;background:rgba(15,23,42,.5);backdrop-filter:blur(4px)}
+.manager-message-modal-card{position:relative;width:min(560px,100%);max-height:min(88vh,760px);overflow:auto;background:#fff;border:1px solid #e1ecea;border-radius:21px;padding:26px;box-shadow:0 28px 90px rgba(15,23,42,.22);z-index:1;box-sizing:border-box;scrollbar-width:thin}
+.manager-message-modal-close{position:absolute;right:13px;top:13px;width:34px;height:34px;border:0;border-radius:10px;background:#f3f7f7;color:#64748b;cursor:pointer}
+.manager-message-modal-card h2{font-size:24px;margin:6px 42px 5px 0;color:#18243d}
+.manager-message-modal-card>p{margin:0 0 18px;color:#718097;font-size:12px;line-height:1.6}
+.manager-message-form label{display:block;margin:0 0 7px;color:#41516b;font-size:11px;font-weight:800}
+.manager-message-form textarea{display:block;width:100%;box-sizing:border-box;border:1px solid #dce8e6;border-radius:11px;padding:12px;font:inherit;font-size:12px;color:#243451;resize:vertical;outline:none}
+.manager-message-form textarea:focus{border-color:#49a9a2;box-shadow:0 0 0 3px rgba(13,127,120,.08)}
+.manager-message-form .manager-primary-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.manager-message-modal-actions{display:flex;justify-content:flex-end;align-items:center;gap:8px;margin-top:18px}
+.manager-inbox-card{width:min(680px,100%)}
+.manager-inbox-list{display:flex;flex-direction:column;gap:9px}
+.manager-inbox-item{border:1px solid #e2eceb;border-radius:14px;padding:13px;background:#fff;transition:border-color .18s ease,background .18s ease}
+.manager-inbox-item.is-unread{border-color:#b9dcd7;background:#f8fcfb}
+.manager-inbox-item-top,.manager-inbox-item-bottom{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.manager-inbox-item-top{font-size:11px;font-weight:800;color:#31504f}
+.manager-inbox-item-top span i{color:#0d7f78;margin-right:5px}
+.manager-inbox-item-top b{font-size:8px;letter-spacing:.5px;color:#0d7f78;background:#e2f4f1;padding:4px 7px;border-radius:20px}
+.manager-inbox-item p{margin:9px 0 11px;color:#536978;font-size:11px;line-height:1.6;overflow-wrap:anywhere}
+.manager-inbox-item-bottom{font-size:9px;color:#8998a9}
+.manager-message-read-btn{border:0;background:transparent;color:#0d7f78;font:800 9px/1 inherit;cursor:pointer;padding:3px 0}
+.manager-inbox-empty{min-height:180px;display:grid;place-items:center;align-content:center;text-align:center;border:1px dashed #dbe8e6;border-radius:14px;background:#fbfdfc;padding:25px}
+.manager-inbox-empty i{font-size:30px;color:#a6bfbc;margin-bottom:9px}
+.manager-inbox-empty strong{font-size:13px;color:#3b526b}
+.manager-inbox-empty span{font-size:10px;color:#8290a4;margin-top:4px}
+@media(max-width:700px){
+    .manager-hero-message-actions{display:grid;grid-template-columns:1fr 1fr}
+    .manager-hero-message-btn{width:100%;box-sizing:border-box}
+}
+@media(max-width:420px){
+    .manager-hero-message-actions{grid-template-columns:1fr}
+    .manager-message-modal{padding:10px}
+    .manager-message-modal-card{max-height:94vh;padding:22px 17px;border-radius:18px}
+    .manager-message-modal-actions{flex-direction:column-reverse}
+    .manager-message-modal-actions>*{width:100%;box-sizing:border-box}
+}
+body.manager-photo-modal-open{overflow:hidden}
+.manager-photo-modal{
+    position:fixed;
+    inset:0;
+    z-index:11000;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+    box-sizing:border-box;
+}
+.manager-photo-modal.is-open{display:flex}
+.manager-photo-modal-backdrop{
+    position:absolute;
+    inset:0;
+    background:rgba(8,47,73,.5);
+    backdrop-filter:blur(3px);
+}
+.manager-photo-modal-card{
+    position:relative;
+    z-index:1;
+    width:min(500px,100%);
+    max-height:90vh;
+    overflow:auto;
+    padding:27px;
+    box-sizing:border-box;
+    border:1px solid #dcebea;
+    border-radius:21px;
+    background:#fff;
+    box-shadow:0 28px 80px rgba(8,47,73,.24);
+}
+.manager-photo-modal-close{
+    position:absolute;
+    top:14px;
+    right:14px;
+    width:34px;
+    height:34px;
+    border:1px solid #dcebea;
+    border-radius:10px;
+    background:#fff;
+    color:#607876;
+    cursor:pointer;
+}
+.manager-photo-modal-close:hover{background:#f3f9f8;color:#0b5f5b}
+.manager-photo-modal-card h2{margin:6px 42px 5px 0;color:#0b4f4c;font-size:24px}
+.manager-photo-modal-card>p{margin:0;color:#6a8381;font-size:12px;line-height:1.6}
+.manager-photo-preview{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    width:145px;
+    height:145px;
+    margin:20px auto 18px;
+    border:5px solid #fff;
+    border-radius:50%;
+    overflow:hidden;
+    background:#e6f5f3;
+    box-shadow:0 12px 28px rgba(15,76,73,.12);
+}
+.manager-photo-preview img{display:block;width:100%;height:100%;object-fit:cover}
+.manager-photo-preview-fallback{color:#0b706a;font-size:40px;font-weight:900}
+.manager-photo-form label{display:block;margin:0 0 7px;color:#41516b;font-size:11px;font-weight:800}
+.manager-photo-form input[type=file]{display:block;width:100%;box-sizing:border-box;border:1px solid #dce8e6;border-radius:10px;padding:10px;background:#fff;color:#243451;font:inherit;font-size:11px}
+.manager-photo-form input[type=file]:focus{outline:none;border-color:#49a9a2;box-shadow:0 0 0 3px rgba(13,127,120,.08)}
+.manager-photo-modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
+
+@media(max-width:1080px){
+    .manager-profile-hero{grid-template-columns:210px minmax(0,1fr)}
+    .manager-hero-photo{height:285px}
+    .manager-overview-stats{grid-template-columns:repeat(4,minmax(0,1fr))}
+}
+@media(max-width:900px){
+    .manager-profile-hero{grid-template-columns:175px minmax(0,1fr);min-height:250px}
+    .manager-hero-photo{height:250px;border-radius:17px 0 0 17px}
+    .manager-hero-copy{padding:24px 20px}
+    .manager-hero-copy h1{font-size:30px}
+    .manager-hero-lead{font-size:13px;line-height:1.6}
+    .manager-hero-meta{gap:8px 12px;margin-top:15px}
+    .manager-overview-stats{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media(max-width:700px){
+    .manager-profile-hero{grid-template-columns:1fr;min-height:0}
+    .manager-hero-photo{height:215px;border-radius:17px 17px 0 0}
+    .manager-hero-copy{padding:21px 18px 23px}
+    .manager-hero-copy h1{font-size:29px}
+    .manager-hero-meta{display:grid;grid-template-columns:1fr;gap:8px}
+    .manager-hero-actions{justify-content:stretch;display:grid;grid-template-columns:1fr 1fr}
+    .manager-hero-actions>*{width:100%;box-sizing:border-box}
+    .manager-overview-stats{grid-template-columns:1fr 1fr;gap:9px}
+    .manager-overview-card{min-height:84px;padding:11px}
+    .manager-overview-icon{width:34px;height:34px;flex-basis:34px;font-size:12px}
+    .manager-overview-card strong{font-size:19px}
+    .manager-overview-card small{font-size:9px}
+    .manager-photo-modal{padding:11px}
+    .manager-photo-modal-card{max-height:94vh;padding:22px 17px;border-radius:18px}
+    .manager-photo-modal-actions{flex-direction:column-reverse}
+    .manager-photo-modal-actions>*{width:100%;box-sizing:border-box}
+}
+@media(max-width:420px){
+    .manager-hero-actions{grid-template-columns:1fr}
+    .manager-overview-stats{grid-template-columns:1fr}
+    .manager-overview-card-wide{grid-column:auto}
+    .manager-hero-photo{height:195px}
+    .manager-hero-photo-fallback{font-size:52px}
+}
+
+/* Compact Manager Service Coverage — added without changing existing catalog/card layout. */
+.manager-service-coverage{margin:0 0 22px;padding:18px 20px;background:#fff;border:1px solid #e2eceb;border-radius:16px;box-shadow:0 6px 22px rgba(17,66,70,.04)}
+.service-coverage-heading{margin-bottom:12px!important}
+.service-coverage-heading h2{margin:3px 0 2px;font-size:18px}
+.service-coverage-heading p{margin:0;color:#718097;font-size:10px}
+.service-coverage-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
+.service-coverage-item{min-width:0;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;border:1px solid #e5eeed;border-radius:10px;background:#f9fcfc}
+.service-coverage-item.has-packages{border-color:#d7ebe8;background:#f5fbfa}
+.service-coverage-item.needs-packages{background:#fbfcfd}
+.service-coverage-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#53657a;font-size:10px;font-weight:700}
+.service-coverage-count{min-width:22px;height:22px;padding:0 5px;display:grid;place-items:center;border-radius:7px;background:#e8f3f1;color:#0d7f78;font-size:10px;line-height:1}
+.service-coverage-item.needs-packages .service-coverage-count{background:#f0f3f5;color:#8996a5}
+.service-coverage-empty{min-height:60px!important;padding:8px!important}
+
+@media(max-width:900px){.service-coverage-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:650px){.manager-service-coverage{padding:15px}.service-coverage-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.service-coverage-item{padding:7px 8px}.service-coverage-name{font-size:9px}.service-coverage-count{min-width:20px;height:20px;font-size:9px}}

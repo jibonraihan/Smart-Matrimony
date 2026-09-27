@@ -45,11 +45,11 @@ if (!$manager_account || $manager_account['role'] !== 'Manager' || $manager_acco
         setcookie(session_name(), '', time() - 42000, $cookie['path'], $cookie['domain'], $cookie['secure'], $cookie['httponly']);
     }
     session_destroy();
-    header('Location: login.php?access=revoked');
+    header('Location: ../login.php?access=revoked');
     exit;
 }
 
-$page_css = 'assets/css/manager.css';
+$page_css = 'assets/css/manager.css?v=manager-hero-1';
 
 if (empty($_SESSION['manager_csrf'])) {
     $_SESSION['manager_csrf'] = bin2hex(random_bytes(24));
@@ -185,6 +185,75 @@ function manager_json_response(bool $ok, string $message = '', array $extra = []
     exit;
 }
 
+function manager_get_live_stats(mysqli $conn, int $manager_id): array {
+    $stats = [
+        'my_packages' => 0,
+        'active_packages' => 0,
+        'inactive_packages' => 0,
+        'confirmed_by_me' => 0,
+        'completed_by_me' => 0,
+        'cancelled_by_me' => 0,
+        'confirmed_value' => 0.0,
+    ];
+
+    $stmt = mysqli_prepare($conn, "SELECT COUNT(*) AS total, COALESCE(SUM(status='Active'),0) AS active FROM service_providers WHERE manager_id=?");
+    mysqli_stmt_bind_param($stmt, 'i', $manager_id);
+    mysqli_stmt_execute($stmt);
+    $row = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt)) ?: [];
+    mysqli_stmt_close($stmt);
+    $stats['my_packages'] = (int)($row['total'] ?? 0);
+    $stats['active_packages'] = (int)($row['active'] ?? 0);
+    $stats['inactive_packages'] = max(0, $stats['my_packages'] - $stats['active_packages']);
+
+    $stmt = mysqli_prepare($conn, "SELECT action_type, COUNT(*) AS total FROM manager_activity_log WHERE manager_id=? AND action_type IN ('booking_confirmed','booking_completed','booking_cancelled') GROUP BY action_type");
+    mysqli_stmt_bind_param($stmt, 'i', $manager_id);
+    mysqli_stmt_execute($stmt);
+    $res = mysqli_stmt_get_result($stmt);
+    while ($row = mysqli_fetch_assoc($res)) {
+        if ($row['action_type'] === 'booking_confirmed') $stats['confirmed_by_me'] = (int)$row['total'];
+        elseif ($row['action_type'] === 'booking_completed') $stats['completed_by_me'] = (int)$row['total'];
+        elseif ($row['action_type'] === 'booking_cancelled') $stats['cancelled_by_me'] = (int)$row['total'];
+    }
+    mysqli_stmt_close($stmt);
+
+    $stmt = mysqli_prepare($conn, "SELECT COALESCE(SUM(amount),0) AS total FROM manager_activity_log WHERE manager_id=? AND action_type='booking_confirmed'");
+    mysqli_stmt_bind_param($stmt, 'i', $manager_id);
+    mysqli_stmt_execute($stmt);
+    $row = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt)) ?: [];
+    mysqli_stmt_close($stmt);
+    $stats['confirmed_value'] = (float)($row['total'] ?? 0);
+
+    return $stats;
+}
+
+function manager_get_service_coverage(mysqli $conn, int $manager_id): array {
+    $rows = [];
+    $stmt = mysqli_prepare($conn, "SELECT s.service_id, s.service_name, COUNT(sp.provider_id) AS package_count
+        FROM services s
+        LEFT JOIN service_providers sp ON sp.service_id=s.service_id AND sp.manager_id=?
+        GROUP BY s.service_id, s.service_name
+        ORDER BY s.service_id ASC");
+    mysqli_stmt_bind_param($stmt, 'i', $manager_id);
+    mysqli_stmt_execute($stmt);
+    $res = mysqli_stmt_get_result($stmt);
+    while ($row = mysqli_fetch_assoc($res)) $rows[] = $row;
+    mysqli_stmt_close($stmt);
+    return $rows;
+}
+
+function manager_render_service_coverage(array $rows): string {
+    if (!$rows) return '<div class="manager-empty service-coverage-empty"><i class="fa-solid fa-layer-group"></i><p>No services are available yet.</p></div>';
+    $html = '<div class="service-coverage-grid">';
+    foreach ($rows as $row) {
+        $count = (int)($row['package_count'] ?? 0);
+        $html .= '<div class="service-coverage-item ' . ($count > 0 ? 'has-packages' : 'needs-packages') . '">'
+            . '<span class="service-coverage-name">' . htmlspecialchars((string)$row['service_name']) . '</span>'
+            . '<strong class="service-coverage-count">' . $count . '</strong>'
+            . '</div>';
+    }
+    return $html . '</div>';
+}
+
 function manager_catalog_package_payload(array $p): array {
     return [
         'provider_id' => (int)($p['provider_id'] ?? 0),
@@ -226,8 +295,8 @@ function manager_render_catalog_card(array $p, int $manager_id, string $upload_w
     if ($is_mine) {
         $actions = '<div class="package-actions">'
             . '<button type="button" class="icon-edit js-edit-package" data-package="' . $payload . '" title="Edit package"><i class="fa-solid fa-pen"></i></button>'
-            . '<form method="post" action="dashboard.php?manager_sid=' . urlencode($manager_sid) . '"><input type="hidden" name="csrf" value="' . htmlspecialchars($csrf, ENT_QUOTES, 'UTF-8') . '"><input type="hidden" name="action" value="toggle_status"><input type="hidden" name="provider_id" value="' . (int)$p['provider_id'] . '"><input type="hidden" name="new_status" value="' . ($p['status'] === 'Active' ? 'Inactive' : 'Active') . '"><button class="icon-status" type="submit" title="' . ($p['status'] === 'Active' ? 'Deactivate' : 'Activate') . '"><i class="fa-solid ' . ($p['status'] === 'Active' ? 'fa-eye-slash' : 'fa-eye') . '"></i></button></form>'
-            . '<form method="post" action="dashboard.php?manager_sid=' . urlencode($manager_sid) . '" onsubmit="return confirm(\'Remove this package? If it has booking history, it will be kept and should be deactivated instead.\');"><input type="hidden" name="csrf" value="' . htmlspecialchars($csrf, ENT_QUOTES, 'UTF-8') . '"><input type="hidden" name="action" value="delete_provider"><input type="hidden" name="provider_id" value="' . (int)$p['provider_id'] . '"><button class="icon-danger" type="submit" title="Remove package"><i class="fa-solid fa-trash-can"></i></button></form>'
+            . '<form method="post" class="js-package-action-form" action="dashboard.php?manager_sid=' . urlencode($manager_sid) . '"><input type="hidden" name="csrf" value="' . htmlspecialchars($csrf, ENT_QUOTES, 'UTF-8') . '"><input type="hidden" name="action" value="toggle_status"><input type="hidden" name="provider_id" value="' . (int)$p['provider_id'] . '"><input type="hidden" name="new_status" value="' . ($p['status'] === 'Active' ? 'Inactive' : 'Active') . '"><button class="icon-status" type="submit" title="' . ($p['status'] === 'Active' ? 'Deactivate' : 'Activate') . '"><i class="fa-solid ' . ($p['status'] === 'Active' ? 'fa-eye-slash' : 'fa-eye') . '"></i></button></form>'
+            . '<form method="post" class="js-package-action-form" action="dashboard.php?manager_sid=' . urlencode($manager_sid) . '"><input type="hidden" name="csrf" value="' . htmlspecialchars($csrf, ENT_QUOTES, 'UTF-8') . '"><input type="hidden" name="action" value="delete_provider"><input type="hidden" name="provider_id" value="' . (int)$p['provider_id'] . '"><button class="icon-danger" type="submit" title="Remove package"><i class="fa-solid fa-trash-can"></i></button></form>'
             . '</div>';
     } else {
         $actions = '<span class="catalog-owner-note">View only</span>';
@@ -273,6 +342,113 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         $action = $_POST['action'] ?? '';
         try {
+            if ($action === 'send_admin_message') {
+                $text = trim((string) ($_POST['message'] ?? ''));
+                if ($text === '') throw new RuntimeException('Please write a message first.');
+                if (mb_strlen($text) > 2000) throw new RuntimeException('Message must be 2000 characters or less.');
+
+                $admin_check = mysqli_query($conn, "SELECT user_id FROM users WHERE role='Admin' AND account_status='Active' ORDER BY user_id ASC LIMIT 1");
+                if (!$admin_check || mysqli_num_rows($admin_check) === 0) {
+                    throw new RuntimeException('No active Admin is available right now.');
+                }
+
+                $thread_id = bin2hex(random_bytes(16));
+                $sender_role = 'Manager';
+                $recipient_role = 'Admin';
+                $stmt = mysqli_prepare($conn, 'INSERT INTO staff_admin_messages (thread_id, sender_id, sender_role, recipient_id, recipient_role, message, status) VALUES (?,?,?,?,?,?,\'Unread\')');
+                if (!$stmt) throw new RuntimeException('The messaging system is not available yet. Please apply the messaging database query first.');
+                $recipient_id = null;
+                mysqli_stmt_bind_param($stmt, 'sisiss', $thread_id, $manager_id, $sender_role, $recipient_id, $recipient_role, $text);
+                if (!mysqli_stmt_execute($stmt)) {
+                    mysqli_stmt_close($stmt);
+                    throw new RuntimeException('Unable to send the message. Please try again.');
+                }
+                mysqli_stmt_close($stmt);
+                header('Location: ' . $manager_url('dashboard.php', ['success'=>'Message sent to Admin successfully.']) . '#manager-hero');
+                exit;
+            }
+
+            if ($action === 'mark_admin_message_read') {
+                $message_id = (int) ($_POST['message_id'] ?? 0);
+                if ($message_id <= 0) throw new RuntimeException('Invalid message.');
+                $stmt = mysqli_prepare($conn, "UPDATE staff_admin_messages SET status='Read', read_at=CURRENT_TIMESTAMP WHERE message_id=? AND recipient_id=? AND recipient_role='Manager'");
+                if (!$stmt) throw new RuntimeException('The messaging system is not available yet. Please apply the messaging database query first.');
+                mysqli_stmt_bind_param($stmt, 'ii', $message_id, $manager_id);
+                mysqli_stmt_execute($stmt);
+                mysqli_stmt_close($stmt);
+                if ($is_ajax_request) manager_json_response(true);
+                header('Location: ' . $manager_url('dashboard.php') . '#manager-hero');
+                exit;
+            }
+
+            if ($action === 'update_manager_photo') {
+                if (empty($_FILES['profile_image']) || ($_FILES['profile_image']['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) {
+                    throw new RuntimeException('Please choose an image first.');
+                }
+
+                $file = $_FILES['profile_image'];
+                $upload_error = (int) ($file['error'] ?? UPLOAD_ERR_OK);
+                if ($upload_error !== UPLOAD_ERR_OK) {
+                    throw new RuntimeException('The image upload failed. Please try again.');
+                }
+                if ((int) ($file['size'] ?? 0) > 5 * 1024 * 1024) {
+                    throw new RuntimeException('Profile image must be 5 MB or less.');
+                }
+
+                $info = @getimagesize($file['tmp_name']);
+                $mime = (string) ($info['mime'] ?? '');
+                $allowed = [
+                    'image/jpeg' => 'jpg',
+                    'image/png'  => 'png',
+                    'image/webp' => 'webp'
+                ];
+                if (!$info || !isset($allowed[$mime])) {
+                    throw new RuntimeException('Only JPG, PNG or WebP images are allowed.');
+                }
+
+                $staff_upload_dir = dirname(__DIR__) . '/uploads/staff/';
+                if (!is_dir($staff_upload_dir) && !@mkdir($staff_upload_dir, 0755, true)) {
+                    throw new RuntimeException('The staff image folder could not be created.');
+                }
+
+                $new_name = 'STAFF_' . $manager_id . '_' . bin2hex(random_bytes(10)) . '.' . $allowed[$mime];
+                $destination = $staff_upload_dir . $new_name;
+                if (!move_uploaded_file($file['tmp_name'], $destination)) {
+                    throw new RuntimeException('The image could not be saved. Please try again.');
+                }
+
+                $old_name = '';
+                $find = mysqli_prepare($conn, 'SELECT profile_image FROM staff_profiles WHERE user_id=? LIMIT 1');
+                if ($find) {
+                    mysqli_stmt_bind_param($find, 'i', $manager_id);
+                    mysqli_stmt_execute($find);
+                    $old_row = mysqli_fetch_assoc(mysqli_stmt_get_result($find));
+                    mysqli_stmt_close($find);
+                    $old_name = trim((string) ($old_row['profile_image'] ?? ''));
+                }
+
+                $save = mysqli_prepare($conn, 'INSERT INTO staff_profiles (user_id, profile_image) VALUES (?, ?) ON DUPLICATE KEY UPDATE profile_image=VALUES(profile_image), updated_at=CURRENT_TIMESTAMP');
+                if (!$save) {
+                    @unlink($destination);
+                    throw new RuntimeException('The shared staff profile storage is not available. Please apply the staff profile database migration first.');
+                }
+                mysqli_stmt_bind_param($save, 'is', $manager_id, $new_name);
+                if (!mysqli_stmt_execute($save)) {
+                    mysqli_stmt_close($save);
+                    @unlink($destination);
+                    throw new RuntimeException('Unable to save the Manager profile image.');
+                }
+                mysqli_stmt_close($save);
+
+                if ($old_name !== '') {
+                    $old_path = $staff_upload_dir . basename($old_name);
+                    if (is_file($old_path)) @unlink($old_path);
+                }
+
+                header('Location: dashboard.php?manager_sid=' . urlencode($manager_sid) . '&success=' . urlencode('Profile image updated successfully.') . '#manager-hero');
+                exit;
+            }
+
             if ($action === 'save_provider') {
                 $provider_id = (int) ($_POST['provider_id'] ?? 0);
                 $service_id = (int) ($_POST['service_id'] ?? 0);
@@ -315,8 +491,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $message = 'Package updated successfully.';
                 } else {
                     $image = $upload['name'] ?? null;
-                    $stmt = mysqli_prepare($conn, 'INSERT INTO service_providers (service_id, provider_name, package_name, package_details, price, discount_percent, contact_number, location, rating, review_count, manager_id, status, image) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)');
-                    mysqli_stmt_bind_param($stmt, 'isssddssdiiss', $service_id, $provider_name, $package_name, $package_details, $price, $discount_percent, $contact_number, $location, $rating, $review_count, $manager_id, $status, $image);
+                    $stmt = mysqli_prepare($conn, 'INSERT INTO service_providers (service_id, provider_name, package_name, package_details, price, discount_percent, contact_number, location, rating, review_count, manager_id, original_manager_id, status, image) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)');
+                    mysqli_stmt_bind_param($stmt, 'isssddssdiiiss', $service_id, $provider_name, $package_name, $package_details, $price, $discount_percent, $contact_number, $location, $rating, $review_count, $manager_id, $manager_id, $status, $image);
                     mysqli_stmt_execute($stmt);
                     $new_provider_id = mysqli_insert_id($conn);
                     mysqli_stmt_close($stmt);
@@ -324,7 +500,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $message = 'Package added successfully.';
                 }
                 if ($is_ajax_request) {
-                    manager_json_response(true, $message, ['provider_id' => (int)($provider_id ?: $new_provider_id)]);
+                    $live_stats = manager_get_live_stats($conn, $manager_id);
+                    $coverage_rows = manager_get_service_coverage($conn, $manager_id);
+                    manager_json_response(true, $message, [
+                        'provider_id' => (int)($provider_id ?: $new_provider_id),
+                        'stats' => $live_stats,
+                        'service_coverage_html' => manager_render_service_coverage($coverage_rows)
+                    ]);
                 }
                 header('Location: dashboard.php?manager_sid=' . urlencode($manager_sid) . '&success=' . urlencode($message) . '&catalog_tab=my#catalog');
                 exit;
@@ -340,6 +522,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 mysqli_stmt_close($stmt);
                 if (!$changed) throw new RuntimeException('You can change status only for your own package.');
                 manager_log_activity($conn, $manager_id, $manager_name, 'package_status_changed', null, $provider_id, 0, 'Package status changed to ' . $new_status . '.');
+                if ($is_ajax_request) {
+                    $live_stats = manager_get_live_stats($conn, $manager_id);
+                    $coverage_rows = manager_get_service_coverage($conn, $manager_id);
+                    manager_json_response(true, 'Package status updated.', ['stats' => $live_stats, 'service_coverage_html' => manager_render_service_coverage($coverage_rows)]);
+                }
                 header('Location: dashboard.php?manager_sid=' . urlencode($manager_sid) . '&success=' . urlencode('Package status updated.') . '&catalog_tab=my#catalog');
                 exit;
             }
@@ -368,6 +555,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 mysqli_stmt_close($stmt);
                 if (!$deleted) throw new RuntimeException('The package could not be removed.');
                 manager_remove_image($owned['image'] ?? null, $upload_dir);
+                if ($is_ajax_request) {
+                    $live_stats = manager_get_live_stats($conn, $manager_id);
+                    $coverage_rows = manager_get_service_coverage($conn, $manager_id);
+                    manager_json_response(true, 'Package removed.', ['stats' => $live_stats, 'service_coverage_html' => manager_render_service_coverage($coverage_rows)]);
+                }
                 header('Location: dashboard.php?manager_sid=' . urlencode($manager_sid) . '&success=' . urlencode('Package removed.') . '&catalog_tab=my#catalog');
                 exit;
             }
@@ -523,6 +715,62 @@ $email_failed_notice = !empty($_GET['email_failed']);
 $manager_name = manager_get_name($conn, $manager_id);
 $manager_public_id = 'SM-' . str_pad((string)$manager_id, 6, '0', STR_PAD_LEFT);
 
+$manager_profile = [
+    'first_name' => '',
+    'last_name' => '',
+    'email' => '',
+    'gender' => '',
+    'mobile' => ''
+];
+$manager_profile_stmt = mysqli_prepare($conn, "SELECT first_name, last_name, email, gender, mobile FROM users WHERE user_id=? AND role='Manager' LIMIT 1");
+if ($manager_profile_stmt) {
+    mysqli_stmt_bind_param($manager_profile_stmt, 'i', $manager_id);
+    mysqli_stmt_execute($manager_profile_stmt);
+    $manager_profile = array_merge($manager_profile, mysqli_fetch_assoc(mysqli_stmt_get_result($manager_profile_stmt)) ?: []);
+    mysqli_stmt_close($manager_profile_stmt);
+}
+
+$manager_profile_image = '';
+$manager_profile_stmt = mysqli_prepare($conn, 'SELECT profile_image FROM staff_profiles WHERE user_id=? LIMIT 1');
+if ($manager_profile_stmt) {
+    mysqli_stmt_bind_param($manager_profile_stmt, 'i', $manager_id);
+    mysqli_stmt_execute($manager_profile_stmt);
+    $profile_row = mysqli_fetch_assoc(mysqli_stmt_get_result($manager_profile_stmt));
+    mysqli_stmt_close($manager_profile_stmt);
+    $manager_profile_image = trim((string) ($profile_row['profile_image'] ?? ''));
+}
+$manager_profile_image_exists = $manager_profile_image !== '' && is_file(dirname(__DIR__) . '/uploads/staff/' . basename($manager_profile_image));
+$manager_first_name = trim((string) ($manager_profile['first_name'] ?? '')) ?: 'Event';
+$manager_last_name = trim((string) ($manager_profile['last_name'] ?? ''));
+$manager_full_name = trim($manager_first_name . ' ' . $manager_last_name);
+$manager_email = (string) ($manager_profile['email'] ?? '');
+$manager_gender = (string) ($manager_profile['gender'] ?? '');
+$manager_mobile = (string) ($manager_profile['mobile'] ?? '');
+
+$admin_messages = [];
+$admin_message_unread = 0;
+$admin_messages_ready = true;
+$admin_messages_table_check = @mysqli_query($conn, "SHOW TABLES LIKE 'staff_admin_messages'");
+if (!$admin_messages_table_check || mysqli_num_rows($admin_messages_table_check) === 0) {
+    $admin_messages_ready = false;
+} else {
+    $stmt = mysqli_prepare($conn, "SELECT message_id, thread_id, message, status, created_at
+        FROM staff_admin_messages
+        WHERE recipient_id=? AND recipient_role='Manager' AND sender_role='Admin'
+        ORDER BY created_at DESC, message_id DESC
+        LIMIT 30");
+    if ($stmt) {
+        mysqli_stmt_bind_param($stmt, 'i', $manager_id);
+        mysqli_stmt_execute($stmt);
+        $res = mysqli_stmt_get_result($stmt);
+        while ($row = mysqli_fetch_assoc($res)) {
+            $admin_messages[] = $row;
+            if (($row['status'] ?? '') === 'Unread') $admin_message_unread++;
+        }
+        mysqli_stmt_close($stmt);
+    }
+}
+
 $services = [];
 $res = mysqli_query($conn, 'SELECT service_id, service_name FROM services ORDER BY service_name');
 while ($row = mysqli_fetch_assoc($res)) $services[] = $row;
@@ -560,7 +808,18 @@ if (($_GET['ajax'] ?? '') === '1' && ($_GET['action'] ?? '') === 'catalog_snapsh
     $payload = array_map('manager_catalog_package_payload', $view_packages);
     $all_count = count($all_packages);
     $my_count = count(array_filter($all_packages, fn($p) => (int)$p['manager_id'] === $manager_id));
-    manager_json_response(true, '', ['catalog_tab' => $tab, 'count' => count($view_packages), 'all_count' => $all_count, 'my_count' => $my_count, 'packages' => $payload, 'html' => manager_render_catalog_list($view_packages, $manager_id, $upload_web, $manager_sid, $csrf)]);
+    $live_stats = manager_get_live_stats($conn, $manager_id);
+    $coverage_rows = manager_get_service_coverage($conn, $manager_id);
+    manager_json_response(true, '', [
+        'catalog_tab' => $tab,
+        'count' => count($view_packages),
+        'all_count' => $all_count,
+        'my_count' => $my_count,
+        'packages' => $payload,
+        'html' => manager_render_catalog_list($view_packages, $manager_id, $upload_web, $manager_sid, $csrf),
+        'stats' => $live_stats,
+        'service_coverage_html' => manager_render_service_coverage($coverage_rows)
+    ]);
 }
 
 $packages = $catalog_tab === 'my'
@@ -618,6 +877,7 @@ foreach ($all_packages as $p) {
         if ($p['status'] === 'Active') $active_my_packages++;
     }
 }
+$service_coverage = manager_get_service_coverage($conn, $manager_id);
 
 $activity_counts = ['booking_confirmed'=>0,'booking_completed'=>0,'booking_cancelled'=>0];
 $stmt = mysqli_prepare($conn, "SELECT action_type, COUNT(*) AS total
@@ -656,34 +916,128 @@ include '../includes/header.php';
             </a>
             <div class="manager-top-actions">
                 <span class="manager-identity"><i class="fa-solid fa-user-tie"></i> <?= htmlspecialchars($manager_name); ?> <small>(<?= htmlspecialchars($manager_public_id); ?>)</small></span>
-                <a href="<?= BASE_URL; ?>dashboard.php" target="_blank" rel="noopener"><i class="fa-solid fa-arrow-left"></i> User Dashboard</a>
+                
                 <a href="<?= htmlspecialchars($manager_url('logout.php')); ?>" class="manager-logout"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
             </div>
         </div>
     </header>
 
     <main class="manager-container manager-main">
-        <section class="manager-welcome">
-            <div>
-                <span class="manager-kicker">EVENT MANAGEMENT</span>
-                <h1>Welcome, <?= htmlspecialchars($manager_name); ?></h1>
-                <p>Manage the shared service catalog and customer bookings.</p>
-            </div>
-            <div class="manager-welcome-actions">
-                <button type="button" class="manager-primary-btn js-open-package-modal"><i class="fa-solid fa-plus"></i> Add Package</button>
-                <a href="#bookings" class="manager-secondary-btn js-bookings-jump"><i class="fa-solid fa-calendar-check"></i> Customer Bookings</a>
+        <section class="manager-profile-hero" id="manager-hero">
+            <button type="button" class="manager-hero-photo" data-manager-photo-open aria-label="Change Manager profile image">
+                <?php if ($manager_profile_image_exists): ?>
+                    <img src="<?= BASE_URL; ?>uploads/staff/<?= htmlspecialchars(basename($manager_profile_image)); ?>" alt="Profile image of <?= htmlspecialchars($manager_full_name); ?>">
+                <?php else: ?>
+                    <span class="manager-hero-photo-fallback"><?= htmlspecialchars(strtoupper(substr($manager_first_name, 0, 1) . substr($manager_last_name, 0, 1))); ?></span>
+                <?php endif; ?>
+                <span class="manager-hero-photo-edit"><i class="fa-solid fa-camera"></i></span>
+            </button>
+
+            <div class="manager-hero-copy">
+                <span class="manager-kicker">MANAGER PROFILE</span>
+                <h1>Welcome, <?= htmlspecialchars($manager_first_name); ?>.</h1>
+                <p class="manager-hero-lead">Your event management workspace is ready. Here is your account identity and management snapshot at a glance.</p>
+                <div class="manager-hero-meta">
+                    <span><i class="manager-hero-meta-icon">ID</i><strong><?= htmlspecialchars($manager_public_id); ?></strong></span>
+                    <span><i class="manager-hero-meta-icon">@</i><?= htmlspecialchars($manager_email); ?></span>
+                    <span><i class="manager-hero-meta-icon">G</i><?= htmlspecialchars($manager_gender); ?></span>
+                    <span><i class="manager-hero-meta-icon">☎</i><?= htmlspecialchars($manager_mobile); ?></span>
+                </div>
+<div class="manager-hero-message-actions" aria-label="Admin messaging">
+                    <button type="button" class="manager-hero-message-btn" data-manager-message-open><i class="fa-solid fa-paper-plane"></i> Message to Admin</button>
+                    <button type="button" class="manager-hero-message-btn inbox" data-manager-inbox-open><i class="fa-solid fa-inbox"></i> Message from Admin<?php if ($admin_message_unread > 0): ?> <span class="manager-message-badge"><?= $admin_message_unread > 99 ? '99+' : $admin_message_unread; ?></span><?php endif; ?></button>
+                </div>
             </div>
         </section>
+
+        <div class="manager-hero-actions">
+            <button type="button" class="manager-primary-btn js-open-package-modal"><i class="fa-solid fa-plus"></i> Add Package</button>
+            <a href="#bookings" class="manager-secondary-btn js-bookings-jump"><i class="fa-solid fa-calendar-check"></i> Customer Bookings</a>
+        </div>
 
         <?php if ($message): ?><div class="manager-alert <?= $email_failed_notice ? 'warning' : 'success'; ?>"><i class="fa-solid <?= $email_failed_notice ? 'fa-triangle-exclamation' : 'fa-circle-check'; ?>"></i><?= htmlspecialchars($message); ?></div><?php endif; ?>
         <?php if ($error): ?><div class="manager-alert error"><i class="fa-solid fa-circle-exclamation"></i><?= htmlspecialchars($error); ?></div><?php endif; ?>
 
-        <section class="manager-stats manager-stats-five">
-            <article><span><i class="fa-solid fa-box"></i></span><div><strong><?= $my_package_count; ?></strong><small>My Packages</small></div></article>
-            <article><span><i class="fa-solid fa-check"></i></span><div><strong><?= $activity_counts['booking_confirmed']; ?></strong><small>Confirmed by Me</small></div></article>
-            <article><span><i class="fa-solid fa-circle-check"></i></span><div><strong><?= $activity_counts['booking_completed']; ?></strong><small>Completed by Me</small></div></article>
-            <article><span><i class="fa-solid fa-ban"></i></span><div><strong><?= $activity_counts['booking_cancelled']; ?></strong><small>Cancelled by Me</small></div></article>
-            <article><span><i class="fa-solid fa-bangladeshi-taka-sign"></i></span><div><strong>৳<?= number_format($revenue, 0); ?></strong><small>Confirmed Value (My Packages)</small></div></article>
+        <section class="manager-overview-stats" aria-label="Manager statistics">
+            <article class="manager-overview-card"><span class="manager-overview-icon"><i class="fa-solid fa-box"></i></span><div><strong data-manager-stat="my_packages"><?= number_format($my_package_count); ?></strong><small>My Packages</small></div></article>
+            <article class="manager-overview-card"><span class="manager-overview-icon success"><i class="fa-solid fa-eye"></i></span><div><strong data-manager-stat="active_packages"><?= number_format($active_my_packages); ?></strong><small>Active Packages</small></div></article>
+            <article class="manager-overview-card"><span class="manager-overview-icon muted"><i class="fa-solid fa-eye-slash"></i></span><div><strong data-manager-stat="inactive_packages"><?= number_format(max(0, $my_package_count - $active_my_packages)); ?></strong><small>Inactive Packages</small></div></article>
+            <article class="manager-overview-card"><span class="manager-overview-icon success"><i class="fa-solid fa-check"></i></span><div><strong data-manager-stat="confirmed_by_me"><?= number_format($activity_counts['booking_confirmed']); ?></strong><small>Confirmed by Me</small></div></article>
+            <article class="manager-overview-card"><span class="manager-overview-icon info"><i class="fa-solid fa-circle-check"></i></span><div><strong data-manager-stat="completed_by_me"><?= number_format($activity_counts['booking_completed']); ?></strong><small>Completed by Me</small></div></article>
+            <article class="manager-overview-card"><span class="manager-overview-icon danger"><i class="fa-solid fa-ban"></i></span><div><strong data-manager-stat="cancelled_by_me"><?= number_format($activity_counts['booking_cancelled']); ?></strong><small>Cancelled by Me</small></div></article>
+            <article class="manager-overview-card manager-overview-card-wide"><span class="manager-overview-icon money"><i class="fa-solid fa-bangladeshi-taka-sign"></i></span><div><strong>৳<span data-manager-stat="confirmed_value"><?= number_format($revenue, 0); ?></span></strong><small>Confirmed Value · My Packages</small></div></article>
+        </section>
+
+        <div class="manager-message-modal" id="managerMessageModal" aria-hidden="true">
+            <div class="manager-message-modal-backdrop" data-manager-message-close></div>
+            <div class="manager-message-modal-card" role="dialog" aria-modal="true" aria-labelledby="managerMessageTitle">
+                <button type="button" class="manager-message-modal-close" data-manager-message-close aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+                <span class="manager-kicker">ADMIN COMMUNICATION</span>
+                <h2 id="managerMessageTitle">Message to Admin</h2>
+                <p>Send a private message to the active Admin team.</p>
+                <?php if (!$admin_messages_ready): ?><div class="manager-alert warning"><i class="fa-solid fa-database"></i> Messaging database setup is required before you can send messages.</div><?php endif; ?>
+                <form method="post" action="<?= htmlspecialchars($manager_url('dashboard.php')); ?>" class="manager-message-form">
+                    <input type="hidden" name="csrf" value="<?= htmlspecialchars($csrf); ?>">
+                    <input type="hidden" name="action" value="send_admin_message">
+                    <label for="managerAdminMessage">Your message</label>
+                    <textarea id="managerAdminMessage" name="message" rows="6" maxlength="2000" required placeholder="Write your message to Admin..."></textarea>
+                    <small class="field-help">Maximum 2000 characters.</small>
+                    <div class="manager-message-modal-actions"><button type="button" class="booking-modal-secondary" data-manager-message-close>Cancel</button><button type="submit" class="manager-primary-btn" <?= !$admin_messages_ready ? 'disabled' : ''; ?>><i class="fa-solid fa-paper-plane"></i> Send Message</button></div>
+                </form>
+            </div>
+        </div>
+
+        <div class="manager-message-modal" id="managerInboxModal" aria-hidden="true">
+            <div class="manager-message-modal-backdrop" data-manager-inbox-close></div>
+            <div class="manager-message-modal-card manager-inbox-card" role="dialog" aria-modal="true" aria-labelledby="managerInboxTitle">
+                <button type="button" class="manager-message-modal-close" data-manager-inbox-close aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+                <span class="manager-kicker">ADMIN COMMUNICATION</span>
+                <h2 id="managerInboxTitle">Messages from Admin</h2>
+                <p>Messages sent to you by an Admin appear here.</p>
+                <div class="manager-inbox-list">
+                    <?php if (!$admin_messages_ready): ?>
+                        <div class="manager-inbox-empty"><i class="fa-solid fa-database"></i><strong>Messaging database is not ready</strong><span>Apply the provided messaging migration first.</span></div>
+                    <?php elseif (!$admin_messages): ?>
+                        <div class="manager-inbox-empty"><i class="fa-regular fa-envelope-open"></i><strong>No messages yet</strong><span>When an Admin sends you a message, it will appear here.</span></div>
+                    <?php else: ?>
+                        <?php foreach ($admin_messages as $admin_msg): ?>
+                            <article class="manager-inbox-item<?= ($admin_msg['status'] ?? '') === 'Unread' ? ' is-unread' : ''; ?>" data-message-id="<?= (int)$admin_msg['message_id']; ?>">
+                                <div class="manager-inbox-item-top"><span><i class="fa-solid fa-user-shield"></i> Admin</span><?php if (($admin_msg['status'] ?? '') === 'Unread'): ?><b>NEW</b><?php endif; ?></div>
+                                <p><?= nl2br(htmlspecialchars($admin_msg['message'])); ?></p>
+                                <div class="manager-inbox-item-bottom"><time><?= htmlspecialchars(date('d M Y · h:i A', strtotime($admin_msg['created_at']))); ?></time><?php if (($admin_msg['status'] ?? '') === 'Unread'): ?><button type="button" class="manager-message-read-btn" data-message-read="<?= (int)$admin_msg['message_id']; ?>">Mark as read</button><?php else: ?><span>Read</span><?php endif; ?></div>
+                            </article>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+
+        <div class="manager-photo-modal" id="managerPhotoModal" aria-hidden="true">
+            <div class="manager-photo-modal-backdrop" data-manager-photo-close></div>
+            <div class="manager-photo-modal-card" role="dialog" aria-modal="true" aria-labelledby="managerPhotoTitle">
+                <button type="button" class="manager-photo-modal-close" data-manager-photo-close aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+                <span class="manager-kicker">MANAGER PROFILE</span>
+                <h2 id="managerPhotoTitle">Update profile image</h2>
+                <p>Choose a clear profile image for your Manager hero. This image is stored in the shared staff profile and can also be shown in the Admin Manager control page.</p>
+                <?php if ($manager_profile_image_exists): ?>
+                    <div class="manager-photo-preview" id="managerPhotoPreview"><img src="<?= BASE_URL; ?>uploads/staff/<?= htmlspecialchars(basename($manager_profile_image)); ?>" alt="Current Manager profile image"></div>
+                <?php else: ?>
+                    <div class="manager-photo-preview manager-photo-preview-fallback" id="managerPhotoPreview"><?= htmlspecialchars(strtoupper(substr($manager_first_name, 0, 1) . substr($manager_last_name, 0, 1))); ?></div>
+                <?php endif; ?>
+                <form method="post" action="<?= htmlspecialchars($manager_url('dashboard.php')); ?>" enctype="multipart/form-data" class="manager-photo-form">
+                    <input type="hidden" name="csrf" value="<?= htmlspecialchars($csrf); ?>">
+                    <input type="hidden" name="action" value="update_manager_photo">
+                    <label for="managerProfileImage">Profile image</label>
+                    <input id="managerProfileImage" name="profile_image" type="file" accept="image/jpeg,image/png,image/webp" required>
+                    <small class="field-help">JPG, PNG or WebP · maximum 5 MB.</small>
+                    <div class="manager-photo-modal-actions"><button type="button" class="booking-modal-secondary" data-manager-photo-close>Cancel</button><button type="submit" class="manager-primary-btn"><i class="fa-solid fa-cloud-arrow-up"></i> Save image</button></div>
+                </form>
+            </div>
+        </div>
+
+        <section class="manager-service-coverage" id="service-coverage" aria-label="My service coverage">
+            <div class="manager-panel-heading service-coverage-heading"><div><span class="manager-kicker">SERVICE COVERAGE</span><h2>My Service Coverage</h2><p>See how many packages you have under each service.</p></div></div>
+            <div id="serviceCoverageList"><?= manager_render_service_coverage($service_coverage); ?></div>
         </section>
 
         <section class="manager-catalog-section" id="catalog">
@@ -808,6 +1162,77 @@ include '../includes/header.php';
         </section>
     </main>
 </div>
+<script>
+(function(){
+    const sendModal = document.getElementById('managerMessageModal');
+    const inboxModal = document.getElementById('managerInboxModal');
+    const sendOpeners = document.querySelectorAll('[data-manager-message-open]');
+    const inboxOpeners = document.querySelectorAll('[data-manager-inbox-open]');
+    const closeModal = function(modal){ if (!modal) return; modal.classList.remove('is-open'); modal.setAttribute('aria-hidden','true'); };
+    const openModal = function(modal){ if (!modal) return; modal.classList.add('is-open'); modal.setAttribute('aria-hidden','false'); document.body.classList.add('manager-message-modal-open'); };
+    const syncBody = function(){ if (!document.querySelector('.manager-message-modal.is-open')) document.body.classList.remove('manager-message-modal-open'); };
+    sendOpeners.forEach(function(el){ el.addEventListener('click', function(){ openModal(sendModal); }); });
+    inboxOpeners.forEach(function(el){ el.addEventListener('click', function(){ openModal(inboxModal); }); });
+    document.querySelectorAll('[data-manager-message-close]').forEach(function(el){ el.addEventListener('click', function(){ closeModal(sendModal); syncBody(); }); });
+    document.querySelectorAll('[data-manager-inbox-close]').forEach(function(el){ el.addEventListener('click', function(){ closeModal(inboxModal); syncBody(); }); });
+    document.querySelectorAll('[data-message-read]').forEach(function(btn){
+        btn.addEventListener('click', function(){
+            const id = btn.getAttribute('data-message-read');
+            const form = new FormData();
+            form.append('csrf', <?= json_encode($csrf); ?>);
+            form.append('action', 'mark_admin_message_read');
+            form.append('message_id', id);
+            form.append('ajax', '1');
+            fetch(<?= json_encode($manager_url('dashboard.php')); ?>, {method:'POST', body:form, credentials:'same-origin'})
+                .then(function(r){ return r.json(); })
+                .then(function(data){
+                    if (!data || !data.ok) return;
+                    const item = btn.closest('.manager-inbox-item');
+                    if (item) {
+                        item.classList.remove('is-unread');
+                        const topBadge = item.querySelector('.manager-inbox-item-top b');
+                        if (topBadge) topBadge.remove();
+                        btn.replaceWith(document.createTextNode('Read'));
+                    }
+                }).catch(function(){});
+        });
+    });
+    document.addEventListener('keydown', function(e){
+        if (e.key !== 'Escape') return;
+        if (sendModal && sendModal.classList.contains('is-open')) { closeModal(sendModal); syncBody(); }
+        if (inboxModal && inboxModal.classList.contains('is-open')) { closeModal(inboxModal); syncBody(); }
+    });
+})();
+
+(function(){
+    const modal = document.getElementById('managerPhotoModal');
+    if (!modal) return;
+    const openers = document.querySelectorAll('[data-manager-photo-open]');
+    const closers = modal.querySelectorAll('[data-manager-photo-close]');
+    const input = document.getElementById('managerProfileImage');
+    const preview = document.getElementById('managerPhotoPreview');
+    let previewUrl = '';
+    const open = function(){ modal.classList.add('is-open'); modal.setAttribute('aria-hidden','false'); document.body.classList.add('manager-photo-modal-open'); if (input) setTimeout(function(){ input.focus(); }, 30); };
+    const close = function(){ modal.classList.remove('is-open'); modal.setAttribute('aria-hidden','true'); document.body.classList.remove('manager-photo-modal-open'); };
+    if (input && preview) {
+        input.addEventListener('change', function(){
+            const file = input.files && input.files[0];
+            if (!file || !file.type || file.type.indexOf('image/') !== 0) return;
+            if (previewUrl) URL.revokeObjectURL(previewUrl);
+            previewUrl = URL.createObjectURL(file);
+            preview.classList.remove('manager-photo-preview-fallback');
+            preview.innerHTML = '';
+            const img = document.createElement('img');
+            img.src = previewUrl;
+            img.alt = 'Selected Manager profile image preview';
+            preview.appendChild(img);
+        });
+    }
+    openers.forEach(function(el){ el.addEventListener('click', open); });
+    closers.forEach(function(el){ el.addEventListener('click', close); });
+    document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && modal.classList.contains('is-open')) close(); });
+})();
+</script>
 <script src="<?= BASE_URL; ?>assets/js/manager-bookings.js?v=2"></script>
 <script src="<?= BASE_URL; ?>assets/js/manager-catalog.js?v=1"></script>
 <?php include '../includes/footer.php'; ?>

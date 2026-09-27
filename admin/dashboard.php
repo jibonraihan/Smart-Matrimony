@@ -1,68 +1,367 @@
 <?php
-// Select the Admin session BEFORE config/db.php, because config.php starts
-// a PHP session automatically when no session is active.
-if (session_status() === PHP_SESSION_NONE) {
-  session_name('SMART_ADMIN_SESSION');
-  session_start();
-}
-require_once '../config/db.php';
-if (empty($_SESSION['admin_user_id'])) { header('Location: login.php'); exit; }
-$admin_id=(int)$_SESSION['admin_user_id'];
-if (empty($_SESSION['admin_csrf'])) $_SESSION['admin_csrf']=bin2hex(random_bytes(32));
-$csrf=$_SESSION['admin_csrf']; $message=''; $error='';
+// Dashboard is the read-only Admin overview. Detailed account and operational
+// actions live in their dedicated Admin modules.
+require_once __DIR__ . '/admin_guard.php';
 
-if ($_SERVER['REQUEST_METHOD']==='POST') {
-  if (!hash_equals($csrf, (string)($_POST['csrf']??''))) { $error='Security check failed. Please refresh and try again.'; }
-  else {
-    $action=$_POST['action']??'';
-    if ($action==='create_manager') {
-      $first=trim($_POST['first_name']??''); $last=trim($_POST['last_name']??''); $gender=$_POST['gender']??''; $mobile=trim($_POST['mobile']??''); $email=trim($_POST['email']??''); $pass=(string)($_POST['password']??'');
-      if ($first===''||$last===''||!in_array($gender,['Male','Female'],true)||$mobile===''||!filter_var($email,FILTER_VALIDATE_EMAIL)||strlen($pass)<8) $error='Please complete all manager fields. Password must be at least 8 characters.';
-      else { $hash=password_hash($pass,PASSWORD_DEFAULT); $stmt=mysqli_prepare($conn,"INSERT INTO users(first_name,last_name,gender,mobile,email,password,role,account_status) VALUES(?,?,?,?,?,?, 'Manager','Active')"); mysqli_stmt_bind_param($stmt,'ssssss',$first,$last,$gender,$mobile,$email,$hash); if(mysqli_stmt_execute($stmt)) $message='Manager account created successfully.'; else $error=(mysqli_errno($conn)===1062?'Email or mobile already exists.':'Unable to create manager account.'); mysqli_stmt_close($stmt); }
-    } elseif ($action==='update_user') {
-      $uid=(int)($_POST['user_id']??0); $role=$_POST['role']??'User'; $status=$_POST['account_status']??'Active';
-      $allowed_roles=['User','Manager','Authenticator']; $allowed_status=['Active','Inactive','Suspended'];
-      if($uid<=0||$uid===$admin_id||!in_array($role,$allowed_roles,true)||!in_array($status,$allowed_status,true)) $error='Invalid user update.';
-      else { $stmt=mysqli_prepare($conn,"UPDATE users SET role=?, account_status=? WHERE user_id=? AND role<>'Admin'"); mysqli_stmt_bind_param($stmt,'ssi',$role,$status,$uid); if(mysqli_stmt_execute($stmt)&&mysqli_stmt_affected_rows($stmt)>=0) $message='User account updated successfully.'; else $error='Unable to update user.'; mysqli_stmt_close($stmt); }
+function scalar($conn, $sql){
+  $r = mysqli_query($conn, $sql);
+  $x = mysqli_fetch_row($r);
+  return (int) ($x[0] ?? 0);
+}
+
+$message = '';
+$error = '';
+
+/*
+ * Staff presentation data is intentionally kept separate from user_profiles.
+ * Admins, Managers and Authenticators share the same staff profile structure.
+ * Common identity data (name, email, gender) remains in users; this table
+ * stores presentation-only data such as the staff profile image.
+ */
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+  $action = (string) ($_POST['action'] ?? '');
+
+  if (!hash_equals($csrf, (string) ($_POST['csrf'] ?? ''))) {
+    $error = 'Security check failed. Please refresh the page and try again.';
+  } elseif ($action === 'update_admin_photo') {
+    if (empty($_FILES['profile_image']) || ($_FILES['profile_image']['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) {
+      $error = 'Please choose an image first.';
+    } else {
+      $file = $_FILES['profile_image'];
+      $upload_error = (int) ($file['error'] ?? UPLOAD_ERR_OK);
+
+      if ($upload_error !== UPLOAD_ERR_OK) {
+        $error = 'The image upload failed. Please try again.';
+      } elseif ((int) ($file['size'] ?? 0) > 5 * 1024 * 1024) {
+        $error = 'Profile image must be 5 MB or less.';
+      } else {
+        $info = @getimagesize($file['tmp_name']);
+        $mime = (string) ($info['mime'] ?? '');
+        $allowed = [
+          'image/jpeg' => 'jpg',
+          'image/png'  => 'png',
+          'image/webp' => 'webp'
+        ];
+
+        if (!$info || !isset($allowed[$mime])) {
+          $error = 'Only JPG, PNG or WebP images are allowed.';
+        } else {
+          $upload_dir = __DIR__ . '/../uploads/staff/';
+          if (!is_dir($upload_dir) && !@mkdir($upload_dir, 0755, true)) {
+            $error = 'The Admin image folder could not be created.';
+          } else {
+            $new_name = 'STAFF_' . $admin_id . '_' . bin2hex(random_bytes(10)) . '.' . $allowed[$mime];
+            $destination = $upload_dir . $new_name;
+
+            if (!move_uploaded_file($file['tmp_name'], $destination)) {
+              $error = 'The image could not be saved. Please try again.';
+            } else {
+              $old_name = '';
+              $find = mysqli_prepare($conn, 'SELECT profile_image FROM staff_profiles WHERE user_id=? LIMIT 1');
+              mysqli_stmt_bind_param($find, 'i', $admin_id);
+              mysqli_stmt_execute($find);
+              $old_row = mysqli_fetch_assoc(mysqli_stmt_get_result($find));
+              mysqli_stmt_close($find);
+              $old_name = trim((string) ($old_row['profile_image'] ?? ''));
+
+              $save = mysqli_prepare($conn, '
+                INSERT INTO staff_profiles (user_id, profile_image)
+                VALUES (?, ?)
+                ON DUPLICATE KEY UPDATE profile_image=VALUES(profile_image), updated_at=CURRENT_TIMESTAMP
+              ');
+              mysqli_stmt_bind_param($save, 'is', $admin_id, $new_name);
+
+              if (mysqli_stmt_execute($save)) {
+                mysqli_stmt_close($save);
+                if ($old_name !== '') {
+                  $old_path = $upload_dir . basename($old_name);
+                  if (is_file($old_path)) @unlink($old_path);
+                }
+                $message = 'Profile image updated successfully.';
+              } else {
+                mysqli_stmt_close($save);
+                @unlink($destination);
+                $error = 'Unable to save the Admin profile image.';
+              }
+            }
+          }
+        }
+      }
     }
   }
 }
 
-function scalar($conn,$sql){$r=mysqli_query($conn,$sql);$x=mysqli_fetch_row($r);return (int)($x[0]??0);}
-$stats=['users'=>scalar($conn,"SELECT COUNT(*) FROM users WHERE role='User'"),'managers'=>scalar($conn,"SELECT COUNT(*) FROM users WHERE role='Manager'"),'authenticators'=>scalar($conn,"SELECT COUNT(*) FROM users WHERE role='Authenticator'"),'active'=>scalar($conn,"SELECT COUNT(*) FROM users WHERE account_status='Active'"),'suspended'=>scalar($conn,"SELECT COUNT(*) FROM users WHERE account_status='Suspended'"),'interests'=>scalar($conn,"SELECT COUNT(*) FROM matches WHERE status='Pending' AND relationship_active=1"),'pending_profiles'=>scalar($conn,"SELECT COUNT(*) FROM user_profiles up INNER JOIN users u ON u.user_id=up.user_id WHERE u.role='User' AND up.verification_status='Pending'"),'verified_profiles'=>scalar($conn,"SELECT COUNT(*) FROM user_profiles WHERE verification_status='Verified'"),'matched_profiles'=>scalar($conn,"SELECT COUNT(*) FROM (SELECT sender_user_id AS user_id FROM matches WHERE status='Accepted' AND relationship_active=1 UNION SELECT receiver_user_id AS user_id FROM matches WHERE status='Accepted' AND relationship_active=1) AS matched_users")];
-$q=trim($_GET['q']??''); $role=$_GET['role']??''; $status=$_GET['status']??'';
-$where=['role<>' . "'Admin'"]; $params=[];$types='';
-if($q!==''){
-  $search_conditions=["CAST(user_id AS CHAR) LIKE ?","CONCAT('SM-', LPAD(CAST(user_id AS CHAR), 6, '0')) LIKE ?","first_name LIKE ?","last_name LIKE ?","email LIKE ?","mobile LIKE ?"];
-  $like="%$q%"; array_push($params,$like,$like,$like,$like,$like,$like); $types.='ssssss';
+$admin_profile_image = '';
+$profile_stmt = mysqli_prepare($conn, 'SELECT profile_image FROM staff_profiles WHERE user_id=? LIMIT 1');
+mysqli_stmt_bind_param($profile_stmt, 'i', $admin_id);
+mysqli_stmt_execute($profile_stmt);
+$admin_profile = mysqli_fetch_assoc(mysqli_stmt_get_result($profile_stmt));
+mysqli_stmt_close($profile_stmt);
+$admin_profile_image = trim((string) ($admin_profile['profile_image'] ?? ''));
+$admin_profile_image_exists = $admin_profile_image !== '' && is_file(__DIR__ . '/../uploads/staff/' . basename($admin_profile_image));
 
-  // Public IDs are displayed as SM-000001. Also accept the numeric portion
-  // alone, including leading zeros (e.g. 000006 or 6), without affecting
-  // normal name/email/mobile searches.
-  $normalized_id = null;
-  if (preg_match('/^SM-\s*0*(\d+)$/i', $q, $id_match)) {
-    $normalized_id = (int)$id_match[1];
-  } elseif (preg_match('/^0*\d+$/', $q)) {
-    $normalized_id = (int)$q;
-  }
-  if ($normalized_id !== null && $normalized_id > 0) {
-    $search_conditions[]='user_id=?';
-    $params[]=$normalized_id;
-    $types.='i';
-  }
-  $where[]='('.implode(' OR ',$search_conditions).')';
-}
-if(in_array($role,['User','Manager','Authenticator'],true)){ $where[]='role=?';$params[]=$role;$types.='s'; }
-if(in_array($status,['Active','Inactive','Suspended'],true)){ $where[]='account_status=?';$params[]=$status;$types.='s'; }
-$sql='SELECT user_id,first_name,last_name,gender,mobile,email,role,account_status,created_at FROM users WHERE '.implode(' AND ',$where).' ORDER BY user_id DESC LIMIT 100';
-$stmt=mysqli_prepare($conn,$sql); if($params) mysqli_stmt_bind_param($stmt,$types,...$params); mysqli_stmt_execute($stmt); $res=mysqli_stmt_get_result($stmt); $users=[];while($r=mysqli_fetch_assoc($res))$users[]=$r;mysqli_stmt_close($stmt);
+$admin_stmt = mysqli_prepare($conn, 'SELECT first_name,last_name,email,gender FROM users WHERE user_id=? AND role="Admin" LIMIT 1');
+mysqli_stmt_bind_param($admin_stmt, 'i', $admin_id);
+mysqli_stmt_execute($admin_stmt);
+$admin_record = mysqli_fetch_assoc(mysqli_stmt_get_result($admin_stmt));
+mysqli_stmt_close($admin_stmt);
+
+$admin_first_name = trim((string) ($admin_record['first_name'] ?? 'Administrator'));
+$admin_last_name = trim((string) ($admin_record['last_name'] ?? ''));
+$admin_full_name = trim($admin_first_name . ' ' . $admin_last_name);
+$admin_email = (string) ($admin_record['email'] ?? '');
+$admin_gender = (string) ($admin_record['gender'] ?? '');
+$admin_public_id = 'SM-' . str_pad((string) $admin_id, 6, '0', STR_PAD_LEFT);
+
+$stats = [
+  'accounts' => [
+    ['label'=>'Total Accounts','value'=>scalar($conn,"SELECT COUNT(*) FROM users"),'icon'=>'users'],
+    ['label'=>'Users','value'=>scalar($conn,"SELECT COUNT(*) FROM users WHERE role='User'"),'icon'=>'user'],
+    ['label'=>'Managers','value'=>scalar($conn,"SELECT COUNT(*) FROM users WHERE role='Manager'"),'icon'=>'briefcase'],
+    ['label'=>'Authenticators','value'=>scalar($conn,"SELECT COUNT(*) FROM users WHERE role='Authenticator'"),'icon'=>'shield'],
+    ['label'=>'Admins','value'=>scalar($conn,"SELECT COUNT(*) FROM users WHERE role='Admin'"),'icon'=>'admin'],
+    ['label'=>'Active Accounts','value'=>scalar($conn,"SELECT COUNT(*) FROM users WHERE account_status='Active'"),'icon'=>'active'],
+    ['label'=>'Inactive Accounts','value'=>scalar($conn,"SELECT COUNT(*) FROM users WHERE account_status='Inactive'"),'icon'=>'inactive'],
+    ['label'=>'Suspended Accounts','value'=>scalar($conn,"SELECT COUNT(*) FROM users WHERE account_status='Suspended'"),'icon'=>'suspended'],
+    ['label'=>'Male Users','value'=>scalar($conn,"SELECT COUNT(*) FROM users WHERE role='User' AND gender='Male'"),'icon'=>'male'],
+    ['label'=>'Female Users','value'=>scalar($conn,"SELECT COUNT(*) FROM users WHERE role='User' AND gender='Female'"),'icon'=>'female'],
+    ['label'=>'Users With Profiles','value'=>scalar($conn,"SELECT COUNT(DISTINCT u.user_id) FROM users u INNER JOIN user_profiles p ON p.user_id=u.user_id WHERE u.role='User'"),'icon'=>'profile-user'],
+    ['label'=>'Users Without Profiles','value'=>scalar($conn,"SELECT COUNT(*) FROM users u WHERE u.role='User' AND NOT EXISTS (SELECT 1 FROM user_profiles p WHERE p.user_id=u.user_id)"),'icon'=>'profile-missing'],
+  ],
+  'profiles' => [
+    ['label'=>'Total Profiles','value'=>scalar($conn,"SELECT COUNT(*) FROM user_profiles"),'icon'=>'profile'],
+    ['label'=>'Pending Verification','value'=>scalar($conn,"SELECT COUNT(*) FROM user_profiles WHERE verification_status='Pending'"),'icon'=>'pending'],
+    ['label'=>'Verified Profiles','value'=>scalar($conn,"SELECT COUNT(*) FROM user_profiles WHERE verification_status='Verified'"),'icon'=>'verified'],
+    ['label'=>'Rejected Profiles','value'=>scalar($conn,"SELECT COUNT(*) FROM user_profiles WHERE verification_status='Rejected'"),'icon'=>'rejected'],
+    ['label'=>'Public Profiles','value'=>scalar($conn,"SELECT COUNT(*) FROM user_profiles WHERE profile_visibility='Public'"),'icon'=>'public'],
+    ['label'=>'Hidden Profiles','value'=>scalar($conn,"SELECT COUNT(*) FROM user_profiles WHERE profile_visibility='Hidden'"),'icon'=>'hidden'],
+    ['label'=>'Profiles With Photo','value'=>scalar($conn,"SELECT COUNT(*) FROM user_profiles WHERE photo IS NOT NULL AND photo<>''"),'icon'=>'photo'],
+    ['label'=>'Photo Visible','value'=>scalar($conn,"SELECT COUNT(*) FROM user_profiles WHERE photo_visibility='Everyone'"),'icon'=>'camera'],
+    ['label'=>'Voice Introductions','value'=>scalar($conn,"SELECT COUNT(*) FROM profile_media WHERE media_type='Voice Introduction' AND status='Active'"),'icon'=>'voice'],
+    ['label'=>'Video Introductions','value'=>scalar($conn,"SELECT COUNT(*) FROM profile_media WHERE media_type='Video Introduction' AND status='Active'"),'icon'=>'video'],
+    ['label'=>'Search Preferences','value'=>scalar($conn,"SELECT COUNT(*) FROM search_preferences"),'icon'=>'preference'],
+    ['label'=>'Health Profiles','value'=>scalar($conn,"SELECT COUNT(*) FROM health_profiles"),'icon'=>'health'],
+    ['label'=>'Trait Answers','value'=>scalar($conn,"SELECT COUNT(*) FROM user_trait_answers"),'icon'=>'trait'],
+    ['label'=>'Trait Questions','value'=>scalar($conn,"SELECT COUNT(*) FROM trait_questions"),'icon'=>'question'],
+  ],
+  'matching' => [
+    ['label'=>'Pending Interests','value'=>scalar($conn,"SELECT COUNT(*) FROM matches WHERE status='Pending' AND relationship_active=1"),'icon'=>'heart'],
+    ['label'=>'Accepted Matches','value'=>scalar($conn,"SELECT COUNT(*) FROM matches WHERE status='Accepted' AND relationship_active=1"),'icon'=>'match'],
+    ['label'=>'Rejected Interests','value'=>scalar($conn,"SELECT COUNT(*) FROM matches WHERE status='Rejected'"),'icon'=>'reject'],
+    ['label'=>'Cancelled Interests','value'=>scalar($conn,"SELECT COUNT(*) FROM matches WHERE status='Cancelled'"),'icon'=>'cancel'],
+    ['label'=>'Active Matched Profiles','value'=>scalar($conn,"SELECT COUNT(*) FROM (SELECT sender_user_id AS user_id FROM matches WHERE status='Accepted' AND relationship_active=1 UNION SELECT receiver_user_id AS user_id FROM matches WHERE status='Accepted' AND relationship_active=1) AS matched_users"),'icon'=>'couple'],
+    ['label'=>'Bookmarks','value'=>scalar($conn,"SELECT COUNT(*) FROM bookmarks"),'icon'=>'bookmark'],
+    ['label'=>'Chat Requests','value'=>scalar($conn,"SELECT COUNT(*) FROM chat_requests"),'icon'=>'chat'],
+    ['label'=>'Pending Chat Requests','value'=>scalar($conn,"SELECT COUNT(*) FROM chat_requests WHERE status='Pending'"),'icon'=>'chat-pending'],
+    ['label'=>'Accepted Chat Requests','value'=>scalar($conn,"SELECT COUNT(*) FROM chat_requests WHERE status='Accepted'"),'icon'=>'chat-accepted'],
+    ['label'=>'Active Conversations','value'=>scalar($conn,"SELECT COUNT(*) FROM conversations WHERE status='Active'"),'icon'=>'conversation'],
+    ['label'=>'Closed Conversations','value'=>scalar($conn,"SELECT COUNT(*) FROM conversations WHERE status='Closed'"),'icon'=>'conversation-closed'],
+    ['label'=>'Conversation Messages','value'=>scalar($conn,"SELECT COUNT(*) FROM conversation_messages"),'icon'=>'message'],
+  ],
+  'services' => [
+    ['label'=>'Services','value'=>scalar($conn,"SELECT COUNT(*) FROM services"),'icon'=>'service-list'],
+    ['label'=>'Service Providers','value'=>scalar($conn,"SELECT COUNT(*) FROM service_providers"),'icon'=>'service'],
+    ['label'=>'Active Providers','value'=>scalar($conn,"SELECT COUNT(*) FROM service_providers WHERE status='Active'"),'icon'=>'service-active'],
+    ['label'=>'Inactive Providers','value'=>scalar($conn,"SELECT COUNT(*) FROM service_providers WHERE status='Inactive'"),'icon'=>'service-off'],
+    ['label'=>'Total Bookings','value'=>scalar($conn,"SELECT COUNT(*) FROM bookings"),'icon'=>'booking'],
+    ['label'=>'Pending Bookings','value'=>scalar($conn,"SELECT COUNT(*) FROM bookings WHERE booking_status='Pending'"),'icon'=>'booking-pending'],
+    ['label'=>'Confirmed Bookings','value'=>scalar($conn,"SELECT COUNT(*) FROM bookings WHERE booking_status='Confirmed'"),'icon'=>'booking-confirmed'],
+    ['label'=>'Completed Bookings','value'=>scalar($conn,"SELECT COUNT(*) FROM bookings WHERE booking_status='Completed'"),'icon'=>'booking-complete'],
+    ['label'=>'Cancelled Bookings','value'=>scalar($conn,"SELECT COUNT(*) FROM bookings WHERE booking_status='Cancelled'"),'icon'=>'booking-cancelled'],
+    ['label'=>'Service Cart Items','value'=>scalar($conn,"SELECT COUNT(*) FROM service_cart_items"),'icon'=>'cart'],
+  ],
+  'communication' => [
+    ['label'=>'Admin Messages','value'=>scalar($conn,"SELECT COUNT(*) FROM admin_messages"),'icon'=>'admin-message'],
+    ['label'=>'Unread Admin Messages','value'=>scalar($conn,"SELECT COUNT(*) FROM admin_messages WHERE status='Unread'"),'icon'=>'unread'],
+    ['label'=>'Authenticator Messages','value'=>scalar($conn,"SELECT COUNT(*) FROM authenticator_messages"),'icon'=>'auth-message'],
+    ['label'=>'Unread Authenticator Messages','value'=>scalar($conn,"SELECT COUNT(*) FROM authenticator_messages WHERE status='Unread'"),'icon'=>'auth-unread'],
+    ['label'=>'Site Messages','value'=>scalar($conn,"SELECT COUNT(*) FROM site_messages"),'icon'=>'site-message'],
+    ['label'=>'New Site Messages','value'=>scalar($conn,"SELECT COUNT(*) FROM site_messages WHERE status='New'"),'icon'=>'site-new'],
+    ['label'=>'Verification Logs','value'=>scalar($conn,"SELECT COUNT(*) FROM verification_logs"),'icon'=>'log'],
+    ['label'=>'Authenticator Claims','value'=>scalar($conn,"SELECT COUNT(*) FROM authenticator_profile_claims"),'icon'=>'claim'],
+    ['label'=>'Manager Activity Logs','value'=>scalar($conn,"SELECT COUNT(*) FROM manager_activity_log"),'icon'=>'activity'],
+    ['label'=>'Email Verifications','value'=>scalar($conn,"SELECT COUNT(*) FROM email_verifications"),'icon'=>'email-verify'],
+    ['label'=>'Verified Emails','value'=>scalar($conn,"SELECT COUNT(DISTINCT user_id) FROM email_verifications WHERE verified_at IS NOT NULL"),'icon'=>'email-ok'],
+    ['label'=>'Pending Email Verification','value'=>scalar($conn,"SELECT COUNT(DISTINCT user_id) FROM email_verifications WHERE verified_at IS NULL"),'icon'=>'email-pending'],
+  ]
+];
+
+$staff_unread_result = mysqli_query($conn, "SELECT COUNT(*) FROM staff_admin_messages WHERE recipient_role='Admin' AND status='Unread'");
+$staff_unread_count = $staff_unread_result ? (int) (mysqli_fetch_row($staff_unread_result)[0] ?? 0) : 0;
+$admin_show_staff_messages = true;
+$admin_staff_unread_count = $staff_unread_count;
+
+$admin_header_title = 'Admin Control Center';
+$admin_header_subtitle = 'System overview and administrative modules.';
 ?>
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Admin Dashboard | Smart Matrimony</title><link rel="stylesheet" href="../assets/css/admin.css"></head><body>
-<header class="topbar"><div class="brand-block"><span class="eyebrow">SMART MATRIMONY</span><h1>Admin Control Center</h1><div class="admin-identity" aria-label="Administrator"><span class="admin-identity-label">ADMIN</span><strong><?=htmlspecialchars($_SESSION['admin_name']??'Administrator')?></strong></div></div><div class="top-actions"><a href="users.php">User Management</a><a href="operations.php">Operations</a><a href="managers.php">Manager Management</a><a href="authenticators.php">Authenticator Management</a><a href="logout.php" class="logout-btn">Logout</a></div></header>
-<main class="wrap">
-<?php if($message):?><div class="alert success"><?=htmlspecialchars($message)?></div><?php endif;?><?php if($error):?><div class="alert error"><?=htmlspecialchars($error)?></div><?php endif;?>
-<section class="stats"><?php foreach([['Users',$stats['users']],['Managers',$stats['managers']],['Authenticators',$stats['authenticators']],['Active Accounts',$stats['active']],['Suspended',$stats['suspended']],['Pending Interests',$stats['interests']],['Pending Profiles',$stats['pending_profiles']],['Verified Profiles',$stats['verified_profiles']],['Matched Profiles',$stats['matched_profiles']]] as $s):?><div class="stat"><span><?=htmlspecialchars($s[0])?></span><strong><?=number_format($s[1])?></strong></div><?php endforeach;?></section>
-<section class="panel"><div class="panel-head"><div><span class="eyebrow">MANAGER MANAGEMENT</span><h2>Create Manager Account</h2></div></div><form method="post" class="manager-form"><input type="hidden" name="csrf" value="<?=htmlspecialchars($csrf)?>"><input type="hidden" name="action" value="create_manager"><input name="first_name" placeholder="First name" required><input name="last_name" placeholder="Last name" required><select name="gender" required><option value="">Gender</option><option>Male</option><option>Female</option></select><input name="mobile" placeholder="Mobile" required><input type="email" name="email" placeholder="Email" required><input type="password" name="password" placeholder="Password (8+ chars)" minlength="8" required><button>Create Manager</button></form></section>
-<section class="panel"><div class="panel-head"><div><span class="eyebrow">ACCOUNT MANAGEMENT</span><h2>Users Managers & Authenticator</h2></div></div><form class="filters" method="get"><input name="q" value="<?=htmlspecialchars($q)?>" placeholder="Search ID, name, email or mobile"><div class="filter-field"><label for="role-filter">Role</label><select id="role-filter" name="role" aria-label="Role"><option value="" disabled <?= $role==='' ? 'selected' : '' ?>>Select role</option><option value="All" <?= $role==='All' ? 'selected' : '' ?>>All</option><?php foreach(['User','Manager','Authenticator'] as $r):?><option <?=$role===$r?'selected':''?>><?=$r?></option><?php endforeach;?></select></div><div class="filter-field"><label for="status-filter">Status</label><select id="status-filter" name="status" aria-label="Status"><option value="" disabled <?= $status==='' ? 'selected' : '' ?>>Select status</option><option value="All" <?= $status==='All' ? 'selected' : '' ?>>All</option><?php foreach(['Active','Inactive','Suspended'] as $st):?><option <?=$status===$st?'selected':''?>><?=$st?></option><?php endforeach;?></select></div><button>Filter</button></form>
-<div class="table-wrap"><table><thead><tr><th>ID</th><th>Name</th><th>Contact</th><th>Role</th><th>Status</th><th>Created</th><th>Update</th></tr></thead><tbody><?php foreach($users as $u):?><tr><td>SM-<?=str_pad((string)$u['user_id'],6,'0',STR_PAD_LEFT)?></td><td><strong><?=htmlspecialchars($u['first_name'].' '.$u['last_name'])?></strong><small><?=htmlspecialchars($u['gender'])?></small></td><td><?=htmlspecialchars($u['email'])?><small><?=htmlspecialchars($u['mobile'])?></small></td><td><form method="post" class="row-form"><input type="hidden" name="csrf" value="<?=htmlspecialchars($csrf)?>"><input type="hidden" name="action" value="update_user"><input type="hidden" name="user_id" value="<?=$u['user_id']?>"><select name="role"><?php foreach(['User','Manager','Authenticator'] as $r):?><option <?=$u['role']===$r?'selected':''?>><?=$r?></option><?php endforeach;?></select></td><td><select name="account_status"><?php foreach(['Active','Inactive','Suspended'] as $st):?><option <?=$u['account_status']===$st?'selected':''?>><?=$st?></option><?php endforeach;?></select></td><td><?=htmlspecialchars(date('d M Y',strtotime($u['created_at'])))?></td><td><button class="small">Save</button></form></td></tr><?php endforeach;?><?php if(!$users):?><tr><td colspan="7" class="empty">No accounts found.</td></tr><?php endif;?></tbody></table></div></section>
-</main></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin Control Center | Smart Matrimony</title>
+  <link rel="stylesheet" href="../assets/css/admin.css?v=20260923.4">
+</head>
+<body>
+<?php require __DIR__ . '/admin_header.php';
+?>
+<main class="wrap admin-dashboard">
+  <?php if ($message): ?><div class="alert success"><?=htmlspecialchars($message)?></div><?php endif; ?>
+  <?php if ($error): ?><div class="alert error"><?=htmlspecialchars($error)?></div><?php endif; ?>
+
+  <section class="admin-hero panel">
+    <button type="button" class="admin-hero-photo" data-admin-photo-open aria-label="Change Admin profile image">
+      <?php if ($admin_profile_image_exists): ?>
+        <img src="../uploads/staff/<?=htmlspecialchars(basename($admin_profile_image))?>" alt="Profile image of <?=htmlspecialchars($admin_full_name)?>">
+      <?php else: ?>
+        <span class="admin-avatar-fallback"><?=htmlspecialchars(strtoupper(substr($admin_first_name, 0, 1)))?></span>
+      <?php endif; ?>
+      <span class="admin-photo-edit-badge" aria-hidden="true">✎</span>
+    </button>
+    <div class="admin-hero-copy">
+      <span class="eyebrow">ADMIN PROFILE</span>
+      <h1>Welcome, <?=htmlspecialchars($admin_first_name)?>.</h1>
+      <p class="admin-hero-lead">Your administrative workspace is ready. Here is your current account identity and the platform snapshot at a glance.</p>
+      <div class="admin-hero-meta">
+        <span><strong><?=htmlspecialchars($admin_full_name)?></strong></span>
+        <span><i class="admin-inline-icon" aria-hidden="true">ID</i><?=htmlspecialchars($admin_public_id)?></span>
+        <span><i class="admin-inline-icon" aria-hidden="true">@</i><?=htmlspecialchars($admin_email)?></span>
+        <span><i class="admin-inline-icon" aria-hidden="true">G</i><?=htmlspecialchars($admin_gender)?></span>
+      </div>
+      <button type="button" class="admin-profile-edit" data-admin-photo-open>
+        <span class="admin-camera-icon" aria-hidden="true">+</span>
+        <?= $admin_profile_image_exists ? 'Change profile image' : 'Add profile image' ?>
+      </button>
+    </div>
+  </section>
+
+  <section class="system-overview">
+    <div class="section-heading">
+      <div>
+        <span class="eyebrow">PLATFORM SNAPSHOT</span>
+        <h2>System Overview</h2>
+        <p>Everything important, grouped by area so the current state is easy to scan.</p>
+      </div>
+    </div>
+
+    <?php foreach ($stats as $category_key => $category):
+      $category_titles = [
+        'accounts'=>'Accounts & Access',
+        'profiles'=>'Profiles & Verification',
+        'matching'=>'Matching & Communication',
+        'services'=>'Services & Bookings',
+        'communication'=>'Messages & Activity'
+      ];
+    ?>
+      <section class="stats-category" aria-labelledby="stats-<?=htmlspecialchars($category_key)?>">
+        <div class="stats-category-head">
+          <h3 id="stats-<?=htmlspecialchars($category_key)?>"><?=htmlspecialchars($category_titles[$category_key])?></h3>
+          <span><?=count($category)?> metrics</span>
+        </div>
+        <div class="stats-grid">
+          <?php foreach ($category as $stat): ?>
+            <article class="stat-card stat-<?=htmlspecialchars($stat['icon'])?>">
+              <div class="stat-card-top">
+                <span class="stat-icon" aria-hidden="true">
+                  <?php
+                    $icons = [
+                      'users'=>'♟','user'=>'●','briefcase'=>'▣','shield'=>'◆','admin'=>'★','active'=>'✓','inactive'=>'◌','suspended'=>'!','male'=>'♂','female'=>'♀','profile-user'=>'◎','profile-missing'=>'◌','profile'=>'◎','pending'=>'◷','verified'=>'✓','rejected'=>'×','public'=>'◉','hidden'=>'◌','photo'=>'▧','camera'=>'◍','voice'=>'♫','video'=>'▶','preference'=>'⚙','health'=>'✚','trait'=>'☷','question'=>'?','heart'=>'♥','match'=>'♡','reject'=>'×','cancel'=>'×','couple'=>'♧','bookmark'=>'◆','chat'=>'◫','chat-pending'=>'◷','chat-accepted'=>'✓','conversation'=>'◌','conversation-closed'=>'◌','message'=>'✉','service-list'=>'▦','service'=>'◆','service-active'=>'✓','service-off'=>'◌','booking'=>'▤','booking-pending'=>'◷','booking-confirmed'=>'✓','booking-complete'=>'★','booking-cancelled'=>'×','cart'=>'▣','admin-message'=>'✉','unread'=>'●','auth-message'=>'✉','auth-unread'=>'●','site-message'=>'✉','site-new'=>'●','log'=>'≡','claim'=>'◇','activity'=>'≋','email-verify'=>'@','email-ok'=>'✓','email-pending'=>'◷'
+                    ];
+                    echo htmlspecialchars($icons[$stat['icon']] ?? '•');
+                  ?>
+                </span>
+                <span class="stat-label"><?=htmlspecialchars($stat['label'])?></span>
+              </div>
+              <strong><?=number_format((int)$stat['value'])?></strong>
+            </article>
+          <?php endforeach; ?>
+        </div>
+      </section>
+    <?php endforeach; ?>
+  </section>
+
+  <section class="admin-modules" aria-labelledby="admin-modules-title">
+    <div class="section-heading">
+      <div>
+        <span class="eyebrow">ADMIN MODULES</span>
+        <h2 id="admin-modules-title">Management Center</h2>
+        <p>Open a dedicated control page when you need to manage accounts, staff or platform operations.</p>
+      </div>
+    </div>
+    <div class="admin-module-grid">
+      <a class="admin-module-card" href="users.php">
+        <span class="admin-module-icon">●</span>
+        <span class="admin-module-copy"><strong>User Management</strong><small>Accounts, roles, status, profiles and member messaging.</small></span>
+        <span class="admin-module-arrow" aria-hidden="true">→</span>
+      </a>
+      <a class="admin-module-card" href="managers.php">
+        <span class="admin-module-icon">▣</span>
+        <span class="admin-module-copy"><strong>Manager Management</strong><small>Manager accounts, packages, bookings and staff controls.</small></span>
+        <span class="admin-module-arrow" aria-hidden="true">→</span>
+      </a>
+      <a class="admin-module-card" href="authenticators.php">
+        <span class="admin-module-icon">◆</span>
+        <span class="admin-module-copy"><strong>Authenticator Management</strong><small>Verification staff, account status and verification activity.</small></span>
+        <span class="admin-module-arrow" aria-hidden="true">→</span>
+      </a>
+      <a class="admin-module-card" href="operations.php">
+        <span class="admin-module-icon">≋</span>
+        <span class="admin-module-copy"><strong>Operations Center</strong><small>Profiles, services, bookings, matches, chats and logs.</small></span>
+        <span class="admin-module-arrow" aria-hidden="true">→</span>
+      </a>
+    </div>
+  </section>
+</main>
+
+<div class="admin-modal" data-admin-photo-modal hidden>
+  <div class="admin-modal-backdrop" data-admin-photo-close></div>
+  <section class="admin-modal-card" role="dialog" aria-modal="true" aria-labelledby="admin-photo-title">
+    <button type="button" class="admin-modal-close" data-admin-photo-close aria-label="Close">×</button>
+    <span class="eyebrow">ADMIN PROFILE</span>
+    <h2 id="admin-photo-title">Profile Image</h2>
+    <p>Choose a clear profile image for your Admin dashboard hero.</p>
+    <div class="admin-photo-preview" data-admin-photo-preview>
+      <?php if ($admin_profile_image_exists): ?>
+        <img src="../uploads/staff/<?=htmlspecialchars(basename($admin_profile_image))?>" alt="Current profile image">
+      <?php else: ?>
+        <span><?=htmlspecialchars(strtoupper(substr($admin_first_name, 0, 1)))?></span>
+      <?php endif; ?>
+    </div>
+    <form method="post" enctype="multipart/form-data" class="admin-photo-form">
+      <input type="hidden" name="csrf" value="<?=htmlspecialchars($csrf)?>">
+      <input type="hidden" name="action" value="update_admin_photo">
+      <label class="admin-file-picker">
+        <span>Choose image</span>
+        <input type="file" name="profile_image" accept="image/jpeg,image/png,image/webp" required data-admin-photo-input>
+      </label>
+      <small>JPG, PNG or WebP · maximum 5 MB</small>
+      <button type="submit">Save Profile Image</button>
+    </form>
+  </section>
+</div>
+
+<script>
+(function(){
+  const modal = document.querySelector('[data-admin-photo-modal]');
+  const openers = document.querySelectorAll('[data-admin-photo-open]');
+  const closers = document.querySelectorAll('[data-admin-photo-close]');
+  const input = document.querySelector('[data-admin-photo-input]');
+  const preview = document.querySelector('[data-admin-photo-preview]');
+  if (!modal) return;
+  const open = () => { modal.hidden = false; document.body.classList.add('admin-modal-open'); };
+  const close = () => { modal.hidden = true; document.body.classList.remove('admin-modal-open'); };
+  openers.forEach(btn => btn.addEventListener('click', open));
+  closers.forEach(btn => btn.addEventListener('click', close));
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !modal.hidden) close(); });
+  if (input && preview) {
+    input.addEventListener('change', function(){
+      const file = this.files && this.files[0];
+      if (!file || !file.type.startsWith('image/')) return;
+      const url = URL.createObjectURL(file);
+      preview.innerHTML = '<img src="' + url + '" alt="Selected profile image preview">';
+    });
+  }
+})();
+</script>
+</body>
+</html>

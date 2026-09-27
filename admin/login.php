@@ -1,9 +1,15 @@
 <?php
-require_once '../config/db.php';
+// Admin uses a dedicated session. Select it BEFORE loading config.php,
+// because config.php starts the default PHP session when none is active.
+if (session_status() === PHP_SESSION_ACTIVE && session_name() !== 'SMART_ADMIN_SESSION') {
+    session_write_close();
+}
 if (session_status() === PHP_SESSION_NONE) {
     session_name('SMART_ADMIN_SESSION');
     session_start();
 }
+
+require_once '../config/db.php';
 if (!empty($_SESSION['admin_user_id'])) {
     header('Location: dashboard.php');
     exit;

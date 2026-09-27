@@ -5,6 +5,9 @@ function money($v) { return number_format((float)$v, 2); }
 function scalar_count(mysqli $conn, string $sql): int { $r=mysqli_query($conn,$sql); if(!$r) return 0; $row=mysqli_fetch_row($r); return (int)($row[0]??0); }
 function public_id($id): string { return 'SM-'.str_pad((string)$id,6,'0',STR_PAD_LEFT); }
 
+$message = '';
+$error = '';
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!hash_equals($csrf, (string)($_POST['csrf'] ?? ''))) {
         $error = 'Security check failed. Please refresh and try again.';
@@ -94,7 +97,13 @@ $sql="SELECT cr.chat_request_id,cr.match_id,cr.sender_user_id,cr.receiver_user_i
 if($res=mysqli_query($conn,$sql)){while($r=mysqli_fetch_assoc($res))$chat_requests[]=$r;}
 ?>
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Admin Operations | Smart Matrimony</title><link rel="stylesheet" href="../assets/css/admin.css"></head><body>
-<header class="topbar"><div class="brand-block"><span class="eyebrow">SMART MATRIMONY</span><h1>Admin Operations Center</h1><p class="subhead">System-wide oversight for profiles, matching and wedding services.</p><div class="admin-identity" aria-label="Administrator"><span class="admin-identity-label">ADMIN</span><strong><?=h($_SESSION['admin_name']??'Administrator')?></strong></div></div><div class="top-actions"><a href="dashboard.php">Admin Dashboard</a><a href="logout.php">Logout</a></div></header>
+
+<?php
+$admin_header_title = 'Admin Operations Center';
+$admin_header_subtitle = 'System-wide oversight for profiles, matching and wedding services.';
+$admin_header_actions = [['label'=>'Admin Dashboard','href'=>'dashboard.php'],['label'=>'User Management','href'=>'users.php'],['label'=>'Logout','href'=>'logout.php','danger'=>true]];
+require __DIR__ . '/admin_header.php';
+?>
 <main class="wrap">
 <?php if($message):?><div class="alert success"><?=h($message)?></div><?php endif;?><?php if($error):?><div class="alert error"><?=h($error)?></div><?php endif;?>
 <section class="stats operations-stats"><?php foreach([['Users',$stats['users']],['Managers',$stats['managers']],['Authenticators',$stats['authenticators']],['Profiles',$stats['profiles']],['Pending Verification',$stats['pending_verification']],['Active Matches',$stats['active_matches']],['Bookings',$stats['bookings']],['Pending Chats',$stats['chat_requests']]] as $s):?><div class="stat"><span><?=h($s[0])?></span><strong><?=number_format($s[1])?></strong></div><?php endforeach;?></section>

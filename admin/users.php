@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/admin_guard.php';
+require_once __DIR__ . '/manager_role_transition.php';
 function h($v){ return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8'); }
 function public_id($id){ return 'SM-' . str_pad((string)(int)$id, 6, '0', STR_PAD_LEFT); }
 function admin_redirect($params=[]){ header('Location: users.php' . ($params ? '?' . http_build_query($params) : '')); exit; }
@@ -20,11 +21,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!in_array($role, $allowed_roles, true) || !in_array($status, $allowed_status, true)) {
                 $error = 'Invalid role or account status.';
             } else {
-                $stmt = mysqli_prepare($conn, "UPDATE users SET role=?, account_status=? WHERE user_id=? AND role<>'Admin'");
-                mysqli_stmt_bind_param($stmt, 'ssi', $role, $status, $uid);
-                if (mysqli_stmt_execute($stmt) && mysqli_stmt_affected_rows($stmt) >= 0) $message = 'Account updated successfully.';
-                else $error = 'Unable to update this account.';
-                mysqli_stmt_close($stmt);
+                $replacement_raw = $_POST['replacement_manager_id'] ?? '';
+                $replacement = $replacement_raw !== '' ? (int)$replacement_raw : null;
+                $transition = transition_manager_role($conn, $uid, $role, $admin_id, $replacement, $status);
+                if ($transition['ok']) $message = 'Account updated successfully.'; else $error = $transition['message'];
             }
         } elseif ($action === 'delete_user') {
             $confirm = trim((string)($_POST['confirm_text'] ?? ''));

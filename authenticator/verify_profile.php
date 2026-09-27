@@ -49,6 +49,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['verification_action']
                 mysqli_stmt_close($check);
                 if (!$target) throw new Exception('Profile not found or not eligible for verification.');
 
+                $claim_check = mysqli_prepare($conn, "SELECT claim_id, authenticator_id, status FROM authenticator_profile_claims WHERE profile_id=? LIMIT 1 FOR UPDATE");
+                mysqli_stmt_bind_param($claim_check, 'i', $profile_id);
+                mysqli_stmt_execute($claim_check);
+                $locked_claim = mysqli_fetch_assoc(mysqli_stmt_get_result($claim_check)) ?: null;
+                mysqli_stmt_close($claim_check);
+                if (!$locked_claim || $locked_claim['status'] !== 'Active') throw new Exception('This profile has not been claimed for review. Please return to the Verification Center and use Take Review first.');
+                if ((int)$locked_claim['authenticator_id'] !== $authenticator_id) throw new Exception('This profile is currently being reviewed by another Authenticator.');
+                if (!in_array($target['verification_status'], ['Pending','Rejected'], true)) throw new Exception('This profile is no longer available for verification action.');
+
                 $update = mysqli_prepare($conn, "UPDATE user_profiles SET verification_status=? WHERE profile_id=?");
                 mysqli_stmt_bind_param($update, 'si', $action, $profile_id);
                 if (!mysqli_stmt_execute($update)) throw new Exception('Could not update verification status.');
@@ -58,6 +67,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['verification_action']
                 mysqli_stmt_bind_param($log, 'iiss', $authenticator_id, $profile_id, $action, $remarks);
                 if (!mysqli_stmt_execute($log)) throw new Exception('Could not save verification history.');
                 mysqli_stmt_close($log);
+
+                $complete_claim = mysqli_prepare($conn, "UPDATE authenticator_profile_claims SET status='Completed', completed_at=CURRENT_TIMESTAMP WHERE profile_id=? AND authenticator_id=? AND status='Active' LIMIT 1");
+                mysqli_stmt_bind_param($complete_claim, 'ii', $profile_id, $authenticator_id);
+                if (!mysqli_stmt_execute($complete_claim) || mysqli_stmt_affected_rows($complete_claim) !== 1) throw new Exception('Could not close the review claim.');
+                mysqli_stmt_close($complete_claim);
 
                 mysqli_commit($conn);
                 $mail_sent = send_verification_status_email(
@@ -83,16 +97,26 @@ $profile = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
 mysqli_stmt_close($stmt);
 if (!$profile) { header('Location: dashboard.php'); exit; }
 
+$claim_stmt = mysqli_prepare($conn, "SELECT c.claim_id, c.authenticator_id, c.status, c.claimed_at, ca.first_name AS claim_first_name, ca.last_name AS claim_last_name FROM authenticator_profile_claims c INNER JOIN users ca ON ca.user_id=c.authenticator_id WHERE c.profile_id=? LIMIT 1");
+mysqli_stmt_bind_param($claim_stmt, 'i', $profile_id);
+mysqli_stmt_execute($claim_stmt);
+$claim = mysqli_fetch_assoc(mysqli_stmt_get_result($claim_stmt)) ?: null;
+mysqli_stmt_close($claim_stmt);
+$my_active_claim = $claim && $claim['status'] === 'Active' && (int)$claim['authenticator_id'] === $authenticator_id;
+$other_active_claim = $claim && $claim['status'] === 'Active' && (int)$claim['authenticator_id'] !== $authenticator_id;
+
 $voice_visibility = 'Not provided';
 $video_visibility = 'Not provided';
-$media_stmt = mysqli_prepare($conn, "SELECT media_type, visibility FROM profile_media WHERE user_id=? AND status='Active' AND media_type IN ('Voice Introduction','Video Introduction') ORDER BY media_id DESC");
+$voice_media_path = '';
+$video_media_path = '';
+$media_stmt = mysqli_prepare($conn, "SELECT media_type, visibility, file_path FROM profile_media WHERE user_id=? AND status='Active' AND media_type IN ('Voice Introduction','Video Introduction') ORDER BY media_id DESC");
 if ($media_stmt) {
     mysqli_stmt_bind_param($media_stmt, 'i', $profile['user_id']);
     mysqli_stmt_execute($media_stmt);
     $media_result = mysqli_stmt_get_result($media_stmt);
     while ($media_result && ($media_row = mysqli_fetch_assoc($media_result))) {
-        if ($media_row['media_type'] === 'Voice Introduction' && $voice_visibility === 'Not provided') $voice_visibility = (string)$media_row['visibility'];
-        if ($media_row['media_type'] === 'Video Introduction' && $video_visibility === 'Not provided') $video_visibility = (string)$media_row['visibility'];
+        if ($media_row['media_type'] === 'Voice Introduction' && $voice_visibility === 'Not provided') { $voice_visibility = (string)$media_row['visibility']; $voice_media_path = trim((string)$media_row['file_path']); }
+        if ($media_row['media_type'] === 'Video Introduction' && $video_visibility === 'Not provided') { $video_visibility = (string)$media_row['visibility']; $video_media_path = trim((string)$media_row['file_path']); }
     }
     mysqli_stmt_close($media_stmt);
 }
@@ -181,13 +205,40 @@ function val($value): string { $v = trim((string)($value ?? '')); return $v === 
   <div class="info-card full"><h3><i class="fa-solid fa-shield-halved"></i> Privacy & Verification Data</h3><div class="data-grid"><div><span>NID / Birth Certificate No</span><strong><?= val($profile['nid_number']) ?></strong></div><div><span>Photo visibility</span><strong><?= val($profile['photo_visibility']) ?></strong></div><div><span>Voice visibility</span><strong><?= val($voice_visibility) ?></strong></div><div><span>Video visibility</span><strong><?= val($video_visibility) ?></strong></div><div><span>Profile visibility</span><strong><?= val($profile['profile_visibility']) ?></strong></div><div><span>Profile created</span><strong><?= esc(date('d M Y, h:i A', strtotime($profile['created_at']))) ?></strong></div><div><span>Last updated</span><strong><?= esc(date('d M Y, h:i A', strtotime($profile['updated_at']))) ?></strong></div></div></div>
 </section>
 
+<section class="media-review-card">
+  <div class="section-heading"><div><span class="section-label">MEDIA REVIEW</span><h2>Profile Media</h2></div><span class="result-count">Active uploads</span></div>
+  <div class="media-review-grid">
+    <article class="media-review-item">
+      <div class="media-review-icon"><i class="fa-solid fa-microphone"></i></div>
+      <div class="media-review-copy"><strong>Voice Introduction</strong><span><?= esc($voice_visibility) ?></span></div>
+      <?php if ($voice_media_path && is_file(dirname(__DIR__) . '/uploads/profile/' . basename($voice_media_path))): ?>
+        <audio controls preload="metadata" src="../uploads/profile/<?= esc(basename($voice_media_path)) ?>"></audio>
+      <?php else: ?><span class="media-review-empty">Not provided</span><?php endif; ?>
+    </article>
+    <article class="media-review-item">
+      <div class="media-review-icon"><i class="fa-solid fa-video"></i></div>
+      <div class="media-review-copy"><strong>Video Introduction</strong><span><?= esc($video_visibility) ?></span></div>
+      <?php if ($video_media_path && is_file(dirname(__DIR__) . '/uploads/profile/' . basename($video_media_path))): ?>
+        <video controls preload="metadata" src="../uploads/profile/<?= esc(basename($video_media_path)) ?>"></video>
+      <?php else: ?><span class="media-review-empty">Not provided</span><?php endif; ?>
+    </article>
+  </div>
+</section>
+
 <section class="decision-card">
   <div class="section-heading"><div><span class="section-label">FINAL DECISION</span><h2>Verification Action</h2></div><span class="result-count">Current: <?= esc($profile['verification_status']) ?></span></div>
-  <form method="POST" class="decision-form">
-    <input type="hidden" name="csrf" value="<?= esc($csrf) ?>"><input type="hidden" name="profile_id" value="<?= $profile_id ?>">
-    <textarea name="remarks" maxlength="1000" placeholder="Verification remarks<?= $profile['verification_status']==='Rejected' ? ' (required for rejection)' : ' (optional)' ?>"></textarea>
-    <div class="decision-actions"><button class="approve" name="verification_action" value="Verified"><i class="fa-solid fa-circle-check"></i> Verify Profile</button><button class="reject" name="verification_action" value="Rejected"><i class="fa-solid fa-circle-xmark"></i> Reject Profile</button></div>
-  </form>
+  <?php if ($my_active_claim): ?>
+    <div class="claim-banner mine"><i class="fa-solid fa-lock"></i><div><strong>Assigned to you</strong><span>You claimed this profile for review.</span></div></div>
+    <form method="POST" class="decision-form">
+      <input type="hidden" name="csrf" value="<?= esc($csrf) ?>"><input type="hidden" name="profile_id" value="<?= $profile_id ?>">
+      <textarea name="remarks" maxlength="1000" placeholder="Verification remarks<?= $profile['verification_status']==='Rejected' ? ' (required for rejection)' : ' (optional)' ?>"></textarea>
+      <div class="decision-actions"><button class="approve" name="verification_action" value="Verified"><i class="fa-solid fa-circle-check"></i> Verify Profile</button><button class="reject" name="verification_action" value="Rejected"><i class="fa-solid fa-circle-xmark"></i> Reject Profile</button></div>
+    </form>
+  <?php elseif ($other_active_claim): ?>
+    <div class="claim-banner locked"><i class="fa-solid fa-lock"></i><div><strong>Currently being reviewed</strong><span>This profile is claimed by <?= esc(trim($claim['claim_first_name'].' '.$claim['claim_last_name'])) ?>. Verification actions are locked for you.</span></div></div>
+  <?php else: ?>
+    <div class="claim-banner available"><i class="fa-solid fa-hand"></i><div><strong>Review claim required</strong><span>Return to the Verification Center and use <strong>Take Review</strong> before making a verification decision.</span></div></div>
+  <?php endif; ?>
 </section>
 
 <section class="history-card"><div class="section-heading"><div><span class="section-label">AUDIT TRAIL</span><h2>Verification History</h2></div></div>

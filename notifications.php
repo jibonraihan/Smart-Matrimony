@@ -29,32 +29,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['notification_action']
     $posted_csrf=(string)($_POST['notification_csrf']??'');
     $action=(string)($_POST['notification_action']??'');
     $message_id=(int)($_POST['message_id']??0);
-    $message_ids = isset($_POST['message_ids']) && is_array($_POST['message_ids']) ? array_values(array_unique(array_filter(array_map('intval', $_POST['message_ids']), fn($id) => $id > 0))) : [];
+    $message_ids = isset($_POST['message_ids']) && is_array($_POST['message_ids']) ? array_values(array_unique(array_filter(array_map('strval', $_POST['message_ids']), static fn($id) => preg_match('/^(admin|authenticator):\d+$/', $id) === 1))) : [];
     $ok=false;
     if (!hash_equals($notification_csrf,$posted_csrf)) { $_SESSION['notification_flash']='Your session expired. Please refresh the page and try again.'; }
     elseif ($action==='mark_read' && $message_id>0) {
-        $stmt_m=mysqli_prepare($conn,"UPDATE authenticator_messages SET status='Read', read_at=NOW() WHERE message_id=? AND user_id=? AND status='Unread'");
+        $source=(string)($_POST['message_source']??'authenticator');
+        $table=$source==='admin'?'admin_messages':'authenticator_messages';
+        $sender_condition=$source==='admin'?" AND admin_id IN (SELECT user_id FROM users WHERE role='Admin')":" AND authenticator_id IN (SELECT user_id FROM users WHERE role='Authenticator')";
+        $stmt_m=mysqli_prepare($conn,"UPDATE {$table} SET status='Read', read_at=NOW() WHERE message_id=? AND user_id=? AND status='Unread'{$sender_condition}");
         if ($stmt_m) { mysqli_stmt_bind_param($stmt_m,'ii',$message_id,$user_id); $ok=mysqli_stmt_execute($stmt_m); mysqli_stmt_close($stmt_m); }
         $_SESSION['notification_flash']=$ok?'Notification marked as read.':'Unable to update the notification right now.';
     } elseif ($action==='delete_messages' && !empty($message_ids)) {
         mysqli_begin_transaction($conn);
         $delete_ok = true;
-        $delete_stmt = mysqli_prepare($conn, "DELETE FROM authenticator_messages WHERE user_id=? AND message_id=?");
-        if (!$delete_stmt) {
-            $delete_ok = false;
-        } else {
-            foreach ($message_ids as $delete_id) {
-                mysqli_stmt_bind_param($delete_stmt, 'ii', $user_id, $delete_id);
-                if (!mysqli_stmt_execute($delete_stmt)) { $delete_ok = false; break; }
-            }
+        foreach ($message_ids as $delete_value) {
+            $parts=explode(':',(string)$delete_value,2); $source=$parts[0]??'authenticator'; $delete_id=(int)($parts[1]??$parts[0]??0);
+            if($delete_id<=0){$delete_ok=false;break;}
+            $table=$source==='admin'?'admin_messages':'authenticator_messages';
+            $sender_condition=$source==='admin'?" AND admin_id IN (SELECT user_id FROM users WHERE role='Admin')":" AND authenticator_id IN (SELECT user_id FROM users WHERE role='Authenticator')";
+            $delete_stmt=mysqli_prepare($conn,"DELETE FROM {$table} WHERE user_id=? AND message_id=?{$sender_condition}");
+            if(!$delete_stmt){$delete_ok=false;break;}
+            mysqli_stmt_bind_param($delete_stmt,'ii',$user_id,$delete_id);
+            if(!mysqli_stmt_execute($delete_stmt)){mysqli_stmt_close($delete_stmt);$delete_ok=false;break;}
             mysqli_stmt_close($delete_stmt);
         }
         if ($delete_ok) { mysqli_commit($conn); } else { mysqli_rollback($conn); }
         $ok = $delete_ok;
         $_SESSION['notification_flash']=$ok ? (count($message_ids) === 1 ? 'Notification deleted.' : count($message_ids).' notifications deleted.') : 'Unable to delete the selected notifications right now.';
     } elseif ($action==='mark_all_read') {
-        $stmt_m=mysqli_prepare($conn,"UPDATE authenticator_messages SET status='Read', read_at=NOW() WHERE user_id=? AND status='Unread'");
-        if ($stmt_m) { mysqli_stmt_bind_param($stmt_m,'i',$user_id); $ok=mysqli_stmt_execute($stmt_m); mysqli_stmt_close($stmt_m); }
+        $ok=true;
+        foreach(['authenticator_messages','admin_messages'] as $table){$stmt_m=mysqli_prepare($conn,"UPDATE {$table} SET status='Read', read_at=NOW() WHERE user_id=? AND status='Unread'");if(!$stmt_m){$ok=false;break;}mysqli_stmt_bind_param($stmt_m,'i',$user_id);if(!mysqli_stmt_execute($stmt_m))$ok=false;mysqli_stmt_close($stmt_m);}
         $_SESSION['notification_flash']=$ok?'All notifications marked as read.':'Unable to update the notifications right now.';
     } else { $_SESSION['notification_flash']='This notification action is not available.'; }
     header('Location: '.BASE_URL.'notifications.php'); exit;
@@ -67,6 +71,12 @@ $stmt_c=mysqli_prepare($conn,"SELECT COUNT(*) AS total FROM authenticator_messag
 if ($stmt_c) { mysqli_stmt_bind_param($stmt_c,'i',$user_id); mysqli_stmt_execute($stmt_c); $row=mysqli_fetch_assoc(mysqli_stmt_get_result($stmt_c)); $authenticator_unread_count=(int)($row['total']??0); mysqli_stmt_close($stmt_c); }
 $stmt_l=mysqli_prepare($conn,"SELECT am.message_id, am.message, am.status, am.created_at, am.read_at, u.first_name AS sender_first_name, u.last_name AS sender_last_name FROM authenticator_messages am INNER JOIN users u ON u.user_id=am.authenticator_id WHERE am.user_id=? AND u.role='Authenticator' ORDER BY am.created_at DESC, am.message_id DESC");
 if ($stmt_l) { mysqli_stmt_bind_param($stmt_l,'i',$user_id); mysqli_stmt_execute($stmt_l); $res=mysqli_stmt_get_result($stmt_l); while($row=mysqli_fetch_assoc($res)) $authenticator_messages[]=$row; mysqli_stmt_close($stmt_l); }
+$admin_messages=[]; $admin_unread_count=0;
+$stmt_ac=mysqli_prepare($conn,"SELECT COUNT(*) AS total FROM admin_messages am INNER JOIN users a ON a.user_id=am.admin_id WHERE am.user_id=? AND am.status='Unread' AND a.role='Admin'");
+if($stmt_ac){mysqli_stmt_bind_param($stmt_ac,'i',$user_id);mysqli_stmt_execute($stmt_ac);$row=mysqli_fetch_assoc(mysqli_stmt_get_result($stmt_ac));$admin_unread_count=(int)($row['total']??0);mysqli_stmt_close($stmt_ac);}
+$stmt_al=mysqli_prepare($conn,"SELECT am.message_id, am.message, am.status, am.created_at, am.read_at, a.first_name AS sender_first_name, a.last_name AS sender_last_name FROM admin_messages am INNER JOIN users a ON a.user_id=am.admin_id WHERE am.user_id=? AND a.role='Admin' ORDER BY am.created_at DESC, am.message_id DESC");
+if($stmt_al){mysqli_stmt_bind_param($stmt_al,'i',$user_id);mysqli_stmt_execute($stmt_al);$res=mysqli_stmt_get_result($stmt_al);while($row=mysqli_fetch_assoc($res))$admin_messages[]=$row;mysqli_stmt_close($stmt_al);}
+$total_unread_count=$authenticator_unread_count+$admin_unread_count;
 include 'includes/header.php';
 ?>
 <link rel="stylesheet" href="<?= BASE_URL; ?>assets/css/notifications.css?v=1">
@@ -101,8 +111,8 @@ include 'includes/header.php';
                         <p>Messages and important notices from the Smart Matrimony team.</p>
                     </div>
                     <div class="notifications-hero-count">
-                        <?php if ($authenticator_unread_count > 0): ?>
-                            <strong><?= number_format($authenticator_unread_count); ?></strong><span>unread</span>
+                        <?php if ($total_unread_count > 0): ?>
+                            <strong><?= number_format($total_unread_count); ?></strong><span>unread</span>
                         <?php else: ?>
                             <strong>0</strong><span>unread</span>
                         <?php endif; ?>
@@ -113,6 +123,7 @@ include 'includes/header.php';
                     <div class="notifications-filter-tabs" role="tablist" aria-label="Notification sources">
                         <button type="button" class="notification-filter is-active" data-notification-filter="all">All</button>
                         <button type="button" class="notification-filter" data-notification-filter="authenticator">Authenticator</button>
+                        <button type="button" class="notification-filter" data-notification-filter="admin">Admin</button>
                     </div>
                     <div class="notifications-toolbar-actions">
                         <button type="button" class="notification-select-all" id="notification-select-all"><i class="fa-regular fa-square"></i> Select all</button>
@@ -150,19 +161,39 @@ include 'includes/header.php';
                         <div class="notification-list">
                             <?php foreach ($authenticator_messages as $auth_message): $message_unread = ($auth_message['status'] ?? '') === 'Unread'; $sender_name = trim(($auth_message['sender_first_name'] ?? '') . ' ' . ($auth_message['sender_last_name'] ?? '')) ?: 'Authenticator'; ?>
                                 <article class="notification-card <?= $message_unread ? 'is-unread' : ''; ?>" data-notification-card="authenticator">
-                                    <label class="notification-select-box" title="Select notification"><input type="checkbox" class="notification-checkbox" value="<?= (int) $auth_message['message_id']; ?>" data-notification-checkbox><span></span></label>
+                                    <label class="notification-select-box" title="Select notification"><input type="checkbox" class="notification-checkbox" value="authenticator:<?= (int) $auth_message['message_id']; ?>" data-notification-checkbox><span></span></label>
                                     <div class="notification-card-icon"><i class="fa-solid <?= $message_unread ? 'fa-envelope' : 'fa-envelope-open'; ?>"></i></div>
                                     <div class="notification-card-content">
                                         <div class="notification-card-topline"><div><strong><?= htmlspecialchars($sender_name); ?></strong><?php if ($message_unread): ?><span class="notification-new-pill">NEW</span><?php endif; ?></div><time><?= htmlspecialchars(date('d M Y, h:i A', strtotime($auth_message['created_at']))); ?></time></div>
                                         <p><?= nl2br(htmlspecialchars($auth_message['message'])); ?></p>
                                         <div class="notification-card-actions">
                                             <?php if ($message_unread): ?>
-                                                <form method="post" class="notifications-inline-form"><input type="hidden" name="notification_csrf" value="<?= htmlspecialchars($notification_csrf); ?>"><input type="hidden" name="notification_action" value="mark_read"><input type="hidden" name="message_id" value="<?= (int) $auth_message['message_id']; ?>"><button type="submit" class="notification-mark-read"><i class="fa-solid fa-check"></i> Mark as read</button></form>
+                                                <form method="post" class="notifications-inline-form"><input type="hidden" name="notification_csrf" value="<?= htmlspecialchars($notification_csrf); ?>"><input type="hidden" name="notification_action" value="mark_read"><input type="hidden" name="message_id" value="<?= (int) $auth_message['message_id']; ?>"><input type="hidden" name="message_source" value="authenticator"><button type="submit" class="notification-mark-read"><i class="fa-solid fa-check"></i> Mark as read</button></form>
                                             <?php else: ?>
                                                 <span class="notification-read-label"><i class="fa-solid fa-check-double"></i> Read</span>
                                             <?php endif; ?>
                                         </div>
                                     </div>
+                                </article>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
+                </section>
+
+                <section class="notification-source-section" data-notification-source="admin" aria-labelledby="adminNotificationsTitle">
+                    <div class="notification-source-heading">
+                        <div><span class="notification-source-icon"><i class="fa-solid fa-shield-halved"></i></span><div><span class="section-kicker">ADMINISTRATION</span><h2 id="adminNotificationsTitle">Admin</h2><p>Private messages and important account notices sent by the Smart Matrimony Admin team.</p></div></div>
+                        <?php if ($admin_unread_count > 0): ?><span class="notification-source-badge"><?= number_format($admin_unread_count); ?> unread</span><?php endif; ?>
+                    </div>
+                    <?php if (!$admin_messages): ?>
+                        <div class="notification-empty"><div class="notification-empty-icon"><i class="fa-regular fa-bell-slash"></i></div><div><strong>No Admin messages yet</strong><p>Private messages from the Admin team will appear here when they are sent to you.</p></div></div>
+                    <?php else: ?>
+                        <div class="notification-list">
+                            <?php foreach ($admin_messages as $admin_message): $message_unread=($admin_message['status']??'')==='Unread'; $sender_name=trim(($admin_message['sender_first_name']??'').' '.($admin_message['sender_last_name']??''))?:'Admin'; $selection_value='admin:'.(int)$admin_message['message_id']; ?>
+                                <article class="notification-card <?= $message_unread?'is-unread':''; ?>" data-notification-card="admin">
+                                    <label class="notification-select-box" title="Select notification"><input type="checkbox" class="notification-checkbox" value="<?= htmlspecialchars($selection_value); ?>" data-notification-checkbox><span></span></label>
+                                    <div class="notification-card-icon"><i class="fa-solid <?= $message_unread?'fa-envelope':'fa-envelope-open'; ?>"></i></div>
+                                    <div class="notification-card-content"><div class="notification-card-topline"><div><strong><?= htmlspecialchars($sender_name); ?></strong><?php if($message_unread): ?><span class="notification-new-pill">NEW</span><?php endif; ?></div><time><?= htmlspecialchars(date('d M Y, h:i A',strtotime($admin_message['created_at']))); ?></time></div><p><?= nl2br(htmlspecialchars($admin_message['message'])); ?></p><div class="notification-card-actions"><?php if($message_unread): ?><form method="post" class="notifications-inline-form"><input type="hidden" name="notification_csrf" value="<?= htmlspecialchars($notification_csrf); ?>"><input type="hidden" name="notification_action" value="mark_read"><input type="hidden" name="message_id" value="<?= (int)$admin_message['message_id']; ?>"><input type="hidden" name="message_source" value="admin"><button type="submit" class="notification-mark-read"><i class="fa-solid fa-check"></i> Mark as read</button></form><?php else: ?><span class="notification-read-label"><i class="fa-solid fa-check-double"></i> Read</span><?php endif; ?></div></div>
                                 </article>
                             <?php endforeach; ?>
                         </div>

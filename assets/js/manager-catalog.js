@@ -93,10 +93,29 @@
         return url.toString();
     }
 
+    function updateLiveStats(stats) {
+        if (!stats) return;
+        Object.keys(stats).forEach(function (key) {
+            const el = document.querySelector('[data-manager-stat="' + key + '"]');
+            if (!el) return;
+            const value = Number(stats[key] ?? 0);
+            if (key === 'confirmed_value') {
+                el.textContent = Math.round(value).toLocaleString();
+            } else {
+                el.textContent = Math.max(0, Math.round(value)).toLocaleString();
+            }
+        });
+    }
+
+    function updateServiceCoverage(html) {
+        const target = document.getElementById('serviceCoverageList');
+        if (target && typeof html === 'string') target.innerHTML = html;
+    }
+
     async function refreshCatalog(tab, updateUrl) {
         list.classList.add('is-loading');
         try {
-            const response = await fetch(snapshotUrl(tab), { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+            const response = await fetch(snapshotUrl(tab), { headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }, credentials: 'same-origin' });
             const data = await response.json();
             if (!data.ok) throw new Error(data.message || 'Could not load packages.');
             list.innerHTML = data.html || '';
@@ -108,8 +127,8 @@
                 const badge = btn.querySelector('b');
                 if (badge) badge.textContent = isMy ? (data.my_count ?? badge.textContent) : (data.all_count ?? badge.textContent);
             });
-            const myStat = document.querySelector('.manager-stats-five article:first-child strong');
-            if (myStat && data.my_count !== undefined) myStat.textContent = data.my_count;
+            updateLiveStats(data.stats);
+            updateServiceCoverage(data.service_coverage_html);
             const heading = document.querySelector('#catalog-list .manager-panel-heading h2');
             if (heading) heading.textContent = activeTab === 'my' ? 'My Packages' : 'All Packages';
             if (updateUrl) {
@@ -194,6 +213,43 @@
         } finally {
             submitBtn.disabled = false;
             submitBtn.classList.remove('is-busy');
+        }
+    });
+
+    document.addEventListener('submit', async function (event) {
+        const actionForm = event.target.closest('.js-package-action-form');
+        if (!actionForm) return;
+        event.preventDefault();
+
+        const action = actionForm.querySelector('input[name="action"]')?.value || '';
+        if (action === 'delete_provider' && !window.confirm('Remove this package? If it has booking history, it will be kept and should be deactivated instead.')) return;
+
+        const button = actionForm.querySelector('button[type="submit"]');
+        if (button) {
+            button.disabled = true;
+            button.classList.add('is-busy');
+        }
+        try {
+            const formData = new FormData(actionForm);
+            formData.set('ajax', '1');
+            const response = await fetch(actionForm.getAttribute('action') || baseDashboard, {
+                method: 'POST',
+                body: formData,
+                headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
+                credentials: 'same-origin'
+            });
+            const data = await response.json();
+            if (!data.ok) throw new Error(data.message || 'Could not update the package.');
+            updateLiveStats(data.stats);
+            updateServiceCoverage(data.service_coverage_html);
+            await refreshCatalog(activeTab, false);
+        } catch (error) {
+            window.alert(error.message || 'Could not update the package.');
+        } finally {
+            if (button) {
+                button.disabled = false;
+                button.classList.remove('is-busy');
+            }
         }
     });
 
