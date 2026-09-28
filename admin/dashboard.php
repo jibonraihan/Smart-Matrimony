@@ -113,6 +113,10 @@ $admin_email = (string) ($admin_record['email'] ?? '');
 $admin_gender = (string) ($admin_record['gender'] ?? '');
 $admin_public_id = 'SM-' . str_pad((string) $admin_id, 6, '0', STR_PAD_LEFT);
 
+$support_total = scalar($conn, "SELECT COUNT(*) FROM site_messages");
+$support_new = scalar($conn, "SELECT COUNT(*) FROM site_messages WHERE status='New'");
+
+
 $stats = [
   'accounts' => [
     ['label'=>'Total Accounts','value'=>scalar($conn,"SELECT COUNT(*) FROM users"),'icon'=>'users'],
@@ -235,6 +239,48 @@ $admin_header_subtitle = 'System overview and administrative modules.';
     </div>
   </section>
 
+  <section class="admin-support-quick" aria-label="Support and Feedback quick access">
+    <a class="admin-support-quick-card" href="operations.php" aria-label="Open Support and Feedback Operations">
+      <span class="admin-support-quick-icon" aria-hidden="true">✉</span>
+      <span class="admin-support-quick-copy">
+        <strong>Support &amp; Feedback</strong>
+        <small><?=number_format($support_total)?> messages · <?=number_format($support_new)?> new</small>
+      </span>
+      <span class="admin-support-quick-arrow" aria-hidden="true">→</span>
+    </a>
+  </section>
+
+  <section class="admin-modules" aria-labelledby="admin-modules-title">
+    <div class="section-heading">
+      <div>
+        <span class="eyebrow">ADMIN MODULES</span>
+        <h2 id="admin-modules-title">Management Center</h2>
+        <p>Use a dedicated control page for account management, staff administration and platform operations.</p>
+      </div>
+    </div>
+    <div class="admin-module-grid">
+      <a class="admin-module-card" href="users.php">
+        <span class="admin-module-icon">●</span>
+        <span class="admin-module-copy"><strong>User Management</strong><small>User accounts, profiles, moderation and user-level controls.</small></span>
+        <span class="admin-module-arrow" aria-hidden="true">→</span>
+      </a>
+      <a class="admin-module-card" href="managers.php">
+        <span class="admin-module-icon">▣</span>
+        <span class="admin-module-copy"><strong>Manager Management</strong><small>Manager accounts and manager-specific controls.</small></span>
+        <span class="admin-module-arrow" aria-hidden="true">→</span>
+      </a>
+      <a class="admin-module-card" href="authenticators.php">
+        <span class="admin-module-icon">◆</span>
+        <span class="admin-module-copy"><strong>Authenticator Management</strong><small>Authenticator accounts, verification assignments and controls.</small></span>
+        <span class="admin-module-arrow" aria-hidden="true">→</span>
+      </a>
+      <a class="admin-module-card" href="operations.php">
+        <span class="admin-module-icon">≋</span>
+        <span class="admin-module-copy"><strong>Operations Center</strong><small>Services, bookings, matching, communication and operational audit.</small></span>
+        <span class="admin-module-arrow" aria-hidden="true">→</span>
+      </a>
+    </div>
+  </section>
   <section class="system-overview">
     <div class="section-heading">
       <div>
@@ -280,37 +326,6 @@ $admin_header_subtitle = 'System overview and administrative modules.';
     <?php endforeach; ?>
   </section>
 
-  <section class="admin-modules" aria-labelledby="admin-modules-title">
-    <div class="section-heading">
-      <div>
-        <span class="eyebrow">ADMIN MODULES</span>
-        <h2 id="admin-modules-title">Management Center</h2>
-        <p>Open a dedicated control page when you need to manage accounts, staff or platform operations.</p>
-      </div>
-    </div>
-    <div class="admin-module-grid">
-      <a class="admin-module-card" href="users.php">
-        <span class="admin-module-icon">●</span>
-        <span class="admin-module-copy"><strong>User Management</strong><small>Accounts, roles, status, profiles and member messaging.</small></span>
-        <span class="admin-module-arrow" aria-hidden="true">→</span>
-      </a>
-      <a class="admin-module-card" href="managers.php">
-        <span class="admin-module-icon">▣</span>
-        <span class="admin-module-copy"><strong>Manager Management</strong><small>Manager accounts, packages, bookings and staff controls.</small></span>
-        <span class="admin-module-arrow" aria-hidden="true">→</span>
-      </a>
-      <a class="admin-module-card" href="authenticators.php">
-        <span class="admin-module-icon">◆</span>
-        <span class="admin-module-copy"><strong>Authenticator Management</strong><small>Verification staff, account status and verification activity.</small></span>
-        <span class="admin-module-arrow" aria-hidden="true">→</span>
-      </a>
-      <a class="admin-module-card" href="operations.php">
-        <span class="admin-module-icon">≋</span>
-        <span class="admin-module-copy"><strong>Operations Center</strong><small>Profiles, services, bookings, matches, chats and logs.</small></span>
-        <span class="admin-module-arrow" aria-hidden="true">→</span>
-      </a>
-    </div>
-  </section>
 </main>
 
 <div class="admin-modal" data-admin-photo-modal hidden>

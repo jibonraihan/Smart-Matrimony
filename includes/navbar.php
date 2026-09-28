@@ -9,7 +9,7 @@ $isHomePage = $currentPage === 'index.php';
 
 $navItems = [
     [
-        'label' => 'Public Home',
+        'label' => 'Home',
         'icon' => 'fa-house',
         'href' => BASE_URL . ($isHomePage ? '#' : 'index.php'),
         'match' => $currentPage === 'index.php',
