@@ -700,114 +700,130 @@ include 'includes/navbar.php';
 
         <div class="col-lg-6 register-left">
 
-    <span class="trust-badge">
-        <i class="fa-solid fa-shield-heart"></i>
-        Trusted by thousands of Muslim families
-    </span>
+            <div class="register-visual-eyebrow">
+                <span class="register-visual-dot"><i class="fa-solid fa-sparkles"></i></span>
+                <span>Start your journey with confidence</span>
+            </div>
 
-    <h1 class="register-heading">
-        Begin Your Halal Journey
-        <span class="wave-hand">💍</span>
-    </h1>
+            <h1 class="register-heading">
+                Create Your<br>
+                <span>Story.</span>
+                <span class="register-ring">💍</span>
+            </h1>
 
-    <p class="register-description">
-        Create your trusted matrimonial profile and connect with compatible
-        life partners in a safe, verified and family-friendly environment.
-    </p>
+            <p class="register-description">
+                Build your profile, share what matters to you, and discover meaningful connections in a respectful space.
+            </p>
 
-    <div class="feature-item">
-        <div class="feature-icon green">
-            <i class="fa-solid fa-circle-check"></i>
+            <div class="register-journey-visual">
+                <div class="journey-orbit orbit-one"></div>
+                <div class="journey-orbit orbit-two"></div>
+
+                <div class="journey-profile-card">
+                    <div class="journey-avatar">
+                        <i class="fa-solid fa-user"></i>
+                    </div>
+                    <div class="journey-profile-copy">
+                        <span class="journey-kicker">YOUR PROFILE</span>
+                        <strong>Ready to begin</strong>
+                        <small>Tell us about yourself</small>
+                    </div>
+                    <span class="journey-check"><i class="fa-solid fa-check"></i></span>
+                </div>
+
+                <div class="journey-step-card step-one">
+                    <span class="journey-step-icon"><i class="fa-solid fa-user-pen"></i></span>
+                    <span><b>Build your profile</b><small>Share the essentials</small></span>
+                </div>
+
+                <div class="journey-step-card step-two">
+                    <span class="journey-step-icon"><i class="fa-solid fa-sliders"></i></span>
+                    <span><b>Set preferences</b><small>Choose what matters</small></span>
+                </div>
+
+                <div class="journey-heart"><i class="fa-solid fa-heart"></i></div>
+                <div class="journey-spark spark-one">✦</div>
+                <div class="journey-spark spark-two">✦</div>
+            </div>
+
+            <div class="register-journey-info">
+                <div class="journey-info-head">
+                    <span>YOUR JOURNEY STARTS HERE</span>
+                    <div class="journey-progress"><i></i></div>
+                </div>
+
+                <div class="journey-info-grid">
+                    <div class="journey-info-card">
+                        <span class="journey-info-number">01</span>
+                        <span class="journey-info-icon"><i class="fa-solid fa-user-pen"></i></span>
+                        <strong>Build your profile</strong>
+                        <small>Tell us about yourself and what matters to you.</small>
+                    </div>
+
+                    <div class="journey-info-card">
+                        <span class="journey-info-number">02</span>
+                        <span class="journey-info-icon"><i class="fa-solid fa-sliders"></i></span>
+                        <strong>Set preferences</strong>
+                        <small>Choose the qualities you value in a partner.</small>
+                    </div>
+
+                    <div class="journey-info-card">
+                        <span class="journey-info-number">03</span>
+                        <span class="journey-info-icon"><i class="fa-solid fa-heart"></i></span>
+                        <strong>Discover connections</strong>
+                        <small>Explore profiles and find meaningful matches.</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="register-benefit-row">
+                <div class="register-benefit-pill">
+                    <span><i class="fa-solid fa-shield-heart"></i></span>
+                    <strong>Private</strong>
+                </div>
+                <div class="register-benefit-pill">
+                    <span><i class="fa-solid fa-heart"></i></span>
+                    <strong>Respectful</strong>
+                </div>
+                <div class="register-benefit-pill">
+                    <span><i class="fa-solid fa-users"></i></span>
+                    <strong>Family Friendly</strong>
+                </div>
+            </div>
+
+            <div class="stats-card">
+
+                <div class="stats-logo">
+                    <img src="<?php echo BASE_URL; ?>assets/images/logo/logo.png" alt="Smart Matrimony Logo">
+                </div>
+
+                <div class="stats-item">
+                    <i class="fa-solid fa-users"></i>
+                    <h4><?= number_format($memberCount) ?>+</h4>
+                    <p>Members</p>
+                </div>
+
+                <div class="stats-item">
+                    <i class="fa-solid fa-shield"></i>
+                    <h4>100%</h4>
+                    <p>Verified</p>
+                </div>
+
+                <div class="stats-item">
+                    <i class="fa-solid fa-lock"></i>
+                    <h4>Secure</h4>
+                    <p>Protected</p>
+                </div>
+
+                <div class="stats-item">
+                    <i class="fa-solid fa-headset"></i>
+                    <h4>24/7</h4>
+                    <p>Support</p>
+                </div>
+
+            </div>
+
         </div>
-
-        <div>
-            <h5>Verified Profiles</h5>
-            <p>Every profile goes through verification.</p>
-        </div>
-    </div>
-
-    <div class="feature-item">
-        <div class="feature-icon pink">
-            <i class="fa-solid fa-heart"></i>
-        </div>
-
-        <div>
-            <h5>Smart Matching</h5>
-            <p>Compatibility based partner suggestions.</p>
-        </div>
-    </div>
-
-    <div class="feature-item">
-        <div class="feature-icon orange">
-            <i class="fa-solid fa-lock"></i>
-        </div>
-
-        <div>
-            <h5>Privacy Protected</h5>
-            <p>Your personal information stays protected.</p>
-        </div>
-    </div>
-
-    <div class="feature-item">
-        <div class="feature-icon blue">
-            <i class="fa-solid fa-handshake"></i>
-        </div>
-
-        <div>
-            <h5>Family Friendly</h5>
-            <p>Built with Islamic values and respect.</p>
-        </div>
-    </div>
-    <div class="stats-card">
-
-    <div class="stats-logo">
-
-        <img src="<?php echo BASE_URL; ?>assets/images/logo/logo.png" alt="Smart Matrimony Logo">
-
-    </div>
-
-    <div class="stats-item">
-
-        <i class="fa-solid fa-users"></i>
-
-        <h4><?= number_format($memberCount) ?>+</h4>
-
-        <p>Happy Members</p>
-
-    </div>
-
-    <div class="stats-item">
-
-        <i class="fa-solid fa-shield"></i>
-
-        <h4>100%</h4>
-
-        <p>Verified Profiles</p>
-
-    </div>
-
-    <div class="stats-item">
-
-        <i class="fa-solid fa-lock"></i>
-
-        <h4>Secure</h4>
-
-        <p>Data Protection</p>
-
-    </div>
-
-    <div class="stats-item">
-
-        <i class="fa-solid fa-headset"></i>
-
-        <h4>24/7</h4>
-
-        <p>Support</p>
-
-    </div>
-
-</div>
-</div>
 
         <!-- Registration Card -->
 

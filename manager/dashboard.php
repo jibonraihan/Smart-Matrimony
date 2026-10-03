@@ -1233,6 +1233,6 @@ include '../includes/header.php';
     document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && modal.classList.contains('is-open')) close(); });
 })();
 </script>
-<script src="<?= BASE_URL; ?>assets/js/manager-bookings.js?v=2"></script>
+<script src="<?= BASE_URL; ?>assets/js/manager-bookings.js?v=4"></script>
 <script src="<?= BASE_URL; ?>assets/js/manager-catalog.js?v=1"></script>
 <?php include '../includes/footer.php'; ?>

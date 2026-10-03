@@ -11,3 +11,8 @@ date_default_timezone_set('Asia/Dhaka');
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
+
+// Central maintenance gate. Staff sessions may continue working while
+// regular users see the branded maintenance page.
+require_once __DIR__ . '/maintenance_gate.php';
+smart_enforce_maintenance_mode();

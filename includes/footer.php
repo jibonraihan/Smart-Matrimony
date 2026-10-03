@@ -43,168 +43,111 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($footer_form_type, ['Conta
 
         <div class="footer-main">
 
-
-            <!-- =========================
-                 BRAND
-            ========================== -->
-
+            <!-- BRAND -->
             <div class="footer-brand">
-
-                <a
-                    href="<?= BASE_URL; ?>"
-                    class="footer-brand-link"
-                >
-
-                    <img
-                        src="<?= BASE_URL; ?>assets/images/logo/logo.png"
-                        alt="Smart Matrimony Logo"
-                        class="footer-logo"
-                    >
-
-                    <span>
-                        Smart Matrimony
-                    </span>
-
+                <a href="<?= BASE_URL; ?>" class="footer-brand-link">
+                    <img src="<?= BASE_URL; ?>assets/images/logo/logo.png" alt="Smart Matrimony Logo" class="footer-logo">
+                    <img src="<?= BASE_URL; ?>assets/images/logo/matrimony_title.png" alt="Smart Matrimony" class="footer-title-logo">
                 </a>
-
 
                 <p class="footer-description">
-
-                    A modern, privacy-focused matrimony platform
-                    designed to help individuals and families
-                    discover meaningful connections with trust,
-                    dignity and respect.
-
+                    A modern, privacy-focused matrimony platform designed to help individuals and families discover meaningful connections with trust, dignity and respect.
                 </p>
 
-
                 <div class="footer-values">
-
-                    <span>
-
-                        <i class="fa-solid fa-shield-heart"></i>
-                        Secure
-
-                    </span>
-
-                    <span>
-
-                        <i class="fa-solid fa-heart"></i>
-                        Respectful
-
-                    </span>
-
-                    <span>
-
-                        <i class="fa-solid fa-users"></i>
-                        Family-Friendly
-
-                    </span>
-
+                    <span><i class="fa-solid fa-shield-heart"></i> Secure</span>
+                    <span><i class="fa-solid fa-lock"></i> Privacy Focused</span>
+                    <span><i class="fa-solid fa-heart"></i> Respectful</span>
+                    <span><i class="fa-solid fa-users"></i> Family-Friendly</span>
                 </div>
-
             </div>
 
-
-            <!-- =========================
-                 QUICK LINKS
-            ========================== -->
-
+            <!-- QUICK LINKS -->
             <div class="footer-links">
-
                 <h3>Quick Links</h3>
-
-                <a href="<?= BASE_URL; ?>">
-                    <i class="fa-solid fa-house"></i> Home
-                </a>
-
-                <a href="<?= BASE_URL; ?>login.php">
-                    <i class="fa-solid fa-right-to-bracket"></i> Login
-                </a>
-
-                <a href="<?= BASE_URL; ?>register.php">
-                    <i class="fa-solid fa-user-plus"></i> Create Account
-                </a>
-
+                <a href="<?= BASE_URL; ?>"><i class="fa-solid fa-house"></i> Home</a>
+                <a href="<?= BASE_URL; ?>login.php"><i class="fa-solid fa-right-to-bracket"></i> Login</a>
+                <a href="<?= BASE_URL; ?>register.php"><i class="fa-solid fa-user-plus"></i> Create Account</a>
             </div>
 
+            <!-- IMPORTANT LINKS -->
+            <div class="footer-links">
+                <h3>Important Links</h3>
+                <a href="<?= BASE_URL; ?>terms.php"><i class="fa-regular fa-file-lines"></i> Terms &amp; Conditions</a>
+                <a href="<?= BASE_URL; ?>how_it_works.php">
+                    <i class="fa-regular fa-circle-question"></i> How It Works
+                </a>
+            </div>
 
-            <!-- =========================
-                 SUPPORT & CONTACT
-            ========================== -->
-
+            <!-- SUPPORT -->
             <div class="footer-links footer-support-links">
-
                 <h3>Support</h3>
-
                 <a href="mailto:support.smartmatrimony@gmail.com" class="footer-email-link">
                     <i class="fa-solid fa-envelope"></i>
                     <span>support.smartmatrimony@gmail.com</span>
                 </a>
-
                 <a href="#" class="footer-action-link" data-footer-modal="contact">
                     <i class="fa-solid fa-headset"></i> Contact Us
                 </a>
-
                 <a href="#" class="footer-action-link" data-footer-modal="feedback">
                     <i class="fa-regular fa-message"></i> Send Feedback
                 </a>
+                <span class="footer-static-link footer-support-time">
+                    <i class="fa-regular fa-clock"></i> Support: 10 AM - 10 PM (BDT)
+                </span>
+            </div>
 
+            <!-- FOLLOW / NEWSLETTER -->
+            <div class="footer-follow-column">
+                <div class="footer-follow">
+                    <h4>Follow Us</h4>
+                    <div class="footer-socials" aria-label="Social media">
+                        <span class="footer-social footer-social-facebook" title="Facebook"><i class="fa-brands fa-facebook-f"></i></span>
+                        <span class="footer-social footer-social-instagram" title="Instagram"><i class="fa-brands fa-instagram"></i></span>
+                        <span class="footer-social footer-social-youtube" title="YouTube"><i class="fa-brands fa-youtube"></i></span>
+                        <span class="footer-social footer-social-linkedin" title="LinkedIn"><i class="fa-brands fa-linkedin-in"></i></span>
+                    </div>
+                </div>
+
+                <div class="footer-newsletter">
+                    <h4>Stay Updated</h4>
+                    <p>Get important updates and tips.</p>
+                    <div class="footer-newsletter-form">
+                        <input type="email" aria-label="Your email address" placeholder="Your email address">
+                        <button type="button" aria-label="Subscribe">
+                            <i class="fa-solid fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
 
-
         <!-- =========================
-             TRUST BAR
+             FOOTER BOTTOM BAR
         ========================== -->
 
-        <div class="footer-trust">
+        <div class="footer-bottom-combined">
 
-            <div class="footer-trust-item">
-
-                <i class="fa-solid fa-shield-halved"></i>
-
-                <span>
-                    Designed with trust in mind
-                </span>
-
-            </div>
-
-
-            <div class="footer-trust-divider"></div>
-
-
-            <div class="footer-trust-item">
-
-                <i class="fa-solid fa-heart"></i>
-
-                <span>
-                    Built around dignity and respect
-                </span>
-
-            </div>
-
-        </div>
-
-
-        <!-- =========================
-             BOTTOM BAR
-        ========================== -->
-
-        <div class="footer-bottom">
-
-            <span>
-
-                © <?= date('Y'); ?> Smart Matrimony.
-                All rights reserved.
-
+            <span class="footer-bottom-copy">
+                © <?= date('Y'); ?> Smart Matrimony. All rights reserved.
             </span>
 
+            <div class="footer-bottom-trust">
+                <span class="footer-trust-item">
+                    <i class="fa-solid fa-shield-halved"></i>
+                    <span>Designed with trust in mind</span>
+                </span>
 
-            <span>
+                <span class="footer-trust-divider"></span>
 
+                <span class="footer-trust-item">
+                    <i class="fa-solid fa-heart"></i>
+                    <span>Built around dignity and respect</span>
+                </span>
+            </div>
+
+            <span class="footer-bottom-tagline">
                 Built for meaningful connections.
-
             </span>
 
         </div>

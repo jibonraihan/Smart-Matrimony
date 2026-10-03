@@ -166,8 +166,14 @@ function val($value): string { $v = trim((string)($value ?? '')); return $v === 
 </head>
 <body class="auth-page">
 <header class="auth-header compact-header">
-  <div><span class="eyebrow">PROFILE REVIEW</span><h1>Verification Review</h1><p>Authenticator: <?= esc($auth['first_name'].' '.$auth['last_name']) ?></p></div>
-  <div class="auth-header-actions"><a href="dashboard.php" class="header-btn"><i class="fa-solid fa-arrow-left"></i> Verification Center</a><a href="logout.php" class="header-btn danger">Logout</a></div>
+  <div class="auth-brand">
+    <img src="../assets/images/logo/logo.png" alt="Smart Matrimony logo" class="auth-logo">
+    <img src="../assets/images/logo/matrimony_title.png" alt="Smart Matrimony" class="auth-title-logo">
+  </div>
+  <div class="auth-header-actions">
+    <a href="dashboard.php" class="header-btn"><i class="fa-solid fa-arrow-left"></i> Verification Center</a>
+    <a href="logout.php" class="header-btn danger">Logout</a>
+  </div>
 </header>
 <main class="auth-container review-container">
 <?php if ($notice): ?><div class="flash success"><i class="fa-solid fa-circle-check"></i><?= esc($notice) ?></div><?php endif; ?>
@@ -222,6 +228,24 @@ function val($value): string { $v = trim((string)($value ?? '')); return $v === 
         <video controls preload="metadata" src="../uploads/profile/<?= esc(basename($video_media_path)) ?>"></video>
       <?php else: ?><span class="media-review-empty">Not provided</span><?php endif; ?>
     </article>
+  </div>
+  <div class="accessibility-review">
+    <div class="accessibility-review-heading">
+      <div><span class="section-label">ACCESSIBILITY CHECKS</span><h3>Hearing &amp; Visual Checks</h3></div>
+      <span class="result-count">Required Step 5 checks</span>
+    </div>
+    <div class="accessibility-review-grid">
+      <div class="accessibility-review-item <?= !empty($profile['hearing_check_passed']) ? 'passed' : 'not-passed' ?>">
+        <span class="accessibility-review-icon"><i class="fa-solid fa-volume-high"></i></span>
+        <div><strong>Hearing Check</strong><span><?= !empty($profile['hearing_check_passed']) ? 'Passed' : 'Not passed' ?></span></div>
+        <i class="fa-solid <?= !empty($profile['hearing_check_passed']) ? 'fa-circle-check' : 'fa-circle-xmark' ?> status-icon"></i>
+      </div>
+      <div class="accessibility-review-item <?= !empty($profile['vision_check_passed']) ? 'passed' : 'not-passed' ?>">
+        <span class="accessibility-review-icon"><i class="fa-solid fa-eye"></i></span>
+        <div><strong>Visual Check</strong><span><?= !empty($profile['vision_check_passed']) ? 'Passed' : 'Not passed' ?></span></div>
+        <i class="fa-solid <?= !empty($profile['vision_check_passed']) ? 'fa-circle-check' : 'fa-circle-xmark' ?> status-icon"></i>
+      </div>
+    </div>
   </div>
 </section>
 

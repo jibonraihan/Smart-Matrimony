@@ -26,6 +26,7 @@
     let mimeType = '';
 
     function showError(message) {
+        if (!errorBox) return;
         errorBox.textContent = message || '';
         errorBox.classList.toggle('d-none', !message);
     }
@@ -73,6 +74,10 @@
         recordedBlob = null;
         recordedDuration = 0;
 
+        if (!window.isSecureContext && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+            showError('Microphone access requires a secure HTTPS connection.');
+            return;
+        }
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !window.MediaRecorder) {
             showError('Voice recording is not supported by this browser. Please use a modern Chrome, Edge, Firefox or Safari browser.');
             return;
@@ -116,7 +121,15 @@
             }, 1000);
         } catch (error) {
             stopStream();
-            showError('Microphone access was not granted. Please allow microphone access and try again.');
+            if (error && error.name === 'NotAllowedError') {
+                showError('Microphone access was blocked. Allow microphone permission for this site, then try again.');
+            } else if (error && error.name === 'NotFoundError') {
+                showError('No microphone was found on this device.');
+            } else if (error && error.name === 'NotReadableError') {
+                showError('The microphone is currently in use by another application.');
+            } else {
+                showError('Unable to start the microphone. Please check browser permission and try again.');
+            }
         }
     }
 
@@ -240,6 +253,7 @@
         const visibilityEl = document.getElementById('videoVisibility');
 
         function error(message) {
+            if (!errorEl) return;
             errorEl.textContent = message || '';
             errorEl.classList.toggle('d-none', !message);
         }
@@ -262,6 +276,9 @@
         }
         async function startRecording() {
             error(''); videoBlob = null; videoDuration = 0;
+            if (!window.isSecureContext && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+                error('Camera and microphone access requires a secure HTTPS connection.'); return;
+            }
             if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) {
                 error('Video recording is not supported by this browser. Please use a modern browser.'); return;
             }
@@ -294,7 +311,18 @@
                 videoRecorder.start(); start.classList.add('d-none'); stop.classList.remove('d-none'); badge.classList.remove('d-none');
                 statusEl.textContent = 'Recording… speak naturally. You have up to 30 seconds.';
                 videoTimerId = setInterval(() => { videoSeconds++; updateTimer(); if (videoSeconds >= 30) stopRecording(); }, 1000);
-            } catch (e) { stopStream(); error('Camera and microphone access was not granted. Please allow access and try again.'); }
+            } catch (e) {
+                stopStream();
+                if (e && e.name === 'NotAllowedError') {
+                    error('Camera and microphone access was blocked. Allow permissions for this site, then try again.');
+                } else if (e && e.name === 'NotFoundError') {
+                    error('A camera and microphone are required for video recording.');
+                } else if (e && e.name === 'NotReadableError') {
+                    error('The camera or microphone is currently in use by another application.');
+                } else {
+                    error('Unable to start video recording. Please check browser permissions and try again.');
+                }
+            }
         }
         function stopRecording() { stopClock(); if (videoRecorder && videoRecorder.state !== 'inactive') videoRecorder.stop(); }
         start.addEventListener('click', startRecording); stop.addEventListener('click', stopRecording);

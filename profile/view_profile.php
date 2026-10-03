@@ -114,9 +114,9 @@ $stmt = mysqli_prepare($conn, "
         up.verification_status,
         up.profile_visibility,
         up.photo_visibility,
-        d.name_bn AS district_name,
-        dv.name_bn AS division_name,
-        uz.name_bn AS upazila_name
+        d.name_en AS district_name,
+        dv.name_en AS division_name,
+        uz.name_en AS upazila_name
     FROM users u
     INNER JOIN user_profiles up ON up.user_id = u.user_id
     LEFT JOIN divisions dv ON dv.id = up.division_id
@@ -208,9 +208,9 @@ $partner_preferences = null;
 $partner_pref_stmt = mysqli_prepare($conn, "
     SELECT
         sp.*,
-        dv.name_bn AS preferred_division_name,
-        d.name_bn AS preferred_district_name,
-        uz.name_bn AS preferred_upazila_name
+        dv.name_en AS preferred_division_name,
+        d.name_en AS preferred_district_name,
+        uz.name_en AS preferred_upazila_name
     FROM search_preferences sp
     LEFT JOIN divisions dv ON dv.id = sp.division_id
     LEFT JOIN districts d ON d.id = sp.district_id
@@ -397,15 +397,23 @@ include '../includes/header.php';
 ?>
 
 <div class="profile-view-page">
-    <div class="profile-view-topbar">
+    <header class="profile-view-topbar">
         <div class="profile-view-container profile-view-nav">
+            <a href="<?= BASE_URL; ?>dashboard.php" class="profile-view-brand" aria-label="Back to Smart Matrimony Dashboard">
+                <span class="profile-view-brand-logo">
+                    <img src="<?= BASE_URL; ?>assets/images/logo/logo.png" alt="Smart Matrimony Logo">
+                </span>
+                <span class="profile-view-brand-title">
+                    <img src="<?= BASE_URL; ?>assets/images/logo/matrimony_title.png" alt="Smart Matrimony">
+                </span>
+            </a>
+
             <a href="<?= htmlspecialchars($return_url); ?>" class="back-dashboard">
                 <i class="fa-solid fa-arrow-left"></i>
-                Back to Dashboard
+                <span>Back to Dashboard</span>
             </a>
-            <span>Smart Matrimony</span>
         </div>
-    </div>
+    </header>
 
     <main class="profile-view-container profile-view-main">
         <section class="profile-view-hero-card">

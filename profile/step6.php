@@ -21,7 +21,7 @@ $user_row = mysqli_fetch_assoc(mysqli_stmt_get_result($user_stmt)) ?: [];
 mysqli_stmt_close($user_stmt);
 
 $pref = [];
-$pref_stmt = mysqli_prepare($conn, 'SELECT preferred_gender, min_age, max_age, min_height_cm, max_height_cm, complexion, min_weight_kg, max_weight_kg, religion, marital_status, madhhab, prayer_status, halal_lifestyle, mahram_maintained, islamic_knowledge, hijab_status, beard_status, personality_type, education, profession, min_monthly_income, division_id, district_id, upazila_id, blood_group, accept_smoker, accept_alcohol, accept_disability, accept_chronic_disease, additional_preferences FROM search_preferences WHERE user_id=? LIMIT 1');
+$pref_stmt = mysqli_prepare($conn, 'SELECT preferred_gender, min_age, max_age, min_height_cm, max_height_cm, complexion, min_weight_kg, max_weight_kg, religion, marital_status, family_status, madhhab, prayer_status, halal_lifestyle, mahram_maintained, islamic_knowledge, hijab_status, beard_status, personality_type, education, profession, min_monthly_income, division_id, district_id, upazila_id, blood_group, accept_smoker, accept_alcohol, accept_disability, accept_chronic_disease, additional_preferences FROM search_preferences WHERE user_id=? LIMIT 1');
 if ($pref_stmt) {
     mysqli_stmt_bind_param($pref_stmt, 'i', $user_id);
     mysqli_stmt_execute($pref_stmt);
@@ -46,6 +46,7 @@ $form = [
     'max_height_inches' => '',
     'religion' => $pref['religion'] ?? '',
     'marital_status' => $pref['marital_status'] ?? '',
+    'family_status' => $pref['family_status'] ?? '',
     'madhhab' => $pref['madhhab'] ?? '',
     'prayer_status' => $pref['prayer_status'] ?? '',
     'halal_lifestyle' => $pref['halal_lifestyle'] ?? '',
@@ -106,6 +107,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'  && isset($_POST['save_step6'])) {
     $form['max_weight_kg'] = trim($_POST['max_weight_kg'] ?? '');
     $form['religion'] = trim($_POST['religion'] ?? '');
     $form['marital_status'] = trim($_POST['marital_status'] ?? '');
+    $form['family_status'] = trim($_POST['family_status'] ?? '');
     $form['madhhab'] = trim($_POST['madhhab'] ?? '');
     $form['prayer_status'] = trim($_POST['prayer_status'] ?? '');
     $form['halal_lifestyle'] = trim($_POST['halal_lifestyle'] ?? '');
@@ -149,6 +151,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'  && isset($_POST['save_step6'])) {
 
     $valid_religions = $religions;
     $valid_marital = $marital_statuses;
+    $valid_family_statuses = $family_statuses;
     $valid_education = $education_levels;
     $valid_professions = $user_professions;
     $valid_madhhabs = $madhhabs;
@@ -177,6 +180,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'  && isset($_POST['save_step6'])) {
         $error = 'Please select a valid marital status preference.';
     } elseif ($form['education'] !== '' && !in_array($form['education'], $valid_education, true)) {
         $error = 'Please select a valid education preference.';
+    } elseif ($form['family_status'] !== '' && !in_array($form['family_status'], $valid_family_statuses, true)) {
+        $error = 'Please select a valid family status preference.';
     } elseif ($form['profession'] !== '' && !in_array($form['profession'], $valid_professions, true)) {
         $error = 'Please select a valid profession preference.';
     } elseif ($min_income !== null && ($min_income < 0 || $min_income > 99999999.99)) {
@@ -262,6 +267,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'  && isset($_POST['save_step6'])) {
     if ($error === '') {
         $religion = $form['religion'] === '' ? null : $form['religion'];
         $marital = $form['marital_status'] === '' ? null : $form['marital_status'];
+        $family_status = $form['family_status'] === '' ? null : $form['family_status'];
         $madhhab = $form['madhhab'] === '' ? null : $form['madhhab'];
         $prayer_status = $form['prayer_status'] === '' ? null : $form['prayer_status'];
         $halal_lifestyle = $form['halal_lifestyle'] === '' ? null : $form['halal_lifestyle'];
@@ -299,15 +305,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'  && isset($_POST['save_step6'])) {
         mysqli_begin_transaction($conn);
         try {
             if ($exists) {
-                $sql = 'UPDATE search_preferences SET preferred_gender=?, min_age=?, max_age=?, min_height_cm=?, max_height_cm=?, complexion=?, min_weight_kg=?, max_weight_kg=?, religion=?, marital_status=?, madhhab=?, prayer_status=?, halal_lifestyle=?, mahram_maintained=?, islamic_knowledge=?, hijab_status=?, beard_status=?, personality_type=?, education=?, profession=?, min_monthly_income=?, division_id=?, district_id=?, upazila_id=?, blood_group=?, accept_smoker=?, accept_alcohol=?, accept_disability=?, accept_chronic_disease=?, additional_preferences=? WHERE user_id=?';
+                $sql = 'UPDATE search_preferences SET preferred_gender=?, min_age=?, max_age=?, min_height_cm=?, max_height_cm=?, complexion=?, min_weight_kg=?, max_weight_kg=?, religion=?, marital_status=?, family_status=?, madhhab=?, prayer_status=?, halal_lifestyle=?, mahram_maintained=?, islamic_knowledge=?, hijab_status=?, beard_status=?, personality_type=?, education=?, profession=?, min_monthly_income=?, division_id=?, district_id=?, upazila_id=?, blood_group=?, accept_smoker=?, accept_alcohol=?, accept_disability=?, accept_chronic_disease=?, additional_preferences=? WHERE user_id=?';
                 $stmt = mysqli_prepare($conn, $sql);
                 if (!$stmt) throw new Exception('Preference update could not be prepared.');
-                mysqli_stmt_bind_param($stmt, 'siiddsddsssssissssssdiiisiiiisi', $form['preferred_gender'], $min_age, $max_age, $min_height, $max_height, $complexion, $min_weight_kg, $max_weight_kg, $religion, $marital, $madhhab, $prayer_status, $halal_lifestyle, $mahram_maintained, $islamic_knowledge, $hijab_status, $beard_status, $personality_type, $education, $profession, $min_income, $division_id, $district_id, $upazila_id, $blood_group, $accept_smoker, $accept_alcohol, $accept_disability, $accept_chronic, $additional_preferences, $user_id);
+                mysqli_stmt_bind_param($stmt, 'siiddsddssssssissssssdiiisiiiisi', $form['preferred_gender'], $min_age, $max_age, $min_height, $max_height, $complexion, $min_weight_kg, $max_weight_kg, $religion, $marital, $family_status, $madhhab, $prayer_status, $halal_lifestyle, $mahram_maintained, $islamic_knowledge, $hijab_status, $beard_status, $personality_type, $education, $profession, $min_income, $division_id, $district_id, $upazila_id, $blood_group, $accept_smoker, $accept_alcohol, $accept_disability, $accept_chronic, $additional_preferences, $user_id);
             } else {
-                $sql = 'INSERT INTO search_preferences (user_id, preferred_gender, min_age, max_age, min_height_cm, max_height_cm, complexion, min_weight_kg, max_weight_kg, religion, marital_status, madhhab, prayer_status, halal_lifestyle, mahram_maintained, islamic_knowledge, hijab_status, beard_status, personality_type, education, profession, min_monthly_income, division_id, district_id, upazila_id, blood_group, accept_smoker, accept_alcohol, accept_disability, accept_chronic_disease, additional_preferences) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)';
+                $sql = 'INSERT INTO search_preferences (user_id, preferred_gender, min_age, max_age, min_height_cm, max_height_cm, complexion, min_weight_kg, max_weight_kg, religion, marital_status, family_status, madhhab, prayer_status, halal_lifestyle, mahram_maintained, islamic_knowledge, hijab_status, beard_status, personality_type, education, profession, min_monthly_income, division_id, district_id, upazila_id, blood_group, accept_smoker, accept_alcohol, accept_disability, accept_chronic_disease, additional_preferences) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)';
                 $stmt = mysqli_prepare($conn, $sql);
                 if (!$stmt) throw new Exception('Preference insert could not be prepared.');
-                mysqli_stmt_bind_param($stmt, 'isiiddsddsssssissssssdiiisiiiis', $user_id, $form['preferred_gender'], $min_age, $max_age, $min_height, $max_height, $complexion, $min_weight_kg, $max_weight_kg, $religion, $marital, $madhhab, $prayer_status, $halal_lifestyle, $mahram_maintained, $islamic_knowledge, $hijab_status, $beard_status, $personality_type, $education, $profession, $min_income, $division_id, $district_id, $upazila_id, $blood_group, $accept_smoker, $accept_alcohol, $accept_disability, $accept_chronic, $additional_preferences);
+                mysqli_stmt_bind_param($stmt, 'isiiddsddssssssissssssdiiisiiiis', $user_id, $form['preferred_gender'], $min_age, $max_age, $min_height, $max_height, $complexion, $min_weight_kg, $max_weight_kg, $religion, $marital, $family_status, $madhhab, $prayer_status, $halal_lifestyle, $mahram_maintained, $islamic_knowledge, $hijab_status, $beard_status, $personality_type, $education, $profession, $min_income, $division_id, $district_id, $upazila_id, $blood_group, $accept_smoker, $accept_alcohol, $accept_disability, $accept_chronic, $additional_preferences);
             }
 
             if (!mysqli_stmt_execute($stmt)) {
@@ -438,6 +444,18 @@ include '../includes/navbar.php';
                     <div class="step6-field">
                         <label for="max_age">Maximum Age <em>*</em></label>
                         <input type="number" id="max_age" name="max_age" min="15" max="80" value="<?= htmlspecialchars((string)$form['max_age']) ?>" placeholder="e.g. 30" required>
+                    </div>
+                </div>
+
+                <div class="step6-grid step6-grid-2">
+                    <div class="step6-field">
+                        <label for="family_status">Preferred Family Status</label>
+                        <select id="family_status" name="family_status">
+                            <option value="">Any family status</option>
+                            <?php foreach ($family_statuses as $item): ?>
+                                <option value="<?= htmlspecialchars($item) ?>" <?= $form['family_status'] === $item ? 'selected' : '' ?>><?= htmlspecialchars($item) ?></option>
+                            <?php endforeach; ?>
+                        </select>
                     </div>
                 </div>
 

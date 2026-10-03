@@ -862,3 +862,656 @@
     }
 
 }
+
+/* =========================================
+   REGISTRATION LEFT VISUAL — MODERN PANEL
+   Left-side UI only; registration form remains unchanged.
+========================================= */
+.register-left{
+    padding-right:54px;
+    position:relative;
+}
+
+.register-visual-eyebrow{
+    display:inline-flex;
+    align-items:center;
+    gap:9px;
+    padding:8px 13px 8px 9px;
+    border:1px solid rgba(15,118,110,.10);
+    border-radius:999px;
+    background:rgba(255,255,255,.78);
+    color:#0f766e;
+    font-size:13px;
+    font-weight:700;
+    box-shadow:0 8px 24px rgba(15,118,110,.07);
+}
+
+.register-visual-dot{
+    width:27px;
+    height:27px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:50%;
+    background:#e6f7f4;
+    color:#0f766e;
+    font-size:12px;
+}
+
+.register-heading{
+    margin:18px 0 13px;
+    max-width:500px;
+    font-size:clamp(2.35rem,3.4vw,3.35rem);
+    line-height:1.02;
+    letter-spacing:-.035em;
+    font-weight:800;
+    background:none;
+    -webkit-text-fill-color:initial;
+    color:#162033;
+}
+
+.register-heading > span:not(.register-ring){
+    color:#0f8b82;
+}
+
+.register-ring{
+    display:inline-block;
+    margin-left:7px;
+    font-size:.7em;
+    vertical-align:middle;
+    -webkit-text-fill-color:initial;
+}
+
+.register-description{
+    max-width:500px;
+    margin:0 0 22px;
+    font-size:15px;
+    line-height:1.65;
+    color:#64748b;
+}
+
+.register-journey-visual{
+    position:relative;
+    min-height:246px;
+    margin:10px 0 17px;
+    border-radius:25px;
+    overflow:hidden;
+    border:1px solid rgba(15,118,110,.08);
+    background:linear-gradient(145deg,#eefaf8 0%,#f8fbfb 58%,#ffffff 100%);
+    box-shadow:0 18px 45px rgba(15,118,110,.08);
+}
+
+.register-journey-visual::before,
+.register-journey-visual::after{
+    content:"";
+    position:absolute;
+    border-radius:50%;
+    pointer-events:none;
+}
+
+.register-journey-visual::before{
+    width:210px;
+    height:210px;
+    right:-70px;
+    top:-105px;
+    background:rgba(15,118,110,.06);
+}
+
+.register-journey-visual::after{
+    width:160px;
+    height:160px;
+    left:-85px;
+    bottom:-90px;
+    background:rgba(22,163,74,.045);
+}
+
+.journey-orbit{
+    position:absolute;
+    border:1px dashed rgba(15,118,110,.16);
+    border-radius:50%;
+    pointer-events:none;
+}
+
+.orbit-one{
+    width:210px;
+    height:210px;
+    right:18px;
+    top:18px;
+}
+
+.orbit-two{
+    width:155px;
+    height:155px;
+    right:46px;
+    top:46px;
+}
+
+.journey-profile-card{
+    position:absolute;
+    left:34px;
+    top:48px;
+    width:300px;
+    min-height:92px;
+    display:flex;
+    align-items:center;
+    gap:13px;
+    padding:14px 15px;
+    border:1px solid rgba(255,255,255,.9);
+    border-radius:18px;
+    background:rgba(255,255,255,.94);
+    box-shadow:0 18px 38px rgba(15,23,42,.10);
+    transform:rotate(-2deg);
+    z-index:3;
+}
+
+.journey-avatar{
+    width:52px;
+    height:52px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:15px;
+    background:#e3f6f3;
+    color:#0f8b82;
+    font-size:21px;
+    flex-shrink:0;
+}
+
+.journey-profile-copy{
+    display:flex;
+    flex-direction:column;
+    min-width:0;
+}
+
+.journey-kicker{
+    color:#0f8b82;
+    font-size:9px;
+    font-weight:800;
+    letter-spacing:.12em;
+}
+
+.journey-profile-copy strong{
+    margin-top:3px;
+    color:#172033;
+    font-size:16px;
+}
+
+.journey-profile-copy small{
+    margin-top:2px;
+    color:#7a8798;
+    font-size:11px;
+}
+
+.journey-check{
+    margin-left:auto;
+    width:28px;
+    height:28px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:50%;
+    background:#e9f8ef;
+    color:#159447;
+    font-size:12px;
+}
+
+.journey-step-card{
+    position:absolute;
+    display:flex;
+    align-items:center;
+    gap:9px;
+    width:190px;
+    padding:10px 12px;
+    border:1px solid rgba(15,118,110,.09);
+    border-radius:15px;
+    background:rgba(255,255,255,.9);
+    box-shadow:0 12px 28px rgba(15,23,42,.07);
+    z-index:4;
+}
+
+.journey-step-card b,
+.journey-step-card small{
+    display:block;
+}
+
+.journey-step-card b{
+    color:#253044;
+    font-size:11px;
+    line-height:1.25;
+}
+
+.journey-step-card small{
+    margin-top:2px;
+    color:#8490a0;
+    font-size:9px;
+}
+
+.journey-step-icon{
+    width:30px;
+    height:30px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:10px;
+    background:#eaf7f5;
+    color:#0f8b82;
+    font-size:12px;
+    flex-shrink:0;
+}
+
+.step-one{
+    right:22px;
+    top:42px;
+    transform:rotate(3deg);
+}
+
+.step-two{
+    right:52px;
+    bottom:24px;
+    transform:rotate(-3deg);
+}
+
+.journey-heart{
+    position:absolute;
+    right:42px;
+    top:121px;
+    width:38px;
+    height:38px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:50%;
+    background:#fff1f4;
+    color:#e54866;
+    box-shadow:0 9px 20px rgba(229,72,102,.12);
+    z-index:5;
+    animation:registerFloat 3.8s ease-in-out infinite;
+}
+
+.journey-spark{
+    position:absolute;
+    color:#0f8b82;
+    font-size:16px;
+    opacity:.65;
+    z-index:2;
+}
+
+.spark-one{left:30px;bottom:24px;}
+.spark-two{right:21px;bottom:17px;font-size:11px;}
+
+@keyframes registerFloat{
+    0%,100%{transform:translateY(0)}
+    50%{transform:translateY(-6px)}
+}
+
+.register-benefit-row{
+    display:flex;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:8px;
+    margin-bottom:14px;
+}
+
+.register-benefit-pill{
+    display:inline-flex;
+    align-items:center;
+    gap:7px;
+    padding:7px 10px 7px 7px;
+    border:1px solid #e3efed;
+    border-radius:999px;
+    background:rgba(255,255,255,.76);
+    color:#17434a;
+    box-shadow:0 5px 14px rgba(15,118,110,.045);
+}
+
+.register-benefit-pill span{
+    width:24px;
+    height:24px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:50%;
+    background:#e7f7f4;
+    color:#0f8b82;
+    font-size:10px;
+}
+
+.register-benefit-pill strong{
+    font-size:10px;
+    font-weight:700;
+}
+
+.register-left .stats-card{
+    margin-top:4px;
+    padding:10px 10px;
+    min-height:61px;
+    border-radius:17px;
+    box-shadow:0 10px 25px rgba(15,23,42,.06);
+}
+
+.register-left .stats-logo{
+    width:68px;
+    padding-right:10px;
+    margin-right:7px;
+}
+
+.register-left .stats-logo img{
+    width:43px;
+}
+
+.register-left .stats-item i{
+    margin-bottom:2px;
+    font-size:14px;
+}
+
+.register-left .stats-item h4{
+    font-size:13px;
+}
+
+.register-left .stats-item p{
+    margin-top:1px;
+    font-size:9px;
+}
+
+@media (max-width: 1199.98px) and (min-width: 992px){
+    .register-left{padding-right:30px;}
+    .journey-profile-card{left:22px;width:265px;}
+    .journey-step-card{width:170px;}
+    .step-one{right:14px;}
+    .step-two{right:30px;}
+}
+
+@media (max-width: 991.98px){
+    .register-left{display:none !important;}
+}
+
+/* =========================================
+   REGISTRATION LEFT VISUAL — SIZE REBALANCE
+   Keep the same design, slightly larger and fuller.
+========================================= */
+@media (min-width: 992px){
+    .register-left{
+        padding-right:48px;
+    }
+
+    .register-visual-eyebrow{
+        padding:9px 15px 9px 10px;
+        font-size:13.5px;
+    }
+
+    .register-heading{
+        margin:20px 0 15px;
+        max-width:530px;
+        font-size:clamp(2.7rem,3.75vw,3.75rem);
+        line-height:1.04;
+    }
+
+    .register-description{
+        max-width:530px;
+        font-size:15.5px;
+        line-height:1.7;
+        margin-bottom:25px;
+    }
+
+    .register-journey-visual{
+        min-height:285px;
+        margin:12px 0 19px;
+        border-radius:27px;
+    }
+
+    .orbit-one{
+        width:235px;
+        height:235px;
+        right:16px;
+        top:17px;
+    }
+
+    .orbit-two{
+        width:175px;
+        height:175px;
+        right:46px;
+        top:47px;
+    }
+
+    .journey-profile-card{
+        left:38px;
+        top:57px;
+        width:325px;
+        min-height:101px;
+        padding:15px 17px;
+        border-radius:20px;
+    }
+
+    .journey-avatar{
+        width:56px;
+        height:56px;
+        border-radius:16px;
+        font-size:22px;
+    }
+
+    .journey-profile-copy strong{
+        font-size:17px;
+    }
+
+    .journey-step-card{
+        width:205px;
+        padding:11px 13px;
+        border-radius:16px;
+    }
+
+    .journey-step-icon{
+        width:32px;
+        height:32px;
+    }
+
+    .step-one{
+        right:20px;
+        top:47px;
+    }
+
+    .step-two{
+        right:43px;
+        bottom:27px;
+    }
+
+    .journey-heart{
+        right:42px;
+        top:137px;
+        width:41px;
+        height:41px;
+    }
+
+    .register-benefit-row{
+        gap:9px;
+        margin-bottom:16px;
+    }
+
+    .register-benefit-pill{
+        padding:8px 12px 8px 8px;
+    }
+
+    .register-benefit-pill span{
+        width:26px;
+        height:26px;
+    }
+
+    .register-benefit-pill strong{
+        font-size:10.5px;
+    }
+
+    .register-left .stats-card{
+        padding:11px 12px;
+        min-height:67px;
+        border-radius:18px;
+    }
+
+    .register-left .stats-logo{
+        width:76px;
+        padding-right:11px;
+        margin-right:9px;
+    }
+
+    .register-left .stats-logo img{
+        width:48px;
+    }
+
+    .register-left .stats-item i{
+        font-size:15px;
+    }
+
+    .register-left .stats-item h4{
+        font-size:13.5px;
+    }
+
+    .register-left .stats-item p{
+        font-size:9.5px;
+    }
+}
+
+@media (max-width: 1199.98px) and (min-width: 992px){
+    .register-heading{
+        font-size:clamp(2.5rem,3.35vw,3.25rem);
+    }
+
+    .register-journey-visual{
+        min-height:265px;
+    }
+
+    .journey-profile-card{
+        left:25px;
+        width:285px;
+    }
+
+    .journey-step-card{
+        width:180px;
+    }
+
+    .step-one{right:13px;}
+    .step-two{right:25px;}
+}
+
+/* =========================================
+   REGISTRATION JOURNEY INFO CARDS
+   Left-side UI only.
+========================================= */
+.register-journey-info{
+    margin:4px 0 17px;
+    padding:14px;
+    border:1px solid rgba(15,118,110,.08);
+    border-radius:20px;
+    background:rgba(255,255,255,.56);
+    box-shadow:0 10px 28px rgba(15,118,110,.045);
+}
+
+.journey-info-head{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:10px;
+}
+
+.journey-info-head > span{
+    color:#0f766e;
+    font-size:9px;
+    font-weight:800;
+    letter-spacing:.13em;
+    white-space:nowrap;
+}
+
+.journey-progress{
+    flex:1;
+    height:4px;
+    border-radius:999px;
+    background:#e4f1ef;
+    overflow:hidden;
+}
+
+.journey-progress i{
+    display:block;
+    width:72%;
+    height:100%;
+    border-radius:inherit;
+    background:linear-gradient(90deg,#0f8b82,#45b9ad);
+}
+
+.journey-info-grid{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:9px;
+}
+
+.journey-info-card{
+    position:relative;
+    min-height:116px;
+    padding:11px 10px 10px;
+    border:1px solid #e6efee;
+    border-radius:15px;
+    background:#fff;
+    box-shadow:0 7px 18px rgba(15,23,42,.045);
+    overflow:hidden;
+    transition:transform .25s ease,box-shadow .25s ease,border-color .25s ease;
+}
+
+.journey-info-card:hover{
+    transform:translateY(-3px);
+    border-color:#cfe6e2;
+    box-shadow:0 12px 24px rgba(15,118,110,.09);
+}
+
+.journey-info-number{
+    position:absolute;
+    top:9px;
+    right:10px;
+    color:#b3c5c3;
+    font-size:9px;
+    font-weight:800;
+    letter-spacing:.06em;
+}
+
+.journey-info-icon{
+    width:31px;
+    height:31px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    margin-bottom:8px;
+    border-radius:10px;
+    background:#e8f7f4;
+    color:#0f8b82;
+    font-size:12px;
+}
+
+.journey-info-card:nth-child(2) .journey-info-icon{
+    background:#eef0ff;
+    color:#6257d8;
+}
+
+.journey-info-card:nth-child(3) .journey-info-icon{
+    background:#fff0f3;
+    color:#e15a73;
+}
+
+.journey-info-card strong{
+    display:block;
+    color:#182235;
+    font-size:11px;
+    line-height:1.3;
+}
+
+.journey-info-card small{
+    display:block;
+    margin-top:4px;
+    color:#718096;
+    font-size:9px;
+    line-height:1.45;
+}
+
+@media (max-width:1199.98px) and (min-width:992px){
+    .journey-info-card{min-height:124px;}
+    .journey-info-card small{font-size:8.5px;}
+}
+
+@media (max-width:575.98px){
+    .journey-info-grid{grid-template-columns:1fr;}
+    .journey-info-card{min-height:auto;}
+}

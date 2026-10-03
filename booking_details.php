@@ -96,10 +96,20 @@ include 'includes/header.php';
 ?>
 
 <div class="booking-page">
-    <header class="booking-topbar">
+    <header class="booking-topbar site-page-header">
         <div class="booking-container booking-topbar-inner">
-            <a href="<?= BASE_URL; ?>my_bookings.php" class="booking-back"><i class="fa-solid fa-arrow-left"></i> My Bookings</a>
-            <a href="<?= BASE_URL; ?>dashboard.php#wedding-services" class="booking-cart"><i class="fa-solid fa-ring"></i> Wedding Services</a>
+            <a href="<?= BASE_URL; ?>dashboard.php" class="site-page-brand" aria-label="Smart Matrimony Dashboard">
+                <span class="site-page-logo">
+                    <img src="<?= BASE_URL; ?>assets/images/logo/logo.png" alt="Smart Matrimony Logo">
+                </span>
+                <span class="site-page-title-logo">
+                    <img src="<?= BASE_URL; ?>assets/images/logo/matrimony_title.png" alt="Smart Matrimony">
+                </span>
+            </a>
+            <div class="site-page-actions">
+                <a href="<?= BASE_URL; ?>my_bookings.php" class="site-page-btn"><i class="fa-solid fa-arrow-left"></i><span>My Bookings</span></a>
+                <a href="<?= BASE_URL; ?>dashboard.php#wedding-services" class="site-page-btn"><i class="fa-solid fa-ring"></i><span>Wedding Services</span></a>
+            </div>
         </div>
     </header>
 

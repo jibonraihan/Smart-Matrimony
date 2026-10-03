@@ -89,10 +89,19 @@ function match_location($r) {
 
 include '../includes/header.php'; include '../includes/navbar.php';
 ?>
-<main class="matching-page"><div class="matching-wrap">
+<main class="matching-page matching-standalone-header"><div class="matching-wrap">
 <a class="back-link" href="../dashboard.php"><i class="fa-solid fa-arrow-left"></i> Dashboard</a>
 <section class="matching-hero match-dashboard-hero">
-  <div><span class="section-kicker">PROFILE INTERACTION</span><h1>My Matches & Interests</h1><p>Keep track of requests, accepted matches, and past interactions in one place.</p></div>
+  <div class="matching-hero-copy">
+    <span class="section-kicker">YOUR CONNECTIONS</span>
+    <h1>My Matches &amp; Interests</h1>
+    <p>Manage the profiles you connected with, review interest requests, and keep track of your match history.</p>
+    <div class="matching-hero-badges">
+      <span><i class="fa-solid fa-heart"></i> Interests</span>
+      <span><i class="fa-solid fa-handshake"></i> Connections</span>
+      <span><i class="fa-solid fa-clock-rotate-left"></i> History</span>
+    </div>
+  </div>
   <div class="match-hero-icon"><i class="fa-solid fa-heart-circle-check"></i></div>
 </section>
 

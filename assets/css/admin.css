@@ -219,3 +219,33 @@ body.admin-modal-open{overflow:hidden}
   .admin-support-quick-copy strong{font-size:11.5px}
   .admin-support-quick-copy small{font-size:9.5px}
 }
+
+/* Maintenance mode control */
+.maintenance-control{display:flex;align-items:center;justify-content:space-between;gap:24px;margin:22px 0 28px;padding:22px 24px;background:linear-gradient(135deg,#ffffff 0%,#f5fbfa 100%);border:1px solid #d6ebe8;box-shadow:0 10px 28px rgba(15,76,73,.055)}
+.maintenance-control-copy{min-width:0}
+.maintenance-control-copy .eyebrow{color:#0f8179}
+.maintenance-control h2{margin:5px 0 5px;color:#084f4c;font-size:21px;line-height:1.2}
+.maintenance-control p{margin:0;max-width:800px;color:#6a8381;font-size:12px;line-height:1.65}
+.maintenance-status{display:inline-flex;align-items:center;gap:7px;margin-top:11px;padding:6px 10px;border-radius:999px;font-size:10px;font-weight:850;border:1px solid #d9e9e7;background:#f5f9f8;color:#637b79}
+.maintenance-status-dot{width:7px;height:7px;border-radius:50%;background:#879b99}
+.maintenance-status.is-on{background:#fff6e7;border-color:#f1dfbb;color:#946116}
+.maintenance-status.is-on .maintenance-status-dot{background:#d48b17;box-shadow:0 0 0 4px rgba(212,139,23,.10)}
+.maintenance-status.is-off{background:#edf9f2;border-color:#d2eadb;color:#2a7250}
+.maintenance-status.is-off .maintenance-status-dot{background:#2e9662;box-shadow:0 0 0 4px rgba(46,150,98,.10)}
+.maintenance-control-action{display:flex;flex:0 0 auto;flex-direction:column;align-items:center;gap:8px;min-width:190px}
+.maintenance-toggle{display:inline-flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:46px;padding:11px 17px;border:0;border-radius:12px;color:#fff;font-size:12px;font-weight:850;cursor:pointer;box-shadow:0 8px 18px rgba(15,76,73,.13);transition:transform .18s ease,box-shadow .18s ease,filter .18s ease}
+.maintenance-toggle:hover{transform:translateY(-1px);box-shadow:0 11px 22px rgba(15,76,73,.17);filter:brightness(1.02)}
+.maintenance-toggle-on{background:linear-gradient(135deg,#0d8179,#075b57)}
+.maintenance-toggle-off{background:linear-gradient(135deg,#2b9462,#216f4b)}
+.maintenance-toggle span{font-size:15px;line-height:1}
+.maintenance-control-action small{color:#829593;font-size:9.5px;text-align:center}
+@media(max-width:700px){.maintenance-control{align-items:stretch;flex-direction:column;padding:19px 17px;gap:17px}.maintenance-control-action{min-width:0;width:100%}.maintenance-toggle{min-height:44px}}
+
+/* Maintenance duration controls */
+.maintenance-status-time{font-variant-numeric:tabular-nums;color:#7b6b4d}
+.maintenance-duration{width:100%;display:flex;flex-direction:column;gap:6px}
+.maintenance-duration label{color:#607976;font-size:10px;font-weight:800;text-align:left}
+.maintenance-duration-fields{display:grid;grid-template-columns:minmax(0,1fr) 112px;gap:7px}
+.maintenance-duration-fields input,.maintenance-duration-fields select{height:40px;border:1px solid #d5e8e5;border-radius:10px;background:#fff;color:#234f4c;padding:0 11px;font-size:11px;font-weight:750;outline:none}
+.maintenance-duration-fields input:focus,.maintenance-duration-fields select:focus{border-color:#0d8179;box-shadow:0 0 0 3px rgba(13,129,121,.09)}
+@media(max-width:700px){.maintenance-duration-fields{grid-template-columns:minmax(0,1fr) 120px}}

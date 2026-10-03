@@ -670,45 +670,6 @@ include 'includes/navbar.php';
             </div>
 
 
-            <!-- =========================
-                 ISLAMIC REMINDER
-            ========================== -->
-
-            <div
-                class="islamic-reminder"
-                data-aos="fade-up"
-            >
-
-                <div class="reminder-icon">
-
-                    <i class="fa-solid fa-heart"></i>
-
-                </div>
-
-
-                <div class="reminder-content">
-
-                    <span>
-                        A Gentle Reminder
-                    </span>
-
-                    <h4>
-                        Seek a marriage built on
-                        character, responsibility and mercy.
-                    </h4>
-
-                    <p>
-
-                        A meaningful matrimonial journey begins
-                        with sincere intention, good character,
-                        responsibility and respect.
-
-                    </p>
-
-                </div>
-
-            </div>
-
         </div>
 
     </section>
@@ -1063,31 +1024,7 @@ include 'includes/navbar.php';
 
             <!-- Feature Bottom Note -->
 
-            <div
-                class="features-bottom-note"
-                data-aos="fade-up"
-            >
-
-                <div class="features-bottom-icon">
-
-                    <i class="fa-solid fa-shield-heart"></i>
-
-                </div>
-
-                <div>
-
-                    <strong>
-                        Designed with trust in mind.
-                    </strong>
-
-                    <span>
-                        From account verification to
-                        respectful communication.
-                    </span>
-
-                </div>
-
-            </div>
+            
 
         </div>
 
@@ -1227,112 +1164,39 @@ include 'includes/navbar.php';
     <!-- =========================
          HOW IT WORKS SECTION
     ========================== -->
-    <section
-        id="how-it-works"
-        class="how-it-works-section"
-    >
-
+    <section id="how-it-works" class="how-it-works-section how-it-works-teaser">
         <div class="container">
-
-            <!-- Section Heading -->
-
-            <div
-                class="how-it-works-heading text-center"
-                data-aos="fade-up"
-            >
-
-                <span class="how-it-works-label">
-
-                    <i class="fa-solid fa-route"></i>
-
-                    How It Works
-
-                </span>
-
-                <h2>
-
-                    A Simple Path to a
-                    <span>Meaningful Connection.</span>
-
-                </h2>
-
-                <p>
-
-                    Smart Matrimony brings the important parts of
-                    your matrimonial journey together in a simple,
-                    organized and respectful way.
-
-                </p>
-
+            <div class="how-it-works-teaser-head" data-aos="fade-up">
+                <div>
+                    <span class="how-it-works-label"><i class="fa-solid fa-route"></i> How It Works</span>
+                    <h2>Start with a profile. <span>Connect with confidence.</span></h2>
+                    <p>A quick look at how Smart Matrimony works. Explore the full visual journey on our How It Works page.</p>
+                </div>
+                <a href="<?= BASE_URL; ?>how_it_works.php" class="how-it-works-cta">Explore How It Works <i class="fa-solid fa-arrow-right"></i></a>
             </div>
 
-
-            <!-- =========================
-                 PROCESS FLOW
-            ========================== -->
-
-            <div class="how-it-works-flow how-it-works-five">
-                <div class="process-step" data-aos="fade-up" data-aos-delay="50">
-                    <div class="process-icon-wrap"><div class="process-icon"><i class="fa-solid fa-user-plus"></i></div><span class="process-number">01</span></div>
-                    <h3>Create Your Account</h3>
-                    <p>Register with your basic information and begin your Smart Matrimony journey.</p>
+            <div class="how-it-works-teaser-flow">
+                <div class="teaser-step" data-aos="fade-up" data-aos-delay="50">
+                    <div class="teaser-step-icon"><i class="fa-solid fa-user-plus"></i><span>01</span></div>
+                    <div><strong>Create Your Account</strong><small>Register and get started.</small></div>
                 </div>
-                <div class="process-connector" aria-hidden="true"><i class="fa-solid fa-arrow-right"></i></div>
-                <div class="process-step" data-aos="fade-up" data-aos-delay="100">
-                    <div class="process-icon-wrap"><div class="process-icon"><i class="fa-solid fa-sliders"></i></div><span class="process-number">02</span></div>
-                    <h3>Set Your Preferences</h3>
-                    <p>Define the qualities, age, education, location and other preferences that matter to you.</p>
+                <div class="teaser-arrow" aria-hidden="true"><i class="fa-solid fa-arrow-right"></i></div>
+                <div class="teaser-step" data-aos="fade-up" data-aos-delay="100">
+                    <div class="teaser-step-icon"><i class="fa-solid fa-user-pen"></i><span>02</span></div>
+                    <div><strong>Build Your Profile</strong><small>Add your details and preferences.</small></div>
                 </div>
-                <div class="process-connector" aria-hidden="true"><i class="fa-solid fa-arrow-right"></i></div>
-                <div class="process-step" data-aos="fade-up" data-aos-delay="150">
-                    <div class="process-icon-wrap"><div class="process-icon"><i class="fa-solid fa-heart-circle-check"></i></div><span class="process-number">03</span></div>
-                    <h3>Discover Connections</h3>
-                    <p>Explore potential connections using profiles, preferences and compatibility information.</p>
+                <div class="teaser-arrow" aria-hidden="true"><i class="fa-solid fa-arrow-right"></i></div>
+                <div class="teaser-step" data-aos="fade-up" data-aos-delay="150">
+                    <div class="teaser-step-icon"><i class="fa-solid fa-heart-circle-check"></i><span>03</span></div>
+                    <div><strong>Discover &amp; Connect</strong><small>Search profiles and connect respectfully.</small></div>
                 </div>
-                <div class="process-connector" aria-hidden="true"><i class="fa-solid fa-arrow-right"></i></div>
-                <div class="process-step" data-aos="fade-up" data-aos-delay="200">
-                    <div class="process-icon-wrap"><div class="process-icon"><i class="fa-solid fa-comments"></i></div><span class="process-number">04</span></div>
-                    <h3>Connect Respectfully</h3>
-                    <p>Send a chat request and communicate respectfully when a connection is accepted.</p>
-                </div>
-                <div class="process-connector" aria-hidden="true"><i class="fa-solid fa-arrow-right"></i></div>
-                <div class="process-step" data-aos="fade-up" data-aos-delay="250">
-                    <div class="process-icon-wrap"><div class="process-icon"><i class="fa-solid fa-calendar-check"></i></div><span class="process-number">05</span></div>
-                    <h3>Book Wedding Packages</h3>
-                    <p>Explore wedding services and book the packages that fit your celebration after signing in.</p>
+                <div class="teaser-arrow" aria-hidden="true"><i class="fa-solid fa-arrow-right"></i></div>
+                <div class="teaser-step" data-aos="fade-up" data-aos-delay="200">
+                    <div class="teaser-step-icon"><i class="fa-solid fa-calendar-check"></i><span>04</span></div>
+                    <div><strong>Plan Your Wedding</strong><small>Explore services and book packages.</small></div>
                 </div>
             </div>
-
-            <!-- Bottom Message -->
-
-            <div
-                class="how-it-works-note"
-                data-aos="fade-up"
-            >
-
-                <div class="how-note-icon">
-
-                    <i class="fa-solid fa-heart"></i>
-
-                </div>
-
-                <div class="how-note-content">
-
-                    <strong>
-                        Take your time. Choose with care.
-                    </strong>
-
-                    <span>
-                        A matrimonial journey is about finding
-                        compatibility, trust and mutual respect.
-                    </span>
-
-                </div>
-
-            </div>
-
         </div>
-
     </section>
 
         <!-- =========================

@@ -198,10 +198,27 @@ include 'includes/header.php';
 ?>
 
 <div class="service-page">
-    <header class="service-topbar">
-        <div class="service-container service-topbar-inner">
-            <a href="<?= BASE_URL; ?>dashboard.php#wedding-services" class="service-back"><i class="fa-solid fa-arrow-left"></i> Wedding Services</a>
-            <strong class="cart-title"><i class="fa-solid fa-cart-shopping"></i> My Cart</strong>
+    <header class="cart-topbar">
+        <div class="service-container cart-topbar-inner">
+            <a href="<?= BASE_URL; ?>dashboard.php" class="cart-brand" aria-label="Smart Matrimony Dashboard">
+                <span class="cart-brand-logo">
+                    <img src="<?= BASE_URL; ?>assets/images/logo/logo.png" alt="Smart Matrimony Logo">
+                </span>
+                <span class="cart-brand-title">
+                    <img src="<?= BASE_URL; ?>assets/images/logo/matrimony_title.png" alt="Smart Matrimony">
+                </span>
+            </a>
+
+            <nav class="cart-topbar-actions" aria-label="Cart navigation">
+                <a href="<?= BASE_URL; ?>dashboard.php#wedding-services" class="cart-nav-link">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    <span>Wedding Services</span>
+                </a>
+                <a href="<?= BASE_URL; ?>my_bookings.php" class="cart-nav-link cart-nav-primary">
+                    <i class="fa-solid fa-calendar-check"></i>
+                    <span>My Bookings</span>
+                </a>
+            </nav>
         </div>
     </header>
 

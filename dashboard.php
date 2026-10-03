@@ -386,6 +386,7 @@ if ($search_submitted && in_array($target_gender, ['Male', 'Female'], true)) {
             up.family_status,
             up.prayer_status,
             up.smoking_status,
+            up.personality_type,
             up.beard_status,
             up.hijab_status,
             up.division,
@@ -400,9 +401,9 @@ if ($search_submitted && in_array($target_gender, ['Male', 'Female'], true)) {
             up.district_id,
             up.upazila_id,
             up.division_id,
-            d.name_bn AS district_name,
-            uz.name_bn AS upazila_name,
-            dv.name_bn AS division_name
+            d.name_en AS district_name,
+            uz.name_en AS upazila_name,
+            dv.name_en AS division_name
         FROM users u
         INNER JOIN user_profiles up ON up.user_id = u.user_id
         LEFT JOIN health_profiles hp ON hp.user_id = up.user_id
@@ -439,7 +440,7 @@ if ($search_submitted && in_array($target_gender, ['Male', 'Female'], true)) {
 }
 
 /* ---------------------------------------------------------
-   Mutual compatibility score preparation
+   Preference-to-profile compatibility score preparation
    This is a read-only layer over the existing search results.
    Existing search filtering/pagination remains unchanged.
 --------------------------------------------------------- */
@@ -454,6 +455,16 @@ if (!empty($results)) {
         $viewer_profile = mysqli_fetch_assoc(mysqli_stmt_get_result($viewer_profile_stmt)) ?: [];
         mysqli_stmt_close($viewer_profile_stmt);
     }
+    if ($viewer_profile) {
+        $loc_stmt = mysqli_prepare($conn, 'SELECT d.name_en AS district_name, uz.name_en AS upazila_name, dv.name_en AS division_name FROM user_profiles up LEFT JOIN districts d ON d.id=up.district_id LEFT JOIN upazilas uz ON uz.id=up.upazila_id LEFT JOIN divisions dv ON dv.id=up.division_id WHERE up.user_id=? LIMIT 1');
+        if ($loc_stmt) {
+            mysqli_stmt_bind_param($loc_stmt, 'i', $user_id);
+            mysqli_stmt_execute($loc_stmt);
+            $viewer_loc = mysqli_fetch_assoc(mysqli_stmt_get_result($loc_stmt));
+            if ($viewer_loc) $viewer_profile = array_merge($viewer_profile, $viewer_loc);
+            mysqli_stmt_close($loc_stmt);
+        }
+    }
 
     $viewer_preferences = [];
     $viewer_pref_stmt = mysqli_prepare($conn, "SELECT * FROM search_preferences WHERE user_id = ? LIMIT 1");
@@ -464,6 +475,31 @@ if (!empty($results)) {
         mysqli_stmt_close($viewer_pref_stmt);
     }
 
+    // Match Details needs readable location names for the viewer's saved preference.
+    if ($viewer_preferences) {
+        $pref_loc_stmt = mysqli_prepare($conn, 'SELECT d.name_en AS district_name, uz.name_en AS upazila_name, dv.name_en AS division_name FROM search_preferences sp LEFT JOIN districts d ON d.id=sp.district_id LEFT JOIN upazilas uz ON uz.id=sp.upazila_id LEFT JOIN divisions dv ON dv.id=sp.division_id WHERE sp.user_id=? LIMIT 1');
+        if ($pref_loc_stmt) {
+            mysqli_stmt_bind_param($pref_loc_stmt, 'i', $user_id);
+            mysqli_stmt_execute($pref_loc_stmt);
+            $pref_loc = mysqli_fetch_assoc(mysqli_stmt_get_result($pref_loc_stmt));
+            if ($pref_loc) $viewer_preferences = array_merge($viewer_preferences, $pref_loc);
+            mysqli_stmt_close($pref_loc_stmt);
+        }
+    }
+
+    $viewer_match_weights = [
+        'age_weight'=>8,'height_weight'=>5,'religion_weight'=>10,'islamic_practice_weight'=>10,'marital_status_weight'=>10,
+        'education_weight'=>10,'profession_weight'=>10,'location_weight'=>10,'lifestyle_weight'=>8,'qna_weight'=>5,'skin_colour_weight'=>10,'weight_weight'=>4,'family_status_weight'=>0
+    ];
+    $viewer_weight_stmt = mysqli_prepare($conn, 'SELECT age_weight,height_weight,religion_weight,islamic_practice_weight,marital_status_weight,education_weight,profession_weight,location_weight,lifestyle_weight,qna_weight,skin_colour_weight,weight_weight,family_status_weight FROM user_match_weights WHERE user_id=? LIMIT 1');
+    if ($viewer_weight_stmt) {
+        mysqli_stmt_bind_param($viewer_weight_stmt, 'i', $user_id);
+        mysqli_stmt_execute($viewer_weight_stmt);
+        $saved_viewer_weights = mysqli_fetch_assoc(mysqli_stmt_get_result($viewer_weight_stmt));
+        if ($saved_viewer_weights) foreach ($viewer_match_weights as $k=>$v) if (isset($saved_viewer_weights[$k])) $viewer_match_weights[$k]=(float)$saved_viewer_weights[$k];
+        mysqli_stmt_close($viewer_weight_stmt);
+    }
+
     $candidate_ids = [];
     foreach ($results as $candidate_row) {
         $candidate_ids[] = (int) $candidate_row['user_id'];
@@ -471,6 +507,7 @@ if (!empty($results)) {
     $candidate_ids = array_values(array_unique(array_filter($candidate_ids)));
 
     $candidate_preferences = [];
+    $candidate_match_weights = [];
     $candidate_trait_preferences = [];
     $candidate_trait_answers = [];
     if ($candidate_ids) {
@@ -488,6 +525,19 @@ if (!empty($results)) {
                 $candidate_preferences[(int) $pref_row['user_id']] = $pref_row;
             }
             mysqli_stmt_close($pref_stmt);
+        }
+
+        $weight_stmt = mysqli_prepare($conn, "SELECT user_id, age_weight,height_weight,religion_weight,islamic_practice_weight,marital_status_weight,education_weight,profession_weight,location_weight,lifestyle_weight,qna_weight,skin_colour_weight,weight_weight,family_status_weight FROM user_match_weights WHERE user_id IN ($placeholders)");
+        if ($weight_stmt) {
+            $ids_for_weights = $candidate_ids;
+            $refs = []; foreach ($ids_for_weights as $key=>$value) $refs[$key]=&$ids_for_weights[$key];
+            mysqli_stmt_bind_param($weight_stmt, $types, ...$refs);
+            mysqli_stmt_execute($weight_stmt);
+            $weight_result = mysqli_stmt_get_result($weight_stmt);
+            while ($weight_row = mysqli_fetch_assoc($weight_result)) {
+                $candidate_match_weights[(int)$weight_row['user_id']] = $weight_row;
+            }
+            mysqli_stmt_close($weight_stmt);
         }
 
         $trait_answer_stmt = mysqli_prepare($conn, "SELECT uta.user_id, uta.question_id, uta.answer FROM user_trait_answers uta INNER JOIN trait_questions tq ON tq.question_id = uta.question_id WHERE uta.user_id IN ($placeholders) AND tq.gender = 'Both'");
@@ -524,18 +574,30 @@ if (!empty($results)) {
         $candidate_trait_preferences[$candidate_id] = $answers;
     }
 
+    $format_height_detail = static function ($value): string {
+        $value = trim((string) $value);
+        if ($value === '' || stripos($value, 'cm') === false) return $value;
+        return preg_replace_callback('/(\d+(?:\.\d+)?)\s*cm/i', static function ($m) {
+            $total_inches = (int) round(((float) $m[1]) / 2.54);
+            $feet = intdiv($total_inches, 12);
+            $inches = $total_inches % 12;
+            return $feet . ' ft ' . $inches . ' inch';
+        }, $value);
+    };
+
     foreach ($results as $candidate_row) {
         $candidate_id = (int) $candidate_row['user_id'];
-        $dashboard_match_details[$candidate_id] = sm_calculate_mutual_match_breakdown(
+        $dashboard_match_details[$candidate_id] = sm_directional_match_breakdown(
             $viewer_preferences,
-            $viewer_profile,
-            $candidate_preferences[$candidate_id] ?? [],
             $candidate_row,
-            $viewer_trait_preferences,
             $viewer_trait_answers,
-            $candidate_trait_preferences[$candidate_id] ?? [],
-            $candidate_trait_answers[$candidate_id] ?? []
+            $candidate_trait_answers[$candidate_id] ?? [],
+            $viewer_match_weights
         );
+        if (!empty($dashboard_match_details[$candidate_id]['details']['height'])) {
+            $dashboard_match_details[$candidate_id]['details']['height']['want'] = $format_height_detail($dashboard_match_details[$candidate_id]['details']['height']['want'] ?? '');
+            $dashboard_match_details[$candidate_id]['details']['height']['have'] = $format_height_detail($dashboard_match_details[$candidate_id]['details']['height']['have'] ?? '');
+        }
         $dashboard_match_scores[$candidate_id] = $dashboard_match_details[$candidate_id]['score'] !== null
             ? (int) round($dashboard_match_details[$candidate_id]['score'])
             : null;
@@ -568,7 +630,7 @@ if (!empty($results)) {
 --------------------------------------------------------- */
 
 $divisions = [];
-$division_result = mysqli_query($conn, "SELECT id, name_bn, name_en FROM divisions ORDER BY name_bn");
+$division_result = mysqli_query($conn, "SELECT id, name_en, name_en FROM divisions ORDER BY name_en");
 if ($division_result) {
     while ($row = mysqli_fetch_assoc($division_result)) {
         $divisions[] = $row;
@@ -636,7 +698,7 @@ include 'includes/header.php';
             <div class="topbar-actions">
                 <a href="<?= BASE_URL; ?>index.php" class="topbar-home">
                     <i class="fa-solid fa-house"></i>
-                    <span>Public Home</span>
+                    <span></span>
                 </a>
 
                 <button class="menu-toggle" type="button" id="dashboardMenuToggle" aria-label="Open menu" aria-expanded="false">
@@ -687,6 +749,7 @@ include 'includes/header.php';
             <a href="<?= BASE_URL; ?>matching/bookmarks.php"><i class="fa-solid fa-bookmark"></i><span>Bookmarks</span></a>
             <a href="<?= BASE_URL; ?>matching/chat_requests.php"><i class="fa-solid fa-comments"></i><span>Messages</span></a>
             <a href="<?= BASE_URL; ?>notifications.php" class="notifications-menu-link"><i class="fa-solid fa-bell"></i><span>Notifications</span><?php if ($authenticator_unread_count > 0): ?><span class="menu-count notifications-menu-count"><?= $authenticator_unread_count; ?></span><?php endif; ?></a>
+            <a href="<?= BASE_URL; ?>settings.php"><i class="fa-solid fa-gear"></i><span>Settings</span></a>
         </nav>
 
         <div class="menu-footer">
@@ -927,7 +990,7 @@ include 'includes/header.php';
                                 <option value="">Any Division</option>
                                 <?php foreach ($divisions as $division): ?>
                                     <option value="<?= (int) $division['id']; ?>" <?= $division_id === (int) $division['id'] ? 'selected' : ''; ?>>
-                                        <?= htmlspecialchars($division['name_bn']); ?>
+                                        <?= htmlspecialchars($division['name_en']); ?>
                                     </option>
                                 <?php endforeach; ?>
                             </select>
@@ -1243,6 +1306,10 @@ include 'includes/header.php';
                                         <div>
                                             <h4><?= htmlspecialchars($name); ?></h4>
                                             <span class="profile-card-id"><i class="fa-solid fa-id-card"></i> <?= htmlspecialchars($target_public_id); ?></span>
+                                            <?php $target_completion = sm_get_profile_completion($conn, $target_id); ?>
+                                            <span class="profile-card-completion" title="Profile completion <?= (int) ($target_completion['percentage'] ?? 0); ?>%">
+                                                <i class="fa-solid fa-chart-simple"></i> Profile <?= (int) ($target_completion['percentage'] ?? 0); ?>%
+                                            </span>
                                             <p>
                                                 <?= $age !== '' ? (int) $age . ' yrs' : 'Age not provided'; ?>
                                                 <?php if (!empty($profile['religion'])): ?> · <?= htmlspecialchars($profile['religion']); ?><?php endif; ?>
@@ -1367,7 +1434,16 @@ include 'includes/header.php';
                         <h2>Wedding Services</h2>
                         <p>Choose a service to explore its available packages, providers, prices and booking options.</p>
                     </div>
-                    <div class="service-overview-stats" aria-label="Wedding service overview">
+                    <div class="service-heading-actions">
+                        <a class="service-budget-action" href="<?= BASE_URL; ?>services/budget_finder.php">
+                            <span class="service-budget-action-icon"><i class="fa-solid fa-wallet"></i></span>
+                            <span class="service-budget-action-copy">
+                                <strong>Find by Budget</strong>
+                                <small>Plan services within your budget</small>
+                            </span>
+                            <i class="fa-solid fa-arrow-right service-budget-action-arrow"></i>
+                        </a>
+                        <div class="service-overview-stats" aria-label="Wedding service overview">
                         <div class="service-overview-stat">
                             <span class="service-overview-icon"><i class="fa-solid fa-layer-group"></i></span>
                             <span><strong><?= count($services); ?></strong><small>Total Services</small></span>
@@ -1375,6 +1451,7 @@ include 'includes/header.php';
                         <div class="service-overview-stat">
                             <span class="service-overview-icon package-stat-icon"><i class="fa-solid fa-box-open"></i></span>
                             <span><strong><?= $total_service_packages; ?></strong><small>Total Packages</small></span>
+                        </div>
                         </div>
                     </div>
                 </div>
@@ -1417,13 +1494,7 @@ include 'includes/header.php';
                     <?php endforeach; ?>
                 </div>
 
-                <div class="service-roadmap">
-                    <div class="roadmap-icon"><i class="fa-solid fa-circle-info"></i></div>
-                    <div>
-                        <strong>Plan your wedding services</strong>
-                        <p>Explore packages, add your choices to the cart, request a booking, and track your booking status from My Bookings.</p>
-                    </div>
-                </div>
+                
             </div>
         </section>
 
@@ -1444,8 +1515,6 @@ include 'includes/header.php';
         </div>
         <div class="match-details-overview">
             <div><strong id="matchDetailsOverall">—%</strong><span>Overall Match</span></div>
-            <div><strong id="matchDetailsForward">—%</strong><span>You → Them</span></div>
-            <div><strong id="matchDetailsReverse">—%</strong><span>Them → You</span></div>
         </div>
         <div class="match-details-list" id="matchDetailsList"></div>
         <p class="match-details-note">Scores are calculated from the current mutual compatibility rules. Missing information is not treated as a mismatch.</p>

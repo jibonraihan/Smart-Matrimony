@@ -1,6 +1,6 @@
 <?php
-// Dashboard is the read-only Admin overview. Detailed account and operational
-// actions live in their dedicated Admin modules.
+// Dashboard is the Admin overview and central platform control surface.
+// Detailed account and operational actions live in their dedicated modules.
 require_once __DIR__ . '/admin_guard.php';
 
 function scalar($conn, $sql){
@@ -11,6 +11,50 @@ function scalar($conn, $sql){
 
 $message = '';
 $error = '';
+
+$maintenance_state = smart_get_maintenance_state();
+$maintenance_mode = $maintenance_state['enabled'];
+$maintenance_expires_at = $maintenance_state['expires_at'];
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+  $action = (string) ($_POST['action'] ?? '');
+
+  if (!hash_equals($csrf, (string) ($_POST['csrf'] ?? ''))) {
+    $error = 'Security check failed. Please refresh the page and try again.';
+  } elseif ($action === 'set_maintenance_mode') {
+    $requested_state = ($_POST['maintenance_state'] ?? '') === 'on';
+
+    if ($requested_state) {
+      $duration_value = filter_input(INPUT_POST, 'maintenance_duration', FILTER_VALIDATE_INT);
+      $duration_unit = (string) ($_POST['maintenance_duration_unit'] ?? 'minutes');
+      $duration_value = is_int($duration_value) ? $duration_value : 0;
+      $multiplier = $duration_unit === 'hours' ? 3600 : 60;
+      $duration_seconds = $duration_value * $multiplier;
+
+      if ($duration_value < 1 || $duration_seconds > 7 * 24 * 3600) {
+        $error = 'Please set a maintenance duration between 1 minute and 7 days.';
+      } else {
+        $maintenance_expires_at = time() + $duration_seconds;
+        if (smart_set_maintenance_mode(true, $maintenance_expires_at)) {
+          $maintenance_mode = true;
+          $maintenance_state = ['enabled' => true, 'expires_at' => $maintenance_expires_at];
+          $message = 'Maintenance mode is now ON. The site will return automatically when the timer ends.';
+        } else {
+          $error = 'The maintenance mode setting could not be saved. Please check the server folder permissions.';
+        }
+      }
+    } else {
+      if (smart_set_maintenance_mode(false, null)) {
+        $maintenance_mode = false;
+        $maintenance_expires_at = null;
+        $maintenance_state = ['enabled' => false, 'expires_at' => null];
+        $message = 'Maintenance mode is now OFF. The site is live again for users.';
+      } else {
+        $error = 'The maintenance mode setting could not be saved. Please check the server folder permissions.';
+      }
+    }
+  }
+}
 
 /*
  * Staff presentation data is intentionally kept separate from user_profiles.
@@ -204,7 +248,7 @@ $admin_header_subtitle = 'System overview and administrative modules.';
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Admin Control Center | Smart Matrimony</title>
-  <link rel="stylesheet" href="../assets/css/admin.css?v=20260923.4">
+  <link rel="stylesheet" href="../assets/css/admin.css?v=20261003.1">
 </head>
 <body>
 <?php require __DIR__ . '/admin_header.php';
@@ -248,6 +292,48 @@ $admin_header_subtitle = 'System overview and administrative modules.';
       </span>
       <span class="admin-support-quick-arrow" aria-hidden="true">→</span>
     </a>
+  </section>
+
+  <section class="maintenance-control panel" aria-labelledby="maintenance-control-title">
+    <div class="maintenance-control-copy">
+      <span class="eyebrow">SITE AVAILABILITY</span>
+      <h2 id="maintenance-control-title">Maintenance Mode</h2>
+      <p>Temporarily lock regular user access while you update the site. Staff sessions remain available during the maintenance window.</p>
+      <div class="maintenance-status <?= $maintenance_mode ? 'is-on' : 'is-off' ?>">
+        <span class="maintenance-status-dot" aria-hidden="true"></span>
+        <?= $maintenance_mode ? 'Maintenance mode is ON' : 'Site is live' ?>
+        <?php if ($maintenance_mode && $maintenance_expires_at !== null): ?>
+          <span class="maintenance-status-time" data-maintenance-admin-countdown="<?= (int) $maintenance_expires_at ?>">· <?= htmlspecialchars(gmdate('H:i:s', max(0, $maintenance_expires_at - time()))) ?> remaining</span>
+        <?php endif; ?>
+      </div>
+    </div>
+    <form method="post" class="maintenance-control-action">
+      <input type="hidden" name="csrf" value="<?=htmlspecialchars($csrf)?>">
+      <input type="hidden" name="action" value="set_maintenance_mode">
+      <?php if ($maintenance_mode): ?>
+        <input type="hidden" name="maintenance_state" value="off">
+        <button type="submit" class="maintenance-toggle maintenance-toggle-off">
+          <span>↗</span> Turn Site Back On
+        </button>
+        <small>Timer ends automatically when the countdown reaches zero.</small>
+      <?php else: ?>
+        <div class="maintenance-duration">
+          <label for="maintenance_duration">Maintenance for</label>
+          <div class="maintenance-duration-fields">
+            <input id="maintenance_duration" name="maintenance_duration" type="number" min="1" max="10080" value="30" inputmode="numeric" required>
+            <select name="maintenance_duration_unit" aria-label="Maintenance duration unit">
+              <option value="minutes">Minutes</option>
+              <option value="hours">Hours</option>
+            </select>
+          </div>
+        </div>
+        <input type="hidden" name="maintenance_state" value="on">
+        <button type="submit" class="maintenance-toggle maintenance-toggle-on">
+          <span>⚙</span> Enable Maintenance
+        </button>
+        <small>Set 1 minute to 7 days. The site turns back on automatically.</small>
+      <?php endif; ?>
+    </form>
   </section>
 
   <section class="admin-modules" aria-labelledby="admin-modules-title">
@@ -377,6 +463,22 @@ $admin_header_subtitle = 'System overview and administrative modules.';
     });
   }
 })();
+</script>
+
+<script>
+document.querySelectorAll('[data-maintenance-admin-countdown]').forEach(function (el) {
+  var end = Number(el.getAttribute('data-maintenance-admin-countdown')) * 1000;
+  var tick = function () {
+    var seconds = Math.max(0, Math.floor((end - Date.now()) / 1000));
+    var h = String(Math.floor(seconds / 3600)).padStart(2, '0');
+    var m = String(Math.floor((seconds % 3600) / 60)).padStart(2, '0');
+    var s = String(seconds % 60).padStart(2, '0');
+    el.textContent = '· ' + h + ':' + m + ':' + s + ' remaining';
+    if (seconds <= 0) window.location.reload();
+  };
+  tick();
+  setInterval(tick, 1000);
+});
 </script>
 </body>
 </html>

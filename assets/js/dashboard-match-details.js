@@ -6,9 +6,9 @@
     if (!modal || !list) return;
 
     const overall = document.getElementById('matchDetailsOverall');
+    const title = document.getElementById('matchDetailsTitle');
     const forward = document.getElementById('matchDetailsForward');
     const reverse = document.getElementById('matchDetailsReverse');
-    const title = document.getElementById('matchDetailsTitle');
 
     function fmt(value) {
         if (value === null || value === undefined || value === '') return '—';
@@ -22,23 +22,29 @@
         return 'is-partial';
     }
 
+    function safe(value) {
+        const div = document.createElement('div');
+        div.textContent = value === null || value === undefined || value === '' ? '—' : String(value);
+        return div.innerHTML;
+    }
+
     function openModal(data, name) {
         if (!data) return;
         overall.textContent = fmt(data.score);
-        forward.textContent = fmt(data.forward_score);
-        reverse.textContent = fmt(data.reverse_score);
+        if (forward) forward.textContent = fmt(data.score);
+        if (reverse) reverse.textContent = '—%';
         title.textContent = name ? name + ' — Match Details' : 'Match Details';
         list.innerHTML = '';
 
-        Object.values(data.categories || {}).forEach(function (item) {
+        Object.values(data.details || {}).forEach(function (item) {
             const row = document.createElement('div');
             row.className = 'match-detail-row';
-            const final = item.score;
+            const contribution = Number(item.contribution || 0);
             row.innerHTML =
-                '<div class="match-detail-name"><i class="fa-solid ' + String(item.icon || 'fa-circle').replace(/[^a-z0-9-]/gi, '') + '"></i><span>' + escapeHtml(item.label || '') + '</span></div>' +
-                '<div class="match-detail-score"><strong>' + fmt(item.forward) + '</strong>You → Them</div>' +
-                '<div class="match-detail-score"><strong>' + fmt(item.reverse) + '</strong>Them → You</div>' +
-                '<div class="match-detail-final ' + statusClass(final) + '">' + fmt(final) + '</div>';
+                '<div class="match-detail-name"><i class="fa-solid ' + String(item.icon || 'fa-circle').replace(/[^a-z0-9-]/gi, '') + '"></i><span>' + safe(item.label || '') + '</span></div>' +
+                '<div class="match-detail-value"><span class="match-detail-label">You want</span><strong>' + safe(item.want || 'No preference') + '</strong></div>' +
+                '<div class="match-detail-value"><span class="match-detail-label">They have</span><strong>' + safe(item.have || 'Not provided') + '</strong></div>' +
+                '<div class="match-detail-contribution ' + statusClass(item.score) + '"><strong>' + Math.round(contribution) + '%</strong><span>Contribution</span></div>';
             list.appendChild(row);
         });
 
@@ -51,12 +57,6 @@
         modal.classList.remove('is-open');
         modal.setAttribute('aria-hidden', 'true');
         document.body.classList.remove('match-details-open');
-    }
-
-    function escapeHtml(value) {
-        const div = document.createElement('div');
-        div.textContent = value;
-        return div.innerHTML;
     }
 
     document.querySelectorAll('.profile-match-details-button').forEach(function (button) {

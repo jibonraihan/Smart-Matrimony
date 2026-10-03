@@ -14,6 +14,61 @@ if (empty($_SESSION['budget_finder_csrf'])) {
 }
 $csrf = $_SESSION['budget_finder_csrf'];
 $user_logged_in = isset($_SESSION['user_id']);
+
+/* Add all recommended packages directly from Budget Finder without changing cart.php. */
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'add_many_budget') {
+    if (!$user_logged_in) {
+        header('Location: ../login.php');
+        exit;
+    }
+
+    if (!hash_equals($csrf, $_POST['csrf'] ?? '')) {
+        http_response_code(403);
+        exit('Invalid request token.');
+    }
+
+    $provider_ids = array_values(array_unique(array_filter(
+        array_map('intval', (array)($_POST['provider_ids'] ?? [])),
+        static function ($id) { return $id > 0; }
+    )));
+
+    if (!$provider_ids) {
+        header('Location: budget_finder.php');
+        exit;
+    }
+
+    $user_id = (int)$_SESSION['user_id'];
+    $stmt = mysqli_prepare($conn, "INSERT INTO service_cart_items (user_id, provider_id, quantity)
+        SELECT ?, provider_id, 1
+        FROM service_providers
+        WHERE provider_id = ? AND status = 'Active'
+        ON DUPLICATE KEY UPDATE quantity = quantity + 1");
+
+    if (!$stmt) {
+        http_response_code(500);
+        exit('Unable to add packages to cart.');
+    }
+
+    mysqli_begin_transaction($conn);
+    try {
+        foreach ($provider_ids as $provider_id) {
+            mysqli_stmt_bind_param($stmt, 'ii', $user_id, $provider_id);
+            if (!mysqli_stmt_execute($stmt)) {
+                throw new RuntimeException('Unable to add selected packages to cart.');
+            }
+        }
+        mysqli_stmt_close($stmt);
+        mysqli_commit($conn);
+        header('Location: ../cart.php');
+        exit;
+    } catch (Throwable $e) {
+        mysqli_stmt_close($stmt);
+        mysqli_rollback($conn);
+        http_response_code(500);
+        exit('Unable to add packages to cart.');
+    }
+}
+
 $search_error = '';
 $search_info = '';
 $selected_service_ids = [];
@@ -166,6 +221,8 @@ function budget_finder_cheapest_combination(array $groups): array {
     return ['packages' => $chosen, 'total' => $total, 'mode' => 'closest_available'];
 }
 
+$search_completed = false;
+
 /* Search / recommendation request. */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'find_packages') {
     if (!hash_equals($csrf, $_POST['csrf'] ?? '')) {
@@ -232,6 +289,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'find_
                         'within_tolerance' => 'No combination fit the budget exactly, so the closest fit within the allowed 10% flexibility is shown.',
                         default => 'The selected services cannot fit within your 10% flexibility window. The closest available combination is shown.',
                     };
+                    $search_completed = true;
                 }
             }
         }
@@ -280,15 +338,29 @@ include '../includes/navbar.php';
 <main class="budget-finder-page">
     <section class="budget-finder-hero">
         <div class="budget-container">
-            <div class="budget-hero-copy">
-                <a class="budget-back-home" href="<?= BASE_URL; ?>"><i class="fa-solid fa-arrow-left"></i> Back to Home</a>
-                <span class="budget-kicker"><i class="fa-solid fa-wand-magic-sparkles"></i> Smart Budget Finder</span>
-                <h1>Plan Your Wedding <span>Within Your Budget.</span></h1>
-                <p>Pick the services you need and set your budget. We'll find a practical package combination for you.</p>
-                <div class="budget-hero-points">
-                    <span><i class="fa-solid fa-check"></i> One package per service</span>
-                    <span><i class="fa-solid fa-percent"></i> Discounted prices</span>
-                    <span><i class="fa-solid fa-sliders"></i> Up to 10% flexibility</span>
+            <div class="budget-hero-layout">
+                <div class="budget-hero-copy">
+                    <div class="budget-hero-nav">
+                        <a class="budget-back-home" href="#" onclick="if (window.history.length > 1) { window.history.back(); } else { window.location.href = '<?= BASE_URL; ?>'; } return false;"><i class="fa-solid fa-arrow-left"></i> Back</a>
+                    </div>
+                    <span class="budget-hero-badge"><i class="fa-solid fa-wallet"></i> Wedding Budget Finder</span>
+                    <h1>Plan Your Wedding <span>Within Your Budget.</span></h1>
+                    <p>Choose your wedding services, set your budget, and get a smart package combination.</p>
+                </div>
+
+                <div class="budget-hero-visual" aria-hidden="true">
+                    <div class="budget-visual-glow"></div>
+                    <div class="budget-visual-card">
+                        <div class="budget-visual-icon"><i class="fa-solid fa-wallet"></i></div>
+                        <div class="budget-visual-flow">
+                            <span><i class="fa-solid fa-list-check"></i></span>
+                            <b>+</b>
+                            <span><i class="fa-solid fa-bangladeshi-taka-sign"></i></span>
+                            <b>→</b>
+                            <span class="is-result"><i class="fa-solid fa-wand-magic-sparkles"></i></span>
+                        </div>
+                        <strong>Smart Wedding Plan</strong>
+                    </div>
                 </div>
             </div>
         </div>
@@ -307,51 +379,64 @@ include '../includes/navbar.php';
             <input type="hidden" name="csrf" value="<?= htmlspecialchars($csrf); ?>">
             <input type="hidden" name="action" value="find_packages">
 
-            <div class="budget-search-heading">
-                <div>
-                    <span class="budget-kicker">STEP 1</span>
-                    <h2>Choose the services you need</h2>
-                    <p>Select as many categories as you want. The finder will choose exactly one active package from each selected service.</p>
+            <section class="budget-step-card budget-step-budget">
+                <div class="budget-search-heading">
+                    <div>
+                        <span class="budget-kicker">STEP 1</span>
+                        <h2>Set your total wedding budget</h2>
+                        <p>Enter the amount you want to spend on your selected wedding services.</p>
+                    </div>
                 </div>
-                <div class="budget-selection-actions">
-                    <button type="button" id="selectAllServices"><i class="fa-solid fa-check-double"></i> Select All</button>
-                    <button type="button" id="clearAllServices"><i class="fa-solid fa-eraser"></i> Clear</button>
-                </div>
-            </div>
 
-            <div class="budget-service-grid" id="budgetServiceGrid">
-                <?php foreach ($all_services as $service): ?>
-                    <?php $checked = in_array((int)$service['service_id'], $selected_service_ids, true); ?>
-                    <label class="budget-service-option<?= $checked ? ' is-checked' : ''; ?>">
-                        <input type="checkbox" name="service_ids[]" value="<?= (int)$service['service_id']; ?>"<?= $checked ? ' checked' : ''; ?>>
-                        <span class="budget-service-check"><i class="fa-solid fa-check"></i></span>
-                        <span class="budget-service-copy">
-                            <strong><?= htmlspecialchars($service['service_name']); ?></strong>
-                            <small><?= htmlspecialchars($service['description'] ?? 'Wedding service'); ?></small>
-                            <?php if ((int)$service['package_count'] > 0): ?>
-                                <em class="budget-package-count"><i class="fa-solid fa-box-open"></i> <?= (int)$service['package_count']; ?> package<?= (int)$service['package_count'] === 1 ? '' : 's'; ?> available</em>
-                            <?php else: ?>
-                                <em class="budget-package-count is-empty"><i class="fa-solid fa-circle-exclamation"></i> No package available</em>
-                            <?php endif; ?>
-                        </span>
-                    </label>
-                <?php endforeach; ?>
-            </div>
+                <div class="budget-input-row">
+                    <div class="budget-input-block">
+                        <label for="budgetAmount">Your total budget</label>
+                        <div class="budget-input-wrap"><span>৳</span><input id="budgetAmount" name="budget" type="number" min="1" max="10000000" step="1" value="<?= $budget > 0 ? htmlspecialchars((string)$budget) : ''; ?>" placeholder="200000" required></div>
+                    </div>
+                    <div class="budget-flexibility-block">
+                        <span class="budget-kicker">SMART FLEXIBILITY</span>
+                        <strong>Up to 10% over budget</strong>
+                        <p>If needed, the finder can consider combinations up to 10% above your budget.</p>
+                    </div>
+                </div>
+            </section>
 
-            <div class="budget-input-row">
-                <div class="budget-input-block">
-                    <span class="budget-kicker">STEP 2</span>
-                    <label for="budgetAmount">Your total budget</label>
-                    <div class="budget-input-wrap"><span>৳</span><input id="budgetAmount" name="budget" type="number" min="1" max="10000000" step="1" value="<?= $budget > 0 ? htmlspecialchars((string)$budget) : ''; ?>" placeholder="200000" required></div>
-                    <small>We'll first try to keep the total at or below this amount.</small>
+            <section class="budget-step-card budget-step-services">
+                <div class="budget-search-heading">
+                    <div>
+                        <span class="budget-kicker">STEP 2</span>
+                        <h2>Choose the services you need</h2>
+                        <p>Select the wedding services you want to include in your plan.</p>
+                    </div>
+                    <div class="budget-selection-actions">
+                        <button type="button" id="selectAllServices"><i class="fa-solid fa-check-double"></i> Select All</button>
+                        <button type="button" id="clearAllServices"><i class="fa-solid fa-eraser"></i> Clear</button>
+                    </div>
                 </div>
-                <div class="budget-flexibility-block">
-                    <span class="budget-kicker">SMART FLEXIBILITY</span>
-                    <strong>Up to 10% over budget</strong>
-                    <p>For example, a ৳2,00,000 budget can consider combinations up to ৳2,20,000 when no exact in-budget combination is available.</p>
+
+                <div class="budget-service-grid" id="budgetServiceGrid">
+                    <?php foreach ($all_services as $service): ?>
+                        <?php $checked = in_array((int)$service['service_id'], $selected_service_ids, true); ?>
+                        <label class="budget-service-option<?= $checked ? ' is-checked' : ''; ?>">
+                            <input type="checkbox" name="service_ids[]" value="<?= (int)$service['service_id']; ?>"<?= $checked ? ' checked' : ''; ?>>
+                            <span class="budget-service-check"><i class="fa-solid fa-check"></i></span>
+                            <span class="budget-service-copy">
+                                <strong><?= htmlspecialchars($service['service_name']); ?></strong>
+                                <small><?= htmlspecialchars($service['description'] ?? 'Wedding service'); ?></small>
+                                <?php if ((int)$service['package_count'] > 0): ?>
+                                    <em class="budget-package-count"><i class="fa-solid fa-box-open"></i> <?= (int)$service['package_count']; ?> package<?= (int)$service['package_count'] === 1 ? '' : 's'; ?> available</em>
+                                <?php else: ?>
+                                    <em class="budget-package-count is-empty"><i class="fa-solid fa-circle-exclamation"></i> No package available</em>
+                                <?php endif; ?>
+                            </span>
+                        </label>
+                    <?php endforeach; ?>
                 </div>
-                <button class="budget-find-btn" type="submit"><i class="fa-solid fa-wand-magic-sparkles"></i> Find My Packages</button>
-            </div>
+
+                <div class="budget-step-submit">
+                    <button class="budget-find-btn" type="submit"><i class="fa-solid fa-wand-magic-sparkles"></i> Find My Packages</button>
+                </div>
+            </section>
         </form>
 
         <?php if ($recommendation && !$search_error): ?>
@@ -422,8 +507,8 @@ include '../includes/navbar.php';
                 <div class="budget-result-footer">
                     <div class="budget-total-block"><small>Current selection</small><strong id="budgetLiveTotal"><?= budget_finder_money($recommendation_total); ?></strong><span id="budgetLiveStatus" class="<?= $difference >= 0 ? 'within' : 'over'; ?>"><?= $difference >= 0 ? 'Within your budget' : 'Above budget — still within the allowed flexibility'; ?></span></div>
                     <?php if ($user_logged_in): ?>
-                        <form method="post" action="<?= BASE_URL; ?>cart.php" id="budgetAddAllForm">
-                            <input type="hidden" name="csrf" value="<?= htmlspecialchars($_SESSION['cart_csrf'] ?? ''); ?>">
+                        <form method="post" action="budget_finder.php" id="budgetAddAllForm">
+                            <input type="hidden" name="csrf" value="<?= htmlspecialchars($csrf); ?>">
                             <input type="hidden" name="action" value="add_many_budget">
                             <div id="budgetSelectedProviders"></div>
                             <button type="submit" class="budget-add-all-btn"><i class="fa-solid fa-cart-plus"></i> Add All to Cart</button>
@@ -443,7 +528,7 @@ window.SMART_BUDGET_FINDER = <?= json_encode([
     'loggedIn' => $user_logged_in,
     'budget' => $budget,
     'tolerance' => BUDGET_FINDER_TOLERANCE,
-    'csrf' => $_SESSION['cart_csrf'] ?? '',
+    'csrf' => $csrf,
     'selectedServiceIds' => $selected_service_ids,
     'recommendationTotal' => $recommendation['total'] ?? 0,
     'packagesByService' => $budget_ui_packages,
@@ -451,5 +536,17 @@ window.SMART_BUDGET_FINDER = <?= json_encode([
 ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
 </script>
 <script src="<?= BASE_URL; ?>assets/js/budget-finder.js?v=2"></script>
+<?php if ($search_completed): ?>
+<script>
+window.addEventListener('load', function () {
+    var results = document.getElementById('budgetResults');
+    if (results) {
+        setTimeout(function () {
+            results.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 60);
+    }
+});
+</script>
+<?php endif; ?>
 
 <?php include '../includes/footer.php'; ?>

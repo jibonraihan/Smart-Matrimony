@@ -39,3 +39,46 @@
 .notification-select-box input{margin:0}
 .notification-card-content{grid-column:3;min-width:0;width:100%}
 @media(max-width:520px){.notification-card{grid-template-columns:22px 40px minmax(0,1fr)}.notification-card-content{grid-column:3}}
+
+.notifications-disabled-notice {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 22px;
+    margin-top: 18px;
+    border: 1px solid rgba(15, 118, 110, .16);
+    border-radius: 18px;
+    background: linear-gradient(135deg, #f0fdfa, #ffffff);
+    color: #46635f;
+}
+
+.notifications-disabled-icon {
+    width: 46px;
+    height: 46px;
+    flex: 0 0 46px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 14px;
+    background: #ffffff;
+    color: #0f766e;
+    box-shadow: 0 8px 20px rgba(15, 118, 110, .10);
+}
+
+.notifications-disabled-notice strong {
+    display: block;
+    color: #244b46;
+    font-size: 16px;
+}
+
+.notifications-disabled-notice p {
+    margin: 5px 0 0;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+@media (max-width: 640px) {
+    .notifications-disabled-notice {
+        padding: 17px;
+    }
+}

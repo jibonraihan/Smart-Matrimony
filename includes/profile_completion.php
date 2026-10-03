@@ -108,10 +108,12 @@ function sm_get_profile_completion(mysqli $conn, int $user_id): array
     }
 
     /*
-     * Step 5: the central profile/media identity is the saved profile photo.
-     * Voice/video remain optional, exactly as the Step 5 UI describes them.
+     * Step 5: profile photo + both required accessibility checks.
+     * Voice/video introductions remain optional.
      */
-    $steps[5] = sm_is_filled($profile['photo'] ?? null);
+    $steps[5] = sm_is_filled($profile['photo'] ?? null)
+        && !empty($profile['hearing_check_passed'])
+        && !empty($profile['vision_check_passed']);
 
     /* Step 6: required partner-preference fields + all applicable own questions. */
     $prefStmt = mysqli_prepare($conn, '

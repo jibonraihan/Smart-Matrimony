@@ -18,7 +18,7 @@ $user_id = (int) $_SESSION['user_id'];
 $error = '';
 
 $stmt = mysqli_prepare($conn, '
-    SELECT photo, photo_visibility, profile_visibility
+    SELECT photo, photo_visibility, profile_visibility, hearing_check_passed, vision_check_passed
     FROM user_profiles
     WHERE user_id=?
     LIMIT 1
@@ -28,6 +28,17 @@ mysqli_stmt_execute($stmt);
 $result = mysqli_stmt_get_result($stmt);
 $user = mysqli_fetch_assoc($result) ?: [];
 mysqli_stmt_close($stmt);
+
+$hearing_check_passed = !empty($user['hearing_check_passed']);
+$vision_check_passed = !empty($user['vision_check_passed']);
+
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+if (empty($_SESSION['step5_hearing_code'])) {
+    $_SESSION['step5_hearing_code'] = (string) random_int(1, 9) . (string) random_int(1, 9) . (string) random_int(1, 9) . (string) random_int(1, 9);
+}
+$step5_hearing_code = (string) $_SESSION['step5_hearing_code'];
 
 $profile_media_id = 0;
 if (!empty($user['photo'])) {
@@ -187,14 +198,19 @@ if (isset($_POST['save_step5'])) {
     $profile_visibility_post = clean_input($_POST['profile_visibility'] ?? 'Public');
     $voice_visibility = clean_input($_POST['voice_visibility'] ?? 'Verified Users');
     $voice_visibility_db = ($voice_visibility === 'Hidden') ? 'Private' : $voice_visibility;
+    $video_visibility = clean_input($_POST['video_visibility'] ?? 'Verified Users');
+    $video_visibility_db = ($video_visibility === 'Hidden') ? 'Private' : $video_visibility;
 
     if (!in_array($profile_visibility_post, ['Public', 'Hidden'], true)) {
         $error = 'Please select a valid profile visibility option.';
     } elseif (!in_array($photo_visibility, $visibility_options, true)) {
         $error = 'Please select a valid photo visibility option.';
-
     } elseif (!in_array($voice_visibility_db, ['Everyone', 'Verified Users', 'Matched Users', 'Private'], true)) {
         $error = 'Please select a valid voice visibility option.';
+    } elseif (!in_array($video_visibility_db, ['Everyone', 'Verified Users', 'Matched Users', 'Private'], true)) {
+        $error = 'Please select a valid video visibility option.';
+    } elseif (!$hearing_check_passed || !$vision_check_passed) {
+        $error = 'Please complete both the Hearing Check and Visual Check before continuing.';
     }
 
     $photo_name = trim((string) ($user['photo'] ?? ''));
@@ -290,6 +306,22 @@ if (isset($_POST['save_step5'])) {
     }
 
     if ($error === '') {
+        /* Keep the existing video introduction's visibility in sync even when no new recording is uploaded. */
+        $video_visibility_stmt = mysqli_prepare($conn, '
+            UPDATE profile_media
+            SET visibility=?
+            WHERE user_id=?
+              AND media_type="Video Introduction"
+              AND status="Active"
+        ');
+        if ($video_visibility_stmt) {
+            mysqli_stmt_bind_param($video_visibility_stmt, 'si', $video_visibility_db, $user_id);
+            mysqli_stmt_execute($video_visibility_stmt);
+            mysqli_stmt_close($video_visibility_stmt);
+        }
+    }
+
+    if ($error === '') {
         header('Location: step6.php');
         exit;
     }
@@ -313,7 +345,7 @@ $steps = [
     2 => ['title' => 'Family', 'icon' => 'bi-people', 'url' => 'step2.php'],
     3 => ['title' => 'Lifestyle', 'icon' => 'bi-heart', 'url' => 'step3.php'],
     4 => ['title' => 'Location', 'icon' => 'bi-geo-alt', 'url' => 'step4.php'],
-    5 => ['title' => 'Privacy', 'icon' => 'bi-shield-lock', 'url' => 'step5.php'],
+    5 => ['title' => 'Photo & Checks', 'icon' => 'bi-shield-lock', 'url' => 'step5.php'],
     6 => ['title' => 'PP & QnA', 'icon' => 'bi-patch-question', 'url' => 'step6.php']
 ];
 $completion = sm_get_profile_completion($conn, $user_id);
@@ -331,7 +363,6 @@ $preview = ($hasPhoto && $profile_media_id > 0) ? 'media.php?id=' . $profile_med
                         <div>
                             <span class="step5-kicker">PROFILE BUILDER</span>
                             <h1>Step <?= $currentStep ?></h1>
-                            <p>Profile Photo &amp; Privacy</p>
                         </div>
                         <a class="step5-logo" href="../dashboard.php" aria-label="Back to dashboard">
                             <img src="<?= BASE_URL ?>assets/images/logo/logo.png" alt="Smart Matrimony">
@@ -376,7 +407,6 @@ $preview = ($hasPhoto && $profile_media_id > 0) ? 'media.php?id=' . $profile_med
                             <span class="section-icon"><i class="bi bi-image"></i></span>
                             <div>
                                 <h2>Profile Photo</h2>
-                                <p>Add a clear photo so people can recognize your profile.</p>
                             </div>
                         </div>
 
@@ -424,17 +454,89 @@ $preview = ($hasPhoto && $profile_media_id > 0) ? 'media.php?id=' . $profile_med
                         </div>
                     </section>
 
-                    <section class="step5-section">
+                    <section class="step5-section accessibility-checks-section" id="accessibilityChecksSection">
                         <div class="section-heading">
-                            <span class="section-icon"><i class="bi bi-shield-lock"></i></span>
+                            <span class="section-icon"><i class="bi bi-universal-access"></i></span>
                             <div>
-                                <h2>Photo Privacy &amp; Profile Visibility</h2>
-                                <p>Control who can access your profile photo and discover your profile.</p>
+                                <h2>Accessibility Checks</h2>
                             </div>
                         </div>
 
-                        <div class="row g-3">
-                            <div class="col-md-7">
+                        <div class="accessibility-check-grid">
+                            <article class="accessibility-check-card <?= $hearing_check_passed ? 'is-passed' : '' ?>" id="hearingCheckCard">
+                                <div class="accessibility-check-head">
+                                    <div class="accessibility-check-icon"><i class="bi bi-volume-up-fill"></i></div>
+                                    <div>
+                                        <h3>Hearing Check <span class="required-badge">Required</span></h3>
+                                    </div>
+                                </div>
+                                <div class="hearing-check-body">
+                                    <button type="button" class="btn btn-outline-success accessibility-play-btn" id="playHearingCheck">
+                                        <i class="bi bi-play-fill"></i> Play Audio
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary d-none" id="replayHearingCheck">
+                                        <i class="bi bi-arrow-repeat"></i> Play Again
+                                    </button>
+                                    <div class="accessibility-code-hint" id="hearingCheckPrompt" data-code="<?= htmlspecialchars($step5_hearing_code) ?>">Listen carefully to the spoken four-digit code.</div>
+                                    <div class="accessibility-answer-row">
+                                        <label for="hearingCheckAnswer">Your answer</label>
+                                        <div class="accessibility-answer-controls">
+                                            <input type="text" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" id="hearingCheckAnswer" class="form-control" autocomplete="off" placeholder="4 digits">
+                                            <button type="button" class="btn btn-success" id="verifyHearingCheck">Verify</button>
+                                        </div>
+                                    </div>
+                                    <div class="accessibility-check-status <?= $hearing_check_passed ? 'is-success' : '' ?>" id="hearingCheckStatus" role="status">
+                                        <?= $hearing_check_passed ? '✓ Hearing check passed.' : 'Not completed yet.' ?>
+                                    </div>
+                                </div>
+                            </article>
+
+                            <article class="accessibility-check-card <?= $vision_check_passed ? 'is-passed' : '' ?>" id="visionCheckCard">
+                                <div class="accessibility-check-head">
+                                    <div class="accessibility-check-icon"><i class="bi bi-eye-fill"></i></div>
+                                    <div>
+                                        <h3>Visual Check <span class="required-badge">Required</span></h3>
+                                    </div>
+                                </div>
+                                <div class="visual-captcha-wrap">
+                                    <img src="accessibility_captcha.php?<?= time() ?>" id="visualCaptchaImage" class="visual-captcha-image" alt="Visual verification code">
+                                    <button type="button" class="btn btn-outline-secondary accessibility-refresh-btn" id="refreshVisualCaptcha" aria-label="Refresh visual verification code">
+                                        <i class="bi bi-arrow-clockwise"></i>
+                                    </button>
+                                </div>
+                                <div class="accessibility-answer-row">
+                                    <label for="visionCheckAnswer">Your answer</label>
+                                    <div class="accessibility-answer-controls">
+                                        <input type="text" maxlength="5" id="visionCheckAnswer" class="form-control" autocomplete="off" placeholder="Enter the code">
+                                        <button type="button" class="btn btn-success" id="verifyVisionCheck">Verify</button>
+                                    </div>
+                                </div>
+                                <div class="accessibility-check-status <?= $vision_check_passed ? 'is-success' : '' ?>" id="visionCheckStatus" role="status">
+                                    <?= $vision_check_passed ? '✓ Visual check passed.' : 'Not completed yet.' ?>
+                                </div>
+                            </article>
+                        </div>
+                        <div class="accessibility-required-note"><i class="bi bi-info-circle"></i> Both checks are required before Step 5 can be completed.</div>
+                    </section>
+
+                    <section class="step5-section step5-visibility-section">
+                        <div class="section-heading">
+                            <span class="section-icon"><i class="bi bi-shield-lock"></i></span>
+                            <div>
+                                <h2>Privacy &amp; Visibility</h2>
+                            </div>
+                        </div>
+
+                        <div class="step5-visibility-grid">
+                            <div class="step5-visibility-field">
+                                <label class="form-label" for="profileVisibility">Profile Visibility</label>
+                                <select name="profile_visibility" id="profileVisibility" class="form-select">
+                                    <option value="Public" <?= $profile_visibility === 'Public' ? 'selected' : '' ?>>Public</option>
+                                    <option value="Hidden" <?= $profile_visibility === 'Hidden' ? 'selected' : '' ?>>Hidden</option>
+                                </select>
+                            </div>
+
+                            <div class="step5-visibility-field">
                                 <label class="form-label" for="photoVisibility">Photo Visibility</label>
                                 <select name="photo_visibility" id="photoVisibility" class="form-select">
                                     <?php foreach ($visibility_options as $option): ?>
@@ -443,67 +545,10 @@ $preview = ($hasPhoto && $profile_media_id > 0) ? 'media.php?id=' . $profile_med
                                         </option>
                                     <?php endforeach; ?>
                                 </select>
-                                <div class="visibility-help" id="visibilityHelp">Only people allowed by this setting can access the protected media resource.</div>
-                            </div>
-                        </div>
-
-                        <div class="row g-3 mt-1">
-                            <div class="col-md-7">
-                                <label class="form-label" for="profileVisibility">Profile Visibility</label>
-                                <select name="profile_visibility" id="profileVisibility" class="form-select">
-                                    <option value="Public" <?= $profile_visibility === 'Public' ? 'selected' : '' ?>>Public</option>
-                                    <option value="Hidden" <?= $profile_visibility === 'Hidden' ? 'selected' : '' ?>>Hidden</option>
-                                </select>
-                                <div class="visibility-help" id="profileVisibilityHelp">Your profile can appear in eligible searches and recommendations.</div>
-                            </div>
-                        </div>
-                    </section>
-
-                    <section class="step5-section voice-section" id="voiceIntroductionSection">
-                        <div class="section-heading">
-                            <span class="section-icon"><i class="bi bi-mic"></i></span>
-                            <div>
-                                <h2>Voice Introduction</h2>
-                                <p>Record a short introduction so others can hear your voice.</p>
-                            </div>
-                        </div>
-
-                        <div class="voice-card" id="voiceCard" data-existing-media-id="<?= $voice_media_id ?>">
-                            <div class="voice-visual">
-                                <div class="voice-mic-circle" id="voiceMicCircle"><i class="bi bi-mic-fill"></i></div>
-                                <div class="voice-wave" id="voiceWave" aria-hidden="true">
-                                    <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
-                                </div>
                             </div>
 
-                            <div class="voice-controls">
-                                <div class="voice-time" id="voiceTimer">00:00 / 00:30</div>
-                                <div class="voice-buttons">
-                                    <button type="button" class="btn btn-success" id="startVoice">
-                                        <i class="bi bi-mic-fill me-1"></i>Start Recording
-                                    </button>
-                                    <button type="button" class="btn btn-outline-secondary d-none" id="stopVoice">
-                                        <i class="bi bi-stop-fill me-1"></i>Stop
-                                    </button>
-                                    <button type="button" class="btn btn-outline-success d-none" id="recordAgainVoice">
-                                        <i class="bi bi-arrow-repeat me-1"></i>Record Again
-                                    </button>
-                                    <?php if ($voice_media_id > 0): ?>
-                                        <button type="button" class="btn btn-outline-danger" id="removeVoice">
-                                            <i class="bi bi-trash me-1"></i>Remove
-                                        </button>
-                                    <?php endif; ?>
-                                </div>
-                                <audio id="voicePlayer" class="voice-player <?= $voice_media_id > 0 ? '' : 'd-none' ?>" controls preload="metadata" <?= $voice_media_id > 0 ? 'src="media.php?id=' . $voice_media_id . '"' : '' ?>></audio>
-                                <div class="voice-status" id="voiceStatus">
-                                    <?= $voice_media_id > 0 ? 'Your current voice introduction is ready to play.' : 'Optional — record up to 30 seconds.' ?>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="row g-3 mt-1">
-                            <div class="col-md-7">
-                                <label class="form-label media-visibility-label" for="voiceVisibility">Voice Visibility <span class="media-limit-inline">30 sec max</span></label>
+                            <div class="step5-visibility-field">
+                                <label class="form-label" for="voiceVisibility">Voice Visibility</label>
                                 <select name="voice_visibility" id="voiceVisibility" class="form-select">
                                     <?php foreach ($visibility_options as $option): ?>
                                         <?php $voice_option = ($option === 'Hidden') ? 'Private' : $option; ?>
@@ -512,18 +557,36 @@ $preview = ($hasPhoto && $profile_media_id > 0) ? 'media.php?id=' . $profile_med
                                         </option>
                                     <?php endforeach; ?>
                                 </select>
-                                <div class="visibility-help">Choose who can access your protected voice introduction.</div>
+                            </div>
+
+                            <div class="step5-visibility-field">
+                                <label class="form-label" for="videoVisibility">Video Visibility</label>
+                                <select name="video_visibility" id="videoVisibility" class="form-select">
+                                    <?php foreach ($visibility_options as $option): ?>
+                                        <?php $video_option = ($option === 'Hidden') ? 'Private' : $option; ?>
+                                        <option value="<?= htmlspecialchars($video_option) ?>" <?= ($video_visibility === $video_option) ? 'selected' : '' ?>>
+                                            <?= htmlspecialchars($option) ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
                             </div>
                         </div>
-                        <div id="voiceError" class="alert alert-danger py-2 px-3 d-none mt-3 mb-0" role="alert"></div>
                     </section>
 
-                    <section class="step5-section video-section" id="videoIntroductionSection">
+                    <section class="step5-section step5-media-section">
+                        <div class="section-heading">
+                            <span class="section-icon"><i class="bi bi-soundwave"></i></span>
+                            <div>
+                                <h2>Voice &amp; Video Introductions</h2>
+                            </div>
+                        </div>
+
+                        <div class="step5-media-grid">
+<div class="step5-media-panel" id="videoIntroductionSection">
                         <div class="section-heading">
                             <span class="section-icon"><i class="bi bi-camera-video"></i></span>
                             <div>
                                 <h2>Video Introduction</h2>
-                                <p>Record a short video introduction so others can see and hear you.</p>
                             </div>
                         </div>
 
@@ -555,35 +618,65 @@ $preview = ($hasPhoto && $profile_media_id > 0) ? 'media.php?id=' . $profile_med
                                         </button>
                                     <?php endif; ?>
                                 </div>
+                                <div class="video-error alert alert-danger d-none" id="videoError" role="alert"></div>
                                 <div class="video-status" id="videoStatus">
                                     <?= $video_media_id > 0 ? 'Your current video introduction is ready to play.' : 'Optional — record up to 30 seconds.' ?>
                                 </div>
                             </div>
                         </div>
+</div>
 
-                        <div class="row g-3 mt-1">
-                            <div class="col-md-7">
-                                <label class="form-label media-visibility-label" for="videoVisibility">Video Visibility <span class="media-limit-inline">30 sec max</span></label>
-                                <select name="video_visibility" id="videoVisibility" class="form-select">
-                                    <?php foreach ($visibility_options as $option): ?>
-                                        <?php $video_option = ($option === 'Hidden') ? 'Private' : $option; ?>
-                                        <option value="<?= htmlspecialchars($video_option) ?>" <?= ($video_visibility === $video_option) ? 'selected' : '' ?>>
-                                            <?= htmlspecialchars($option) ?>
-                                        </option>
-                                    <?php endforeach; ?>
-                                </select>
-                                <div class="visibility-help">Choose who can access your protected video introduction.</div>
+<div class="step5-media-panel" id="voiceIntroductionSection">
+                        <div class="section-heading">
+                            <span class="section-icon"><i class="bi bi-mic"></i></span>
+                            <div>
+                                <h2>Voice Introduction</h2>
                             </div>
                         </div>
-                        <div id="videoError" class="alert alert-danger py-2 px-3 d-none mt-3 mb-0" role="alert"></div>
+
+                        <div class="voice-card" id="voiceCard" data-existing-media-id="<?= $voice_media_id ?>">
+                            <div class="voice-visual">
+                                <div class="voice-mic-circle" id="voiceMicCircle"><i class="bi bi-mic-fill"></i></div>
+                                <div class="voice-wave" id="voiceWave" aria-hidden="true">
+                                    <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+                                </div>
+                            </div>
+
+                            <div class="voice-controls">
+                                <div class="voice-time" id="voiceTimer">00:00 / 00:30</div>
+                                <div class="voice-buttons">
+                                    <button type="button" class="btn btn-success" id="startVoice">
+                                        <i class="bi bi-mic-fill me-1"></i>Start Recording
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary d-none" id="stopVoice">
+                                        <i class="bi bi-stop-fill me-1"></i>Stop
+                                    </button>
+                                    <button type="button" class="btn btn-outline-success d-none" id="recordAgainVoice">
+                                        <i class="bi bi-arrow-repeat me-1"></i>Record Again
+                                    </button>
+                                    <?php if ($voice_media_id > 0): ?>
+                                        <button type="button" class="btn btn-outline-danger" id="removeVoice">
+                                            <i class="bi bi-trash me-1"></i>Remove
+                                        </button>
+                                    <?php endif; ?>
+                                </div>
+                                <audio id="voicePlayer" class="voice-player <?= $voice_media_id > 0 ? '' : 'd-none' ?>" controls preload="metadata" <?= $voice_media_id > 0 ? 'src="media.php?id=' . $voice_media_id . '"' : '' ?>></audio>
+                                <div class="voice-error alert alert-danger d-none" id="voiceError" role="alert"></div>
+                                <div class="voice-status" id="voiceStatus">
+                                    <?= $voice_media_id > 0 ? 'Your current voice introduction is ready to play.' : 'Optional — record up to 30 seconds.' ?>
+                                </div>
+                            </div>
+                        </div>
+</div>
+                        </div>
                     </section>
+
 
                     <section class="step5-section privacy-summary-section">
                         <div class="section-heading">
                             <span class="section-icon"><i class="bi bi-eye"></i></span>
                             <div>
                                 <h2>Privacy Summary</h2>
-                                <p>A quick view of who can discover and access your profile media.</p>
                             </div>
                         </div>
 
@@ -620,31 +713,6 @@ $preview = ($hasPhoto && $profile_media_id > 0) ? 'media.php?id=' . $profile_med
 
                     </section>
 
-                    <section class="step5-section privacy-safety-section">
-                        <div class="privacy-safety-panel">
-                            <div class="privacy-safety-heading">
-                                <span class="privacy-safety-icon"><i class="bi bi-shield-check"></i></span>
-                                <div>
-                                    <h2>Privacy &amp; Media Safety</h2>
-                                    <p>Keep your profile information and introductions safe and respectful.</p>
-                                </div>
-                            </div>
-                            <div class="privacy-safety-grid">
-                                <div class="privacy-safety-item">
-                                    <i class="bi bi-lock-fill"></i>
-                                    <div><strong>Protected access</strong><span>Only people who satisfy the selected access rule can request protected media.</span></div>
-                                </div>
-                                <div class="privacy-safety-item">
-                                    <i class="bi bi-shield-lock"></i>
-                                    <div><strong>Secure media</strong><span>Voice and video use the permission-based media system; direct public access is not exposed.</span></div>
-                                </div>
-                                <div class="privacy-safety-item">
-                                    <i class="bi bi-image"></i>
-                                    <div><strong>Photo safety</strong><span>Use your own recent photo and avoid group photos, misleading images, or sensitive personal information.</span></div>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
 
                     <div class="step5-actions">
                         <a href="../profile/view_profile.php" class="btn step5-back">
@@ -763,21 +831,10 @@ $preview = ($hasPhoto && $profile_media_id > 0) ? 'media.php?id=' . $profile_med
     });
 
     const visibility = document.getElementById('photoVisibility');
-    const help = document.getElementById('visibilityHelp');
-    const helpText = {
-        'Everyone': 'Anyone who can access your profile may view the photo.',
-        'Verified Users': 'Only verified users may access the protected photo.',
-        'Matched Users': 'Only users with an eligible match may access the photo.',
-        'Hidden': 'The photo is hidden from other users until you change this setting.'
-    };
-    function updateHelp() { help.textContent = helpText[visibility.value] || ''; }
-    visibility.addEventListener('change', updateHelp);
-    updateHelp();
     updateRemoveButton();
 
     const summaryProfile = document.getElementById('summaryProfileVisibility');
     const profileVisibility = document.getElementById('profileVisibility');
-    const profileVisibilityHelp = document.getElementById('profileVisibilityHelp');
     const summaryPhoto = document.getElementById('summaryPhotoVisibility');
     const summaryVoice = document.getElementById('summaryVoiceVisibility');
     const summaryVideo = document.getElementById('summaryVideoVisibility');
@@ -790,12 +847,7 @@ $preview = ($hasPhoto && $profile_media_id > 0) ? 'media.php?id=' . $profile_med
         if (summaryVideo && videoSelect) summaryVideo.textContent = videoSelect.value === 'Private' ? 'Hidden' : videoSelect.value;
     }
     if (visibility) visibility.addEventListener('change', updatePrivacySummary);
-    if (profileVisibility) profileVisibility.addEventListener('change', function () {
-        if (profileVisibilityHelp) profileVisibilityHelp.textContent = profileVisibility.value === 'Hidden'
-            ? 'Your profile will not be discoverable by other users until you make it Public.'
-            : 'Your profile can appear in eligible searches and recommendations.';
-        updatePrivacySummary();
-    });
+    if (profileVisibility) profileVisibility.addEventListener('change', updatePrivacySummary);
     if (document.getElementById('voiceVisibility')) document.getElementById('voiceVisibility').addEventListener('change', updatePrivacySummary);
     if (document.getElementById('videoVisibility')) document.getElementById('videoVisibility').addEventListener('change', updatePrivacySummary);
     updatePrivacySummary();

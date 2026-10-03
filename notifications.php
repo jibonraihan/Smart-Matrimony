@@ -6,6 +6,15 @@ if (session_status() === PHP_SESSION_NONE) { session_start(); }
 if (!isset($_SESSION['user_id'])) { header('Location: login.php'); exit; }
 $user_id = (int) $_SESSION['user_id'];
 
+$notifications_enabled = true;
+$notification_settings_result = mysqli_query($conn, "SELECT notifications_enabled FROM notification_settings WHERE setting_id = 1 LIMIT 1");
+if ($notification_settings_result) {
+    $notification_settings_row = mysqli_fetch_assoc($notification_settings_result);
+    if ($notification_settings_row !== null) {
+        $notifications_enabled = ((int) ($notification_settings_row['notifications_enabled'] ?? 1)) === 1;
+    }
+}
+
 $stmt = mysqli_prepare($conn, "SELECT u.user_id, u.first_name, u.last_name, u.gender, u.email, u.mobile, u.role, up.photo FROM users u LEFT JOIN user_profiles up ON up.user_id=u.user_id WHERE u.user_id=? LIMIT 1");
 mysqli_stmt_bind_param($stmt, 'i', $user_id);
 mysqli_stmt_execute($stmt);
@@ -28,6 +37,10 @@ $notification_csrf = $_SESSION['notification_csrf'];
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['notification_action'])) {
     $posted_csrf=(string)($_POST['notification_csrf']??'');
     $action=(string)($_POST['notification_action']??'');
+    if (!$notifications_enabled) {
+        $_SESSION['notification_flash']='Notifications are currently OFF for everyone.';
+        header('Location: '.BASE_URL.'notifications.php'); exit;
+    }
     $message_id=(int)($_POST['message_id']??0);
     $message_ids = isset($_POST['message_ids']) && is_array($_POST['message_ids']) ? array_values(array_unique(array_filter(array_map('strval', $_POST['message_ids']), static fn($id) => preg_match('/^(admin|authenticator):\d+$/', $id) === 1))) : [];
     $ok=false;
@@ -76,7 +89,7 @@ $stmt_ac=mysqli_prepare($conn,"SELECT COUNT(*) AS total FROM admin_messages am I
 if($stmt_ac){mysqli_stmt_bind_param($stmt_ac,'i',$user_id);mysqli_stmt_execute($stmt_ac);$row=mysqli_fetch_assoc(mysqli_stmt_get_result($stmt_ac));$admin_unread_count=(int)($row['total']??0);mysqli_stmt_close($stmt_ac);}
 $stmt_al=mysqli_prepare($conn,"SELECT am.message_id, am.message, am.status, am.created_at, am.read_at, a.first_name AS sender_first_name, a.last_name AS sender_last_name FROM admin_messages am INNER JOIN users a ON a.user_id=am.admin_id WHERE am.user_id=? AND a.role='Admin' ORDER BY am.created_at DESC, am.message_id DESC");
 if($stmt_al){mysqli_stmt_bind_param($stmt_al,'i',$user_id);mysqli_stmt_execute($stmt_al);$res=mysqli_stmt_get_result($stmt_al);while($row=mysqli_fetch_assoc($res))$admin_messages[]=$row;mysqli_stmt_close($stmt_al);}
-$total_unread_count=$authenticator_unread_count+$admin_unread_count;
+$total_unread_count=$notifications_enabled ? ($authenticator_unread_count+$admin_unread_count) : 0;
 include 'includes/header.php';
 ?>
 <link rel="stylesheet" href="<?= BASE_URL; ?>assets/css/notifications.css?v=1">
@@ -119,6 +132,7 @@ include 'includes/header.php';
                     </div>
                 </div>
 
+                <?php if ($notifications_enabled): ?>
                 <div class="notifications-toolbar">
                     <div class="notifications-filter-tabs" role="tablist" aria-label="Notification sources">
                         <button type="button" class="notification-filter is-active" data-notification-filter="all">All</button>
@@ -199,6 +213,15 @@ include 'includes/header.php';
                         </div>
                     <?php endif; ?>
                 </section>
+                <?php else: ?>
+                    <div class="notifications-disabled-notice" role="status">
+                        <div class="notifications-disabled-icon"><i class="fa-solid fa-bell-slash"></i></div>
+                        <div>
+                            <strong>Notifications are currently OFF</strong>
+                            <p>The notification system is disabled for everyone right now. Existing notification records are kept and will be available again when notifications are turned ON.</p>
+                        </div>
+                    </div>
+                <?php endif; ?>
             </div>
         </section>
     </main>

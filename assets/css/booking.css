@@ -21,3 +21,82 @@
 @media(max-width:520px){.booking-container{width:min(100% - 24px,1180px)}.booking-topbar-inner{height:64px}.booking-heading{padding-top:35px}.booking-card{padding:16px}.booking-card-main{gap:11px}.booking-card-icon{width:42px;height:42px}.booking-card-copy h2{font-size:18px}.booking-card-side{flex-wrap:wrap;gap:12px}.booking-primary{width:100%;text-align:center}.detail-item{grid-template-columns:1fr}.detail-item-image{width:100%;height:150px}.detail-item-side{grid-column:auto}.booking-action-panel button{width:100%}}
 
 .detail-qty{font-size:12px;color:#738097;font-weight:700}
+
+/* =========================================================
+   Shared Smart Matrimony page header — Bookings
+   Header-only update; booking content remains unchanged.
+========================================================= */
+.booking-topbar.site-page-header{
+    background:linear-gradient(120deg,#0f8b83,#086b67);
+    border-bottom:1px solid rgba(255,255,255,.10);
+    box-shadow:0 10px 30px rgba(8,47,73,.10);
+    backdrop-filter:blur(12px);
+}
+.booking-topbar.site-page-header .site-page-brand{
+    display:inline-flex;
+    align-items:center;
+    gap:16px;
+    min-width:0;
+    text-decoration:none;
+}
+.booking-topbar.site-page-header .site-page-logo{
+    width:58px;
+    height:58px;
+    flex:0 0 58px;
+    display:grid;
+    place-items:center;
+    background:#fff;
+    border:1px solid rgba(255,255,255,.45);
+    border-radius:16px;
+    padding:7px;
+    box-sizing:border-box;
+}
+.booking-topbar.site-page-header .site-page-logo img{
+    width:100%;
+    height:100%;
+    object-fit:contain;
+}
+.booking-topbar.site-page-header .site-page-title-logo{display:block;min-width:0}
+.booking-topbar.site-page-header .site-page-title-logo img{
+    display:block;
+    width:min(184px,30vw);
+    height:auto;
+    max-height:48px;
+    object-fit:contain;
+    object-position:left center;
+    background:transparent;
+}
+.booking-topbar.site-page-header .site-page-actions{
+    display:flex;
+    align-items:center;
+    justify-content:flex-end;
+    gap:10px;
+    flex-wrap:wrap;
+}
+.booking-topbar.site-page-header .site-page-btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:7px;
+    min-height:42px;
+    padding:10px 14px;
+    border:1px solid rgba(255,255,255,.35);
+    border-radius:12px;
+    color:#fff;
+    background:rgba(255,255,255,.08);
+    font:700 12px Poppins,sans-serif;
+    text-decoration:none;
+    white-space:nowrap;
+    transition:.18s ease;
+}
+.booking-topbar.site-page-header .site-page-btn:hover{color:#fff;background:rgba(255,255,255,.15);transform:translateY(-1px)}
+@media(max-width:650px){
+    .booking-topbar.site-page-header .booking-topbar-inner{min-height:76px}
+    .booking-topbar.site-page-header .site-page-brand{gap:10px}
+    .booking-topbar.site-page-header .site-page-logo{width:48px;height:48px;flex-basis:48px;border-radius:13px;padding:6px}
+    .booking-topbar.site-page-header .site-page-title-logo img{width:min(145px,42vw);max-height:40px}
+    .booking-topbar.site-page-header .site-page-actions{gap:6px}
+    .booking-topbar.site-page-header .site-page-btn{min-height:38px;padding:8px 10px;font-size:10px}
+    .booking-topbar.site-page-header .site-page-btn span{display:none}
+    .booking-topbar.site-page-header .site-page-btn i{margin:0}
+}
