@@ -6,6 +6,7 @@ error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
 require_once '../config/db.php';
+require_once '../includes/service_reviews.php';
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -53,6 +54,10 @@ while ($row = mysqli_fetch_assoc($result)) {
 }
 mysqli_stmt_close($stmt);
 
+$provider_ids = array_map(static fn($row) => (int) $row['provider_id'], $providers);
+$provider_reviews = service_review_get_published_for_providers($conn, $provider_ids, 3);
+$provider_rating_breakdowns = service_review_get_rating_breakdown($conn, $provider_ids);
+
 $cart_count = 0;
 $cart_stmt = mysqli_prepare($conn, 'SELECT COALESCE(SUM(quantity),0) AS total FROM service_cart_items WHERE user_id = ?');
 mysqli_stmt_bind_param($cart_stmt, 'i', $_SESSION['user_id']);
@@ -64,16 +69,20 @@ include '../includes/header.php';
 ?>
 
 <div class="service-page">
-    <header class="service-topbar">
+    <header class="service-topbar site-page-header">
         <div class="service-container service-topbar-inner">
-            <a href="<?= BASE_URL; ?>dashboard.php#wedding-services" class="service-back">
-                <i class="fa-solid fa-arrow-left"></i> Wedding Services
+            <a href="<?= BASE_URL; ?>dashboard.php" class="service-page-brand" aria-label="Smart Matrimony Dashboard">
+                <span class="service-page-logo">
+                    <img src="<?= BASE_URL; ?>assets/images/logo/logo.png" alt="Smart Matrimony Logo">
+                </span>
+                <span class="service-page-title-logo">
+                    <img src="<?= BASE_URL; ?>assets/images/logo/matrimony_title.png" alt="Smart Matrimony">
+                </span>
             </a>
-            <a href="<?= BASE_URL; ?>cart.php" class="service-cart-link">
-                <i class="fa-solid fa-cart-shopping"></i>
-                Cart
-                <span><?= $cart_count; ?></span>
-            </a>
+            <div class="service-page-actions">
+                <a href="<?= BASE_URL; ?>dashboard.php#wedding-services" class="service-page-btn"><i class="fa-solid fa-arrow-left"></i><span>Wedding Services</span></a>
+                <a href="<?= BASE_URL; ?>cart.php" class="service-page-btn"><i class="fa-solid fa-cart-shopping"></i><span>Cart</span><b><?= $cart_count; ?></b></a>
+            </div>
         </div>
     </header>
 
@@ -116,7 +125,7 @@ include '../includes/header.php';
                                 <?php else: ?>
                                     <div class="provider-image-fallback"><i class="fa-solid fa-store"></i></div>
                                 <?php endif; ?>
-                                <span class="provider-rating"><i class="fa-solid fa-star"></i> <?= number_format((float) $provider['rating'], 1); ?> <small>(<?= (int) $provider['review_count']; ?>)</small></span>
+
                             </div>
                             <div class="provider-body">
                                 <div class="provider-heading">
@@ -129,6 +138,74 @@ include '../includes/header.php';
                                     <?php if (!empty($provider['location'])): ?><span><i class="fa-solid fa-location-dot"></i><?= htmlspecialchars($provider['location']); ?></span><?php endif; ?>
                                     <?php if (!empty($provider['package_details'])): ?><span><i class="fa-solid fa-list-check"></i><?= htmlspecialchars($provider['package_details']); ?></span><?php endif; ?>
                                 </div>
+                                <div class="provider-rating-summary">
+                                <?php $provider_id = (int) $provider['provider_id']; $rating_total = (int) $provider['review_count']; $rating_breakdown = $provider_rating_breakdowns[$provider_id] ?? []; ?>
+                                <?php if ($rating_total > 0): ?>
+                                    <details class="provider-rating-breakdown">
+                                        <summary aria-label="View rating breakdown">
+                                            <span><i class="fa-solid fa-star"></i> <?= number_format((float) $provider['rating'], 1); ?></span>
+                                            <small><?= $rating_total; ?> <?= $rating_total === 1 ? 'review' : 'reviews'; ?></small>
+                                            <i class="fa-solid fa-chevron-down provider-rating-chevron" aria-hidden="true"></i>
+                                        </summary>
+                                        <div class="provider-rating-breakdown-panel">
+                                            <?php for ($rating_star = 5; $rating_star >= 1; $rating_star--): ?>
+                                                <?php $rating_count = (int) ($rating_breakdown[$rating_star] ?? 0); $rating_percent = $rating_total > 0 ? round(($rating_count / $rating_total) * 100, 1) : 0; ?>
+                                                <div class="rating-breakdown-row">
+                                                    <span><?= $rating_star; ?> <i class="fa-solid fa-star"></i></span>
+                                                    <span class="rating-breakdown-track"><span style="width: <?= $rating_percent; ?>%;"></span></span>
+                                                    <b><?= $rating_count; ?></b>
+                                                </div>
+                                            <?php endfor; ?>
+                                        </div>
+                                    </details>
+                                <?php else: ?>
+                                    <span class="provider-rating provider-rating-empty"><i class="fa-regular fa-star"></i> No reviews yet</span>
+                                <?php endif; ?>
+                                </div>
+                                <?php $reviews = $provider_reviews[(int) $provider['provider_id']] ?? []; ?>
+                                <div class="provider-reviews">
+                                    <div class="provider-reviews-head">
+                                        <div>
+                                            <span class="provider-reviews-kicker"><i class="fa-regular fa-comments"></i> VERIFIED REVIEWS</span>
+                                            <strong><?= (int) $provider['review_count']; ?> <?= (int) $provider['review_count'] === 1 ? 'review' : 'reviews'; ?></strong>
+                                        </div>
+                                        <?php if ($reviews): ?><span>Latest <?= count($reviews); ?></span><?php endif; ?>
+                                    </div>
+                                    <?php if ($reviews): ?>
+                                        <div class="provider-review-list">
+                                            <?php foreach ($reviews as $review): ?>
+                                                <?php
+                                                    $reviewer_first = trim((string) ($review['first_name'] ?? ''));
+                                                    $reviewer_last = trim((string) ($review['last_name'] ?? ''));
+                                                    $reviewer_label = trim($reviewer_first . ' ' . $reviewer_last);
+                                                    if ($reviewer_label === '') $reviewer_label = 'Verified Customer';
+                                                ?>
+                                                <article class="provider-review-item">
+                                                    <div class="provider-review-top">
+                                                        <strong><?= htmlspecialchars($reviewer_label); ?></strong>
+                                                        <time datetime="<?= htmlspecialchars(date('c', strtotime($review['created_at']))); ?>"><?= htmlspecialchars(date('d M Y', strtotime($review['created_at']))); ?></time>
+                                                    </div>
+                                                    <div class="provider-review-stars" aria-label="<?= (int) $review['rating']; ?> out of 5 stars">
+                                                        <?php for ($star = 1; $star <= 5; $star++): ?><i class="fa-solid fa-star<?= $star <= (int) $review['rating'] ? ' active' : ''; ?>"></i><?php endfor; ?>
+                                                    </div>
+                                                    <?php if (trim((string) ($review['review_text'] ?? '')) !== ''): ?>
+                                                        <p><?= nl2br(htmlspecialchars($review['review_text'])); ?></p>
+                                                    <?php endif; ?>
+                                                    <span class="provider-review-verified"><i class="fa-solid fa-circle-check"></i> Verified booking</span>
+                                                </article>
+                                            <?php endforeach; ?>
+                                        </div>
+                                    <?php else: ?>
+                                        <p class="provider-reviews-empty"><i class="fa-regular fa-star"></i> No customer reviews yet. Be the first to share your experience after a completed booking.</p>
+                                    <?php endif; ?>
+                                    <?php if ((int) $provider['review_count'] > 0): ?>
+                                        <a class="provider-view-all-reviews" href="<?= BASE_URL; ?>services/service_reviews.php?provider_id=<?= (int) $provider['provider_id']; ?>">
+                                            View all <?= (int) $provider['review_count']; ?> <?= (int) $provider['review_count'] === 1 ? 'review' : 'reviews'; ?>
+                                            <i class="fa-solid fa-arrow-right"></i>
+                                        </a>
+                                    <?php endif; ?>
+                                </div>
+
                                 <div class="provider-bottom">
                                     <div class="provider-price">
                                         <?php $provider_discount = max(0, min(100, (float)($provider['discount_percent'] ?? 0))); $provider_final = (float)$provider['price'] * (1 - ($provider_discount / 100)); ?>

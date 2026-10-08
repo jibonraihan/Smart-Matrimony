@@ -18,8 +18,6 @@
     const contact = document.getElementById('packageContact');
     const image = document.getElementById('packageImage');
     const imageHelp = document.getElementById('packageImageHelp');
-    const rating = document.getElementById('packageRating');
-    const reviewCount = document.getElementById('packageReviewCount');
     const status = document.getElementById('packageStatus');
     const details = document.getElementById('packageDetails');
     const currentImage = document.getElementById('packageCurrentImage');
@@ -55,8 +53,6 @@
             discount.value = data.discount_percent ?? 0;
             location.value = data.location || '';
             contact.value = data.contact_number || '';
-            rating.value = data.rating ?? 0;
-            reviewCount.value = data.review_count ?? 0;
             status.value = data.status || 'Active';
             details.value = data.package_details || '';
             if (data.image) {

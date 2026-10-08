@@ -371,7 +371,7 @@ $completion = sm_get_profile_completion($conn, $user_id);
                             value="<?= htmlspecialchars((string) ($user['brothers_count'] ?? 0)) ?>"
                             placeholder="Enter number"
                             required>
-                        <small>Use the arrows or type a number.</small>
+                        
                     </div>
 
                     <div class="step2-field">
@@ -386,7 +386,7 @@ $completion = sm_get_profile_completion($conn, $user_id);
                             value="<?= htmlspecialchars((string) ($user['sisters_count'] ?? 0)) ?>"
                             placeholder="Enter number"
                             required>
-                        <small>Use the arrows or type a number.</small>
+        
                     </div>
 
                     <div class="step2-field">

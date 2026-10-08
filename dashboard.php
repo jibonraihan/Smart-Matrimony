@@ -747,7 +747,7 @@ include 'includes/header.php';
             <a href="<?= BASE_URL; ?>my_bookings.php"><i class="fa-solid fa-calendar-check"></i><span>My Bookings</span><?php if ($booking_count > 0): ?><span class="menu-count"><?= $booking_count; ?></span><?php endif; ?></a>
             <a href="<?= BASE_URL; ?>matching/my_matches.php"><i class="fa-solid fa-heart"></i><span>My Matches</span></a>
             <a href="<?= BASE_URL; ?>matching/bookmarks.php"><i class="fa-solid fa-bookmark"></i><span>Bookmarks</span></a>
-            <a href="<?= BASE_URL; ?>matching/chat_requests.php"><i class="fa-solid fa-comments"></i><span>Messages</span></a>
+            <a href="<?= BASE_URL; ?>matching/messages.php"><i class="fa-solid fa-comments"></i><span>Messages</span></a>
             <a href="<?= BASE_URL; ?>notifications.php" class="notifications-menu-link"><i class="fa-solid fa-bell"></i><span>Notifications</span><?php if ($authenticator_unread_count > 0): ?><span class="menu-count notifications-menu-count"><?= $authenticator_unread_count; ?></span><?php endif; ?></a>
             <a href="<?= BASE_URL; ?>settings.php"><i class="fa-solid fa-gear"></i><span>Settings</span></a>
         </nav>
@@ -841,7 +841,7 @@ include 'includes/header.php';
                         <div class="hero-quick-grid">
                             <a href="<?= BASE_URL; ?>matching/my_matches.php"><i class="fa-solid fa-heart"></i><span>My Matches</span></a>
                             <a href="<?= BASE_URL; ?>matching/bookmarks.php"><i class="fa-solid fa-bookmark"></i><span>Bookmarks</span></a>
-                            <a href="<?= BASE_URL; ?>matching/chat_requests.php"><i class="fa-solid fa-comments"></i><span>Messages</span></a>
+                            <a href="<?= BASE_URL; ?>matching/messages.php"><i class="fa-solid fa-comments"></i><span>Messages</span></a>
                             <a href="#wedding-services"><i class="fa-solid fa-ring"></i><span>Wedding Services</span></a>
                         </div>
                     </div>
@@ -898,7 +898,7 @@ include 'includes/header.php';
                         <i class="fa-solid fa-arrow-right account-action-arrow"></i>
                     </a>
 
-                    <a class="account-action-card" href="<?= BASE_URL; ?>matching/chat_requests.php">
+                    <a class="account-action-card" href="<?= BASE_URL; ?>matching/messages.php">
                         <span class="account-action-icon"><i class="fa-solid fa-comments"></i></span>
                         <span class="account-action-copy">
                             <strong>Messages</strong>

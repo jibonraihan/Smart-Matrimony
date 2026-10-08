@@ -14,66 +14,61 @@ body.chat-menu-open{overflow:hidden}
 .chat-ready{background:#fff;border:1px solid var(--line);border-radius:22px;padding:22px;margin-bottom:18px}.chat-ready-head{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:16px}.chat-ready-head span{font-size:11px;letter-spacing:2px;font-weight:800;color:var(--teal)}.chat-ready-head h2{margin:4px 0 5px;font-size:25px}.chat-ready-head p{margin:0;color:var(--muted)}.chat-ready-head>i{font-size:48px;color:#7da19e;opacity:.45}.chat-ready-card{box-shadow:0 8px 24px rgba(11,77,74,.05)}
 @media(max-width:700px){.chat-ready{padding:16px}.chat-ready-head{align-items:flex-start}.chat-ready-head>i{display:none}}
 
+/* Messages/Conversation pages: keep the public middle navigation hidden without changing other pages. */
+body:has(.matching-standalone-header) .smart-navbar-nav{display:none!important}
+body:has(.matching-standalone-header) .smart-navbar-collapse{justify-content:flex-end}
+@media(max-width:700px){
+  body:has(.matching-standalone-header) .smart-navbar-collapse{justify-content:flex-start}
+}
 
-/* ===================== CHAT REQUEST PAGE HEADER ===================== */
-/* This page intentionally has no public Home/About/Services/Contact navigation.
-   Keep only the brand on the left and the signed-in actions on the right,
-   including on mobile. */
-.chat-request-header .chat-request-navbar-collapse {
-    display: flex !important;
-    flex: 1 1 auto;
-    align-items: center;
-    min-width: 0;
+/* ===================== MOBILE STANDALONE HEADER =====================
+   On Messages/Conversation pages the shared navbar remains a single compact row:
+   logo/title on the left, account actions on the right. No hamburger/collapsed menu. */
+@media (max-width: 991.98px){
+  body:has(.matching-standalone-header) .smart-navbar-toggler{display:none!important}
+  body:has(.matching-standalone-header) .smart-navbar-container{min-height:64px;gap:8px;width:100%;padding-left:12px;padding-right:12px}
+  body:has(.matching-standalone-header) .smart-navbar-collapse{
+    display:flex!important;
+    flex:1 1 auto;
+    width:auto;
+    margin:0!important;
+    padding:0!important;
+    border:0!important;
+    border-radius:0!important;
+    background:transparent!important;
+    box-shadow:none!important;
+    backdrop-filter:none!important;
+    justify-content:flex-end!important;
+  }
+  body:has(.matching-standalone-header) .smart-navbar-nav{display:none!important}
+  body:has(.matching-standalone-header) .smart-navbar-actions{
+    width:auto!important;
+    margin:0 0 0 auto!important;
+    padding:0!important;
+    border:0!important;
+    gap:6px!important;
+    flex:0 0 auto;
+  }
+  body:has(.matching-standalone-header) .smart-navbar-brand{gap:7px;padding:2px 0;min-width:0;flex:0 1 auto}
+  body:has(.matching-standalone-header) .smart-navbar-logo{width:40px;height:40px;flex-basis:40px;border-radius:11px}
+  body:has(.matching-standalone-header) .smart-navbar-title{min-width:0;overflow:hidden}
+  body:has(.matching-standalone-header) .smart-navbar-title img{display:block;width:clamp(96px,30vw,145px);height:auto;max-width:100%}
+  body:has(.matching-standalone-header) .smart-user-greeting{min-height:36px;padding:4px 7px;gap:5px;font-size:10px;border-radius:10px;white-space:nowrap}
+  body:has(.matching-standalone-header) .smart-user-greeting-icon{width:24px;height:24px;font-size:10px}
+  body:has(.matching-standalone-header) .smart-nav-btn{min-height:36px;padding:6px 9px!important;gap:5px;border-radius:10px!important;font-size:10px}
 }
-.chat-request-header .smart-navbar-actions {
-    margin-left: auto;
-    width: auto;
-    padding-top: 0;
-    border-top: 0;
-    flex-wrap: nowrap;
+@media (max-width: 420px){
+  body:has(.matching-standalone-header) .smart-navbar-container{padding-left:8px;padding-right:8px;gap:5px}
+  body:has(.matching-standalone-header) .smart-navbar-logo{width:36px;height:36px;flex-basis:36px;border-radius:10px}
+  body:has(.matching-standalone-header) .smart-navbar-title img{width:clamp(82px,29vw,112px)}
+  body:has(.matching-standalone-header) .smart-user-greeting{padding:3px 5px;font-size:9px}
+  body:has(.matching-standalone-header) .smart-user-greeting-icon{width:22px;height:22px}
+  body:has(.matching-standalone-header) .smart-nav-btn{padding:5px 7px!important;font-size:9px}
+  body:has(.matching-standalone-header) .smart-navbar-actions{gap:4px!important}
 }
-.chat-request-header .smart-navbar-actions > * {
-    flex: 0 0 auto;
-}
-@media (max-width: 991.98px) {
-    .chat-request-header .smart-navbar-container {
-        flex-wrap: nowrap;
-    }
-    .chat-request-header .chat-request-navbar-collapse {
-        margin: 0 0 0 auto;
-        padding: 0;
-        border: 0;
-        border-radius: 0;
-        background: transparent;
-        box-shadow: none;
-        backdrop-filter: none;
-    }
-    .chat-request-header .smart-navbar-actions {
-        margin-left: auto;
-        justify-content: flex-end;
-        gap: 6px;
-    }
-    .chat-request-header .smart-user-greeting,
-    .chat-request-header .smart-nav-btn {
-        min-height: 38px;
-        padding: 6px 9px !important;
-    }
-}
-@media (max-width: 575.98px) {
-    .chat-request-header .smart-navbar-container {
-        gap: 8px;
-    }
-    .chat-request-header .smart-navbar-actions {
-        gap: 5px;
-    }
-    .chat-request-header .smart-user-greeting,
-    .chat-request-header .smart-nav-btn {
-        font-size: 10px;
-        min-height: 36px;
-        padding: 5px 7px !important;
-    }
-    .chat-request-header .smart-user-greeting-icon {
-        width: 24px;
-        height: 24px;
-    }
+@media (max-width: 340px){
+  body:has(.matching-standalone-header) .smart-navbar-title img{width:82px}
+  body:has(.matching-standalone-header) .smart-user-greeting span:last-child{display:none}
+  body:has(.matching-standalone-header) .smart-nav-logout span{display:none}
+  body:has(.matching-standalone-header) .smart-nav-btn{width:34px;padding:5px!important}
 }

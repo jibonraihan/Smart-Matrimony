@@ -388,7 +388,7 @@ include '../includes/navbar.php';
                 <div>
                     <span class="step6-kicker">PROFILE BUILDER</span>
                     <h1>Step 6</h1>
-                    <p>Partner Preferences &amp; Compatibility</p>
+                    <p>Partner Preferences &amp; Compatibility for partner matching</p>
                 </div>
                 <a class="step6-logo" href="../dashboard.php" aria-label="Back to dashboard">
                     <img src="<?= BASE_URL ?>assets/images/logo/logo.png" alt="Smart Matrimony">
@@ -433,7 +433,7 @@ include '../includes/navbar.php';
                             <option value="Female" <?= $form['preferred_gender'] === 'Female' ? 'selected' : '' ?>>Female</option>
                         </select>
                         <input type="hidden" name="preferred_gender" value="<?= htmlspecialchars($form['preferred_gender']) ?>">
-                        <small>Automatically set to the opposite gender of your profile and cannot be changed.</small>
+                        <small>Automatically set to the opposite gender of your profile.</small>
                     </div>
 
                     <div class="step6-field">
@@ -530,7 +530,7 @@ include '../includes/navbar.php';
 
                 <div class="step6-grid step6-grid-3">
                     <div class="step6-field">
-                        <label for="religion">Preferred Religion <em>*</em></label>
+                        <label for="religion">Religion <em>*</em></label>
                         <select id="religion" name="religion" required>
                             <option value="">Select religion</option>
                             <?php foreach ($religions as $item): ?>
@@ -539,7 +539,7 @@ include '../includes/navbar.php';
                         </select>
                     </div>
                     <div class="step6-field">
-                        <label for="marital_status">Preferred Marital Status</label>
+                        <label for="marital_status">Marital Status</label>
                         <select id="marital_status" name="marital_status">
                             <option value="">Any marital status</option>
                             <?php foreach ($marital_statuses as $item): ?>
@@ -548,7 +548,7 @@ include '../includes/navbar.php';
                         </select>
                     </div>
                     <div class="step6-field step6-islamic-preference">
-                        <label for="madhhab">Preferred Madhhab</label>
+                        <label for="madhhab">Madhhab</label>
                         <select id="madhhab" name="madhhab">
                             <option value="">Any madhhab</option>
                             <?php foreach ($madhhabs as $item): ?>
@@ -557,16 +557,16 @@ include '../includes/navbar.php';
                         </select>
                     </div>
                     <div class="step6-field step6-islamic-preference">
-                        <label for="prayer_status">Preferred Prayer Status</label>
+                        <label for="prayer_status">Prayer Status</label>
                         <select id="prayer_status" name="prayer_status">
-                            <option value="">Any prayer status</option>
+                            <option value="">Prayer status</option>
                             <?php foreach ($prayer_statuses as $item): ?>
                                 <option value="<?= htmlspecialchars($item) ?>" <?= $form['prayer_status'] === $item ? 'selected' : '' ?>><?= htmlspecialchars($item) ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>
                     <div class="step6-field step6-islamic-preference">
-                        <label for="halal_lifestyle">Preferred Halal Lifestyle</label>
+                        <label for="halal_lifestyle">Halal Lifestyle</label>
                         <select id="halal_lifestyle" name="halal_lifestyle">
                             <option value="">Any halal lifestyle</option>
                             <?php foreach ($halal_lifestyle_options as $item): ?>
@@ -592,7 +592,7 @@ include '../includes/navbar.php';
                         </select>
                     </div>
                     <div class="step6-field step6-islamic-preference step6-gender-preference" data-preferred-gender="Female">
-                        <label for="hijab_status">Preferred Hijab Status</label>
+                        <label for="hijab_status">Hijab Status</label>
                         <select id="hijab_status" name="hijab_status">
                             <option value="">Any hijab status</option>
                             <?php foreach ($hijab_statuses as $item): ?>
@@ -601,7 +601,7 @@ include '../includes/navbar.php';
                         </select>
                     </div>
                     <div class="step6-field step6-islamic-preference step6-gender-preference" data-preferred-gender="Male">
-                        <label for="beard_status">Preferred Beard Status</label>
+                        <label for="beard_status">Beard Status</label>
                         <select id="beard_status" name="beard_status">
                             <option value="">Any beard status</option>
                             <?php foreach ($beard_statuses as $item): ?>
@@ -610,7 +610,7 @@ include '../includes/navbar.php';
                         </select>
                     </div>
                     <div class="step6-field">
-                        <label for="personality_type">Preferred Personality Type</label>
+                        <label for="personality_type">Personality Type</label>
                         <select id="personality_type" name="personality_type">
                             <option value="">Any personality type</option>
                             <?php foreach ($personality_types as $item): ?>

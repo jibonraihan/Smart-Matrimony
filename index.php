@@ -1087,7 +1087,7 @@ include 'includes/navbar.php';
                                         <?php if ($discount > 0): ?><span class="featured-package-discount"><?= rtrim(rtrim(number_format($discount, 2), '0'), '.'); ?>% OFF</span><?php endif; ?>
                                     </div>
                                     <div class="featured-package-body">
-                                        <div class="featured-package-rating"><i class="fa-solid fa-star"></i> <?= number_format((float) $package['rating'], 1); ?> <small>(<?= (int) $package['review_count']; ?>)</small></div>
+                                        <div class="featured-package-rating"><i class="fa-solid fa-star"></i> <?= number_format((float) $package['rating'], 1); ?> <?php if ((int) $package['review_count'] > 0): ?><small><?= (int) $package['review_count']; ?> <?= (int) $package['review_count'] === 1 ? 'review' : 'reviews'; ?></small><?php else: ?><small>No reviews yet</small><?php endif; ?></div>
                                         <h3><?= htmlspecialchars($package['package_name'] ?: $package['provider_name']); ?></h3>
                                         <p class="featured-package-provider"><i class="fa-solid fa-building-user"></i> <?= htmlspecialchars($package['provider_name']); ?></p>
                                         <p class="featured-package-details"><?= htmlspecialchars($package['package_details'] ?: 'A curated wedding service package for your special day.'); ?></p>

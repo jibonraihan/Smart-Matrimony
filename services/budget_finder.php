@@ -478,7 +478,7 @@ include '../includes/navbar.php';
                                 <strong>৳<?= number_format($final_price, 2); ?></strong>
                                 <?php if ($discount > 0): ?><em><?= rtrim(rtrim(number_format($discount, 2), '0'), '.'); ?>% OFF</em><?php endif; ?>
                             </div>
-                            <div class="budget-package-rating"><i class="fa-solid fa-star"></i> <?= number_format((float)$package['rating'], 1); ?><small>(<?= (int)$package['review_count']; ?>)</small></div>
+                            <div class="budget-package-rating"><i class="fa-solid fa-star"></i> <?= number_format((float)$package['rating'], 1); ?><?php if ((int)$package['review_count'] > 0): ?><small><?= (int)$package['review_count']; ?> <?= (int)$package['review_count'] === 1 ? 'review' : 'reviews'; ?></small><?php else: ?><small>No reviews yet</small><?php endif; ?></div>
                             <div class="budget-package-actions">
                                 <select class="budget-package-select" data-service-id="<?= $service_id; ?>" aria-label="Change package for <?= htmlspecialchars($service['service_name']); ?>">
                                     <?php foreach ($packages_by_service[$service_id] as $option): ?>

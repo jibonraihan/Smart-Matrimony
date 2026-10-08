@@ -1854,3 +1854,179 @@ hr{
         padding: 1px;
     }
 }
+
+/* Chat Requests page: keep only account actions in the header.
+   Scoped so the global navbar on every other page is untouched. */
+.chat-requests-navbar .chat-requests-navbar-actions {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+@media (max-width: 991.98px) {
+    .chat-requests-navbar .smart-navbar-container {
+        flex-wrap: nowrap;
+    }
+
+    .chat-requests-navbar .chat-requests-navbar-actions {
+        margin-left: auto;
+        flex-shrink: 0;
+        gap: 6px;
+    }
+
+    .chat-requests-navbar .smart-user-greeting,
+    .chat-requests-navbar .smart-nav-logout {
+        white-space: nowrap;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .chat-requests-navbar .smart-navbar-container {
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+
+    .chat-requests-navbar .smart-navbar-brand {
+        min-width: 0;
+        flex: 1 1 auto;
+    }
+
+    .chat-requests-navbar .smart-navbar-title img {
+        max-width: 125px;
+        height: auto;
+    }
+
+    .chat-requests-navbar .smart-navbar-logo {
+        width: 44px;
+        height: 44px;
+    }
+
+    .chat-requests-navbar .smart-navbar-actions {
+        gap: 5px;
+    }
+
+    .chat-requests-navbar .smart-user-greeting,
+    .chat-requests-navbar .smart-nav-btn {
+        min-height: 38px;
+        padding: 7px 9px;
+        font-size: 11px;
+    }
+}
+
+/* Chat Requests header — final mobile alignment fix.
+   Scoped only to this page so the shared navbar on every other page is untouched. */
+.chat-requests-navbar .chat-requests-navbar-actions {
+    margin-left: auto;
+    flex: 0 0 auto;
+    flex-wrap: nowrap;
+}
+
+@media (max-width: 575.98px) {
+    .chat-requests-navbar .smart-navbar-container {
+        gap: 6px;
+        padding-left: 10px;
+        padding-right: 10px;
+        flex-wrap: nowrap;
+    }
+
+    .chat-requests-navbar .smart-navbar-brand {
+        flex: 0 1 auto;
+        min-width: 0;
+        max-width: calc(100% - 150px);
+        gap: 6px;
+    }
+
+    .chat-requests-navbar .smart-navbar-logo {
+        width: 40px;
+        height: 40px;
+        flex: 0 0 40px;
+        border-radius: 11px;
+        padding: 3px;
+    }
+
+    .chat-requests-navbar .smart-navbar-title {
+        height: 24px;
+        min-width: 0;
+        overflow: hidden;
+    }
+
+    .chat-requests-navbar .smart-navbar-title img {
+        height: 23px;
+        width: auto;
+        max-width: 100%;
+        object-fit: contain;
+    }
+
+    .chat-requests-navbar .chat-requests-navbar-actions {
+        width: auto;
+        max-width: 150px;
+        margin-left: auto;
+        padding: 0;
+        border: 0;
+        gap: 4px;
+        flex: 0 0 auto;
+        flex-wrap: nowrap;
+    }
+
+    .chat-requests-navbar .chat-requests-navbar-actions > * {
+        flex: 0 0 auto;
+        min-width: 0;
+        white-space: nowrap;
+    }
+
+    .chat-requests-navbar .smart-user-greeting,
+    .chat-requests-navbar .smart-nav-btn {
+        min-height: 34px;
+        padding: 5px 7px !important;
+        border-radius: 9px !important;
+        font-size: 10px;
+        gap: 4px;
+    }
+
+    .chat-requests-navbar .smart-user-greeting-icon {
+        width: 22px;
+        height: 22px;
+        font-size: 9px;
+    }
+
+    .chat-requests-navbar .smart-nav-btn i {
+        font-size: 10px;
+    }
+}
+
+@media (max-width: 360px) {
+    .chat-requests-navbar .smart-navbar-container {
+        padding-left: 8px;
+        padding-right: 8px;
+        gap: 5px;
+    }
+
+    .chat-requests-navbar .smart-navbar-brand {
+        max-width: calc(100% - 142px);
+        gap: 5px;
+    }
+
+    .chat-requests-navbar .smart-navbar-logo {
+        width: 38px;
+        height: 38px;
+        flex-basis: 38px;
+    }
+
+    .chat-requests-navbar .smart-navbar-title img {
+        height: 21px;
+    }
+
+    .chat-requests-navbar .chat-requests-navbar-actions {
+        max-width: 142px;
+        gap: 3px;
+    }
+
+    .chat-requests-navbar .smart-user-greeting,
+    .chat-requests-navbar .smart-nav-btn {
+        min-height: 32px;
+        padding: 4px 6px !important;
+        font-size: 9px;
+    }
+}

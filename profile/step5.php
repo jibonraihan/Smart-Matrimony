@@ -519,6 +519,106 @@ $preview = ($hasPhoto && $profile_media_id > 0) ? 'media.php?id=' . $profile_med
                         <div class="accessibility-required-note"><i class="bi bi-info-circle"></i> Both checks are required before Step 5 can be completed.</div>
                     </section>
 
+                    
+
+                    <section class="step5-section step5-media-section">
+                        <div class="section-heading">
+                            <span class="section-icon"><i class="bi bi-soundwave"></i></span>
+                            <div>
+                                <h2>Voice &amp; Video Introductions</h2>
+                            </div>
+                        </div>
+
+                        <div class="step5-media-grid">
+                        <div class="step5-media-panel" id="videoIntroductionSection">
+                        <div class="section-heading">
+                            <span class="section-icon"><i class="bi bi-camera-video"></i></span>
+                            <div>
+                                <h2>Video Introduction</h2>
+                            </div>
+                        </div>
+
+                        <div class="video-card" id="videoCard" data-existing-media-id="<?= $video_media_id ?>">
+                            <div class="video-preview-wrap">
+                                <video id="videoPreview" class="video-preview <?= $video_media_id > 0 ? '' : 'd-none' ?>" controls playsinline preload="metadata" <?= $video_media_id > 0 ? 'src="media.php?id=' . $video_media_id . '"' : '' ?>></video>
+                                <div id="videoPlaceholder" class="video-placeholder <?= $video_media_id > 0 ? 'd-none' : '' ?>">
+                                    <i class="bi bi-camera-video-fill"></i>
+                                    <span>No video yet</span>
+                                </div>
+                                <div id="videoRecordingBadge" class="video-recording-badge d-none"><span></span>Recording</div>
+                            </div>
+
+                            <div class="video-controls">
+                                <div class="video-time" id="videoTimer">00:00 / 00:30</div>
+                                <div class="video-buttons">
+                                    <button type="button" class="btn btn-success" id="startVideo">
+                                        <i class="bi bi-camera-video-fill me-1"></i>Start Recording
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary d-none" id="stopVideo">
+                                        <i class="bi bi-stop-fill me-1"></i>Stop
+                                    </button>
+                                    <button type="button" class="btn btn-outline-success d-none" id="recordAgainVideo">
+                                        <i class="bi bi-arrow-repeat me-1"></i>Record Again
+                                    </button>
+                                    <?php if ($video_media_id > 0): ?>
+                                        <button type="button" class="btn btn-outline-danger" id="removeVideo">
+                                            <i class="bi bi-trash me-1"></i>Remove
+                                        </button>
+                                    <?php endif; ?>
+                                </div>
+                                <div class="video-error alert alert-danger d-none" id="videoError" role="alert"></div>
+                                <div class="video-status" id="videoStatus">
+                                    <?= $video_media_id > 0 ? 'Your current video introduction is ready to play.' : 'Optional — record up to 30 seconds.' ?>
+                                </div>
+                            </div>
+                        </div>
+                     </div>
+
+                      <div class="step5-media-panel" id="voiceIntroductionSection">
+                        <div class="section-heading">
+                            <span class="section-icon"><i class="bi bi-mic"></i></span>
+                            <div>
+                                <h2>Voice Introduction</h2>
+                            </div>
+                        </div>
+
+                        <div class="voice-card" id="voiceCard" data-existing-media-id="<?= $voice_media_id ?>">
+                            <div class="voice-visual">
+                                <div class="voice-mic-circle" id="voiceMicCircle"><i class="bi bi-mic-fill"></i></div>
+                                <div class="voice-wave" id="voiceWave" aria-hidden="true">
+                                    <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+                                </div>
+                            </div>
+
+                            <div class="voice-controls">
+                                <div class="voice-time" id="voiceTimer">00:00 / 00:30</div>
+                                <div class="voice-buttons">
+                                    <button type="button" class="btn btn-success" id="startVoice">
+                                        <i class="bi bi-mic-fill me-1"></i>Start Recording
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary d-none" id="stopVoice">
+                                        <i class="bi bi-stop-fill me-1"></i>Stop
+                                    </button>
+                                    <button type="button" class="btn btn-outline-success d-none" id="recordAgainVoice">
+                                        <i class="bi bi-arrow-repeat me-1"></i>Record Again
+                                    </button>
+                                    <?php if ($voice_media_id > 0): ?>
+                                        <button type="button" class="btn btn-outline-danger" id="removeVoice">
+                                            <i class="bi bi-trash me-1"></i>Remove
+                                        </button>
+                                    <?php endif; ?>
+                                </div>
+                                <audio id="voicePlayer" class="voice-player <?= $voice_media_id > 0 ? '' : 'd-none' ?>" controls preload="metadata" <?= $voice_media_id > 0 ? 'src="media.php?id=' . $voice_media_id . '"' : '' ?>></audio>
+                                <div class="voice-error alert alert-danger d-none" id="voiceError" role="alert"></div>
+                                <div class="voice-status" id="voiceStatus">
+                                    <?= $voice_media_id > 0 ? 'Your current voice introduction is ready to play.' : 'Optional — record up to 30 seconds.' ?>
+                                </div>
+                            </div>
+                        </div>
+                        </div>
+                        </div>
+                    </section>
+                    
                     <section class="step5-section step5-visibility-section">
                         <div class="section-heading">
                             <span class="section-icon"><i class="bi bi-shield-lock"></i></span>
@@ -572,105 +672,6 @@ $preview = ($hasPhoto && $profile_media_id > 0) ? 'media.php?id=' . $profile_med
                             </div>
                         </div>
                     </section>
-
-                    <section class="step5-section step5-media-section">
-                        <div class="section-heading">
-                            <span class="section-icon"><i class="bi bi-soundwave"></i></span>
-                            <div>
-                                <h2>Voice &amp; Video Introductions</h2>
-                            </div>
-                        </div>
-
-                        <div class="step5-media-grid">
-<div class="step5-media-panel" id="videoIntroductionSection">
-                        <div class="section-heading">
-                            <span class="section-icon"><i class="bi bi-camera-video"></i></span>
-                            <div>
-                                <h2>Video Introduction</h2>
-                            </div>
-                        </div>
-
-                        <div class="video-card" id="videoCard" data-existing-media-id="<?= $video_media_id ?>">
-                            <div class="video-preview-wrap">
-                                <video id="videoPreview" class="video-preview <?= $video_media_id > 0 ? '' : 'd-none' ?>" controls playsinline preload="metadata" <?= $video_media_id > 0 ? 'src="media.php?id=' . $video_media_id . '"' : '' ?>></video>
-                                <div id="videoPlaceholder" class="video-placeholder <?= $video_media_id > 0 ? 'd-none' : '' ?>">
-                                    <i class="bi bi-camera-video-fill"></i>
-                                    <span>No video yet</span>
-                                </div>
-                                <div id="videoRecordingBadge" class="video-recording-badge d-none"><span></span>Recording</div>
-                            </div>
-
-                            <div class="video-controls">
-                                <div class="video-time" id="videoTimer">00:00 / 00:30</div>
-                                <div class="video-buttons">
-                                    <button type="button" class="btn btn-success" id="startVideo">
-                                        <i class="bi bi-camera-video-fill me-1"></i>Start Recording
-                                    </button>
-                                    <button type="button" class="btn btn-outline-secondary d-none" id="stopVideo">
-                                        <i class="bi bi-stop-fill me-1"></i>Stop
-                                    </button>
-                                    <button type="button" class="btn btn-outline-success d-none" id="recordAgainVideo">
-                                        <i class="bi bi-arrow-repeat me-1"></i>Record Again
-                                    </button>
-                                    <?php if ($video_media_id > 0): ?>
-                                        <button type="button" class="btn btn-outline-danger" id="removeVideo">
-                                            <i class="bi bi-trash me-1"></i>Remove
-                                        </button>
-                                    <?php endif; ?>
-                                </div>
-                                <div class="video-error alert alert-danger d-none" id="videoError" role="alert"></div>
-                                <div class="video-status" id="videoStatus">
-                                    <?= $video_media_id > 0 ? 'Your current video introduction is ready to play.' : 'Optional — record up to 30 seconds.' ?>
-                                </div>
-                            </div>
-                        </div>
-</div>
-
-<div class="step5-media-panel" id="voiceIntroductionSection">
-                        <div class="section-heading">
-                            <span class="section-icon"><i class="bi bi-mic"></i></span>
-                            <div>
-                                <h2>Voice Introduction</h2>
-                            </div>
-                        </div>
-
-                        <div class="voice-card" id="voiceCard" data-existing-media-id="<?= $voice_media_id ?>">
-                            <div class="voice-visual">
-                                <div class="voice-mic-circle" id="voiceMicCircle"><i class="bi bi-mic-fill"></i></div>
-                                <div class="voice-wave" id="voiceWave" aria-hidden="true">
-                                    <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
-                                </div>
-                            </div>
-
-                            <div class="voice-controls">
-                                <div class="voice-time" id="voiceTimer">00:00 / 00:30</div>
-                                <div class="voice-buttons">
-                                    <button type="button" class="btn btn-success" id="startVoice">
-                                        <i class="bi bi-mic-fill me-1"></i>Start Recording
-                                    </button>
-                                    <button type="button" class="btn btn-outline-secondary d-none" id="stopVoice">
-                                        <i class="bi bi-stop-fill me-1"></i>Stop
-                                    </button>
-                                    <button type="button" class="btn btn-outline-success d-none" id="recordAgainVoice">
-                                        <i class="bi bi-arrow-repeat me-1"></i>Record Again
-                                    </button>
-                                    <?php if ($voice_media_id > 0): ?>
-                                        <button type="button" class="btn btn-outline-danger" id="removeVoice">
-                                            <i class="bi bi-trash me-1"></i>Remove
-                                        </button>
-                                    <?php endif; ?>
-                                </div>
-                                <audio id="voicePlayer" class="voice-player <?= $voice_media_id > 0 ? '' : 'd-none' ?>" controls preload="metadata" <?= $voice_media_id > 0 ? 'src="media.php?id=' . $voice_media_id . '"' : '' ?>></audio>
-                                <div class="voice-error alert alert-danger d-none" id="voiceError" role="alert"></div>
-                                <div class="voice-status" id="voiceStatus">
-                                    <?= $voice_media_id > 0 ? 'Your current voice introduction is ready to play.' : 'Optional — record up to 30 seconds.' ?>
-                                </div>
-                            </div>
-                        </div>
-</div>
-                        </div>
-                    </section>
-
 
                     <section class="step5-section privacy-summary-section">
                         <div class="section-heading">

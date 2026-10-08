@@ -237,6 +237,10 @@
     let videoBlob = null;
     let videoDuration = 0;
     let videoMimeType = '';
+    let videoCanvas = null;
+    let videoCanvasContext = null;
+    let videoDrawFrame = null;
+    let recordingStream = null;
 
     function initVideo() {
         if (!videoCard) return;
@@ -251,6 +255,9 @@
         const statusEl = document.getElementById('videoStatus');
         const errorEl = document.getElementById('videoError');
         const visibilityEl = document.getElementById('videoVisibility');
+        let livePreviewCanvas = null;
+        let livePreviewContext = null;
+        let livePreviewFrame = null;
 
         function error(message) {
             if (!errorEl) return;
@@ -274,8 +281,72 @@
             start.classList.remove('d-none'); stop.classList.add('d-none'); badge.classList.add('d-none');
             updateTimer();
         }
+        function startRawLivePreview() {
+            if (!livePreviewCanvas) {
+                livePreviewCanvas = document.createElement('canvas');
+                livePreviewCanvas.className = 'video-preview-live-canvas';
+                livePreviewCanvas.setAttribute('aria-hidden', 'true');
+                livePreviewCanvas.style.width = '100%';
+                livePreviewCanvas.style.height = '100%';
+                livePreviewCanvas.style.objectFit = 'cover';
+                livePreviewCanvas.style.display = 'block';
+                livePreviewCanvas.style.background = '#eaf4f0';
+                player.parentNode.insertBefore(livePreviewCanvas, player.nextSibling);
+                livePreviewContext = livePreviewCanvas.getContext('2d', { alpha: false });
+            }
+
+            player.style.display = 'none';
+            livePreviewCanvas.style.display = 'block';
+
+            if (livePreviewFrame) window.cancelAnimationFrame(livePreviewFrame);
+            const draw = function () {
+                if (!livePreviewContext || !player.videoWidth || !player.videoHeight) {
+                    livePreviewFrame = window.requestAnimationFrame(draw);
+                    return;
+                }
+
+                const vw = player.videoWidth;
+                const vh = player.videoHeight;
+                const targetRatio = 16 / 9;
+                let sx = 0, sy = 0, sw = vw, sh = vh;
+                const sourceRatio = vw / vh;
+                if (sourceRatio > targetRatio) {
+                    sw = Math.round(vh * targetRatio);
+                    sx = Math.floor((vw - sw) / 2);
+                } else if (sourceRatio < targetRatio) {
+                    sh = Math.round(vw / targetRatio);
+                    sy = Math.floor((vh - sh) / 2);
+                }
+
+                const rect = livePreviewCanvas.getBoundingClientRect();
+                const dpr = window.devicePixelRatio || 1;
+                const cw = Math.max(1, Math.round(rect.width * dpr));
+                const ch = Math.max(1, Math.round(rect.height * dpr));
+                if (livePreviewCanvas.width !== cw || livePreviewCanvas.height !== ch) {
+                    livePreviewCanvas.width = cw;
+                    livePreviewCanvas.height = ch;
+                }
+
+                // The browser's front-camera stream is displayed mirrored on the live preview.
+                // Flip only this canvas rendering so the live preview is visually non-mirrored.
+                // The recorded-video canvas below remains unchanged.
+                livePreviewContext.setTransform(-1, 0, 0, 1, cw, 0);
+                livePreviewContext.drawImage(player, sx, sy, sw, sh, 0, 0, cw, ch);
+                livePreviewFrame = window.requestAnimationFrame(draw);
+            };
+            livePreviewFrame = window.requestAnimationFrame(draw);
+        }
+
+        function stopRawLivePreview() {
+            if (livePreviewFrame) window.cancelAnimationFrame(livePreviewFrame);
+            livePreviewFrame = null;
+            if (livePreviewCanvas) livePreviewCanvas.style.display = 'none';
+            player.style.display = '';
+        }
+
         async function startRecording() {
             error(''); videoBlob = null; videoDuration = 0;
+            const existingSrc = player.getAttribute('src') || '';
             if (!window.isSecureContext && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
                 error('Camera and microphone access requires a secure HTTPS connection.'); return;
             }
@@ -285,9 +356,11 @@
             try {
                 videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: true });
                 videoMimeType = mime();
-                videoRecorder = videoMimeType ? new MediaRecorder(videoStream, { mimeType: videoMimeType }) : new MediaRecorder(videoStream);
                 videoChunks = []; videoSeconds = 0; updateTimer();
                 player.srcObject = videoStream;
+                // Front-facing camera previews are normally mirrored by the browser.
+                // Unmirror only the live recording preview; the recorded file logic stays unchanged.
+                player.style.setProperty('transform', 'none', 'important');
                 player.muted = true;
                 player.autoplay = true;
                 player.playsInline = true;
@@ -299,11 +372,64 @@
                 try { await player.play(); } catch (previewError) {
                     player.onloadedmetadata = () => { player.play().catch(() => {}); };
                 }
+                startRawLivePreview();
+
+                // Flip the canvas horizontally so the saved video is NOT mirrored.
+                // The camera preview itself remains untouched; only the MediaRecorder input is corrected.
+                await new Promise(function (resolve) {
+                    if (player.readyState >= 2 && player.videoWidth && player.videoHeight) {
+                        resolve();
+                        return;
+                    }
+                    const onReady = function () {
+                        player.removeEventListener('loadedmetadata', onReady);
+                        resolve();
+                    };
+                    player.addEventListener('loadedmetadata', onReady, { once: true });
+                });
+
+                videoCanvas = document.createElement('canvas');
+                videoCanvas.width = player.videoWidth || 1280;
+                videoCanvas.height = player.videoHeight || 720;
+                videoCanvasContext = videoCanvas.getContext('2d', { alpha: false });
+                if (!videoCanvasContext || !videoCanvas.captureStream) {
+                    throw new Error('This browser does not support the video recording format required for this feature.');
+                }
+
+                const drawVideoFrame = function () {
+                    if (!videoCanvasContext || !videoCanvas) return;
+                    videoCanvasContext.save();
+                    videoCanvasContext.translate(videoCanvas.width, 0);
+                    videoCanvasContext.scale(-1, 1);
+                    videoCanvasContext.drawImage(player, 0, 0, videoCanvas.width, videoCanvas.height);
+                    videoCanvasContext.restore();
+                    videoDrawFrame = window.requestAnimationFrame(drawVideoFrame);
+                };
+                drawVideoFrame();
+
+                recordingStream = videoCanvas.captureStream(30);
+                videoStream.getAudioTracks().forEach(function (track) {
+                    recordingStream.addTrack(track);
+                });
+
+                videoRecorder = videoMimeType ? new MediaRecorder(recordingStream, { mimeType: videoMimeType }) : new MediaRecorder(recordingStream);
                 videoRecorder.ondataavailable = e => { if (e.data?.size) videoChunks.push(e.data); };
                 videoRecorder.onstop = function () {
                     videoBlob = new Blob(videoChunks, { type: videoRecorder.mimeType || videoMimeType || 'video/webm' });
                     videoDuration = Math.max(1, Math.min(30, videoSeconds));
+                    if (videoDrawFrame) {
+                        window.cancelAnimationFrame(videoDrawFrame);
+                        videoDrawFrame = null;
+                    }
+                    if (recordingStream) {
+                        recordingStream.getTracks().forEach(function (track) { track.stop(); });
+                        recordingStream = null;
+                    }
+                    videoCanvas = null;
+                    videoCanvasContext = null;
+                    stopRawLivePreview();
                     if (player.srcObject) player.srcObject = null;
+                    player.style.transform = '';
                     player.src = URL.createObjectURL(videoBlob); player.muted = false; player.autoplay = false; player.controls = true; player.classList.remove('d-none');
                     statusEl.textContent = 'Recording ready. Play it back, then Save & Continue to keep it.';
                     again.classList.remove('d-none'); resetUI();
@@ -312,7 +438,36 @@
                 statusEl.textContent = 'Recording… speak naturally. You have up to 30 seconds.';
                 videoTimerId = setInterval(() => { videoSeconds++; updateTimer(); if (videoSeconds >= 30) stopRecording(); }, 1000);
             } catch (e) {
+                stopRawLivePreview();
                 stopStream();
+                if (videoDrawFrame) {
+                    window.cancelAnimationFrame(videoDrawFrame);
+                    videoDrawFrame = null;
+                }
+                if (recordingStream) {
+                    recordingStream.getTracks().forEach(function (track) { track.stop(); });
+                    recordingStream = null;
+                }
+                videoCanvas = null;
+                videoCanvasContext = null;
+                player.pause();
+                player.srcObject = null;
+                player.removeAttribute('src');
+                if (existingSrc) {
+                    player.setAttribute('src', existingSrc);
+                    player.controls = true;
+                    player.classList.remove('d-none');
+                    placeholder.classList.add('d-none');
+                    player.load();
+                } else {
+                    player.classList.add('d-none');
+                    placeholder.classList.remove('d-none');
+                }
+                start.classList.remove('d-none');
+                stop.classList.add('d-none');
+                badge.classList.add('d-none');
+                statusEl.textContent = existingSrc ? 'Your current video introduction is ready to play.' : 'Optional — record up to 30 seconds.';
+                updateTimer();
                 if (e && e.name === 'NotAllowedError') {
                     error('Camera and microphone access was blocked. Allow permissions for this site, then try again.');
                 } else if (e && e.name === 'NotFoundError') {
@@ -327,7 +482,11 @@
         function stopRecording() { stopClock(); if (videoRecorder && videoRecorder.state !== 'inactive') videoRecorder.stop(); }
         start.addEventListener('click', startRecording); stop.addEventListener('click', stopRecording);
         again.addEventListener('click', function () {
-            player.pause(); player.removeAttribute('src'); player.srcObject = null; player.classList.add('d-none');
+            stopRawLivePreview();
+            player.pause(); player.removeAttribute('src'); player.srcObject = null;
+            if (videoDrawFrame) { window.cancelAnimationFrame(videoDrawFrame); videoDrawFrame = null; }
+            if (recordingStream) { recordingStream.getTracks().forEach(function (track) { track.stop(); }); recordingStream = null; }
+            videoCanvas = null; videoCanvasContext = null;
             videoBlob = null; videoDuration = 0; videoSeconds = 0; updateTimer(); again.classList.add('d-none'); start.classList.remove('d-none');
             placeholder.classList.remove('d-none'); statusEl.textContent = 'Ready for a new recording.'; error('');
         });
@@ -338,7 +497,8 @@
                 fetch('save_video.php', { method: 'POST', headers: {'Content-Type':'application/x-www-form-urlencoded; charset=UTF-8'}, body:'action=remove', credentials:'same-origin' })
                 .then(r => r.json()).then(data => {
                     if (!data.success) throw new Error(data.message || 'Unable to remove video introduction.');
-                    player.pause(); player.removeAttribute('src'); player.srcObject = null; player.classList.add('d-none'); placeholder.classList.remove('d-none');
+                    stopRawLivePreview();
+                    player.pause(); player.removeAttribute('src'); player.srcObject = null; player.style.transform = ''; player.classList.add('d-none'); placeholder.classList.remove('d-none');
                     videoBlob = null; again.classList.add('d-none'); start.classList.remove('d-none'); statusEl.textContent = 'Video introduction removed. You can record a new one anytime.'; remove.classList.add('d-none'); error('');
                 }).catch(e => { error(e.message); remove.disabled = false; });
             });
@@ -359,6 +519,126 @@
                 .catch(e => { const box=document.getElementById('videoError'); box.textContent=e.message; box.classList.remove('d-none'); resolve(false); });
         });
     }
+
+    // Accessibility checks — Step 5
+    // Keep these checks on this page only; they persist the pass state through
+    // the existing accessibility_check.php endpoint.
+    const hearingPlay = document.getElementById('playHearingCheck');
+    const hearingReplay = document.getElementById('replayHearingCheck');
+    const hearingAnswer = document.getElementById('hearingCheckAnswer');
+    const hearingVerify = document.getElementById('verifyHearingCheck');
+    const hearingStatus = document.getElementById('hearingCheckStatus');
+    const hearingCard = document.getElementById('hearingCheckCard');
+    const hearingPrompt = document.getElementById('hearingCheckPrompt');
+
+    const visionImage = document.getElementById('visualCaptchaImage');
+    const visionRefresh = document.getElementById('refreshVisualCaptcha');
+    const visionAnswer = document.getElementById('visionCheckAnswer');
+    const visionVerify = document.getElementById('verifyVisionCheck');
+    const visionStatus = document.getElementById('visionCheckStatus');
+    const visionCard = document.getElementById('visionCheckCard');
+
+    function setCheckBusy(button, busy) {
+        if (!button) return;
+        button.disabled = busy;
+        button.classList.toggle('disabled', busy);
+    }
+
+    function speakHearingCode() {
+        if (!hearingPrompt) return;
+        const code = hearingPrompt.dataset.code || '';
+        if (!code) return;
+
+        if (!('speechSynthesis' in window) || !('SpeechSynthesisUtterance' in window)) {
+            if (hearingStatus) hearingStatus.textContent = 'Audio playback is not supported by this browser.';
+            return;
+        }
+
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(code.split('').join(' '));
+        utterance.lang = 'en-US';
+        utterance.rate = 0.8;
+        utterance.pitch = 1;
+        utterance.volume = 1;
+        utterance.onstart = function () {
+            if (hearingStatus && !hearingCard.classList.contains('is-passed')) {
+                hearingStatus.textContent = 'Playing the four-digit code…';
+            }
+        };
+        utterance.onend = function () {
+            if (hearingStatus && !hearingCard.classList.contains('is-passed')) {
+                hearingStatus.textContent = 'Enter the four digits you heard, then verify.';
+            }
+        };
+        window.speechSynthesis.speak(utterance);
+        if (hearingPlay) hearingPlay.classList.add('d-none');
+        if (hearingReplay) hearingReplay.classList.remove('d-none');
+    }
+
+    async function verifyAccessibilityCheck(check, answer, button, status, card) {
+        const value = (answer?.value || '').trim();
+        if (!value) {
+            if (status) status.textContent = 'Please enter your answer.';
+            answer?.focus();
+            return;
+        }
+
+        setCheckBusy(button, true);
+        try {
+            const body = new URLSearchParams();
+            body.set('check', check);
+            body.set('answer', value);
+
+            const response = await fetch('accessibility_check.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+                body: body.toString(),
+                credentials: 'same-origin'
+            });
+            const data = await response.json();
+            if (!data.success) throw new Error(data.message || 'Unable to verify this check.');
+
+            if (status) status.textContent = '✓ ' + data.message;
+            if (card) card.classList.add('is-passed');
+            if (answer) answer.disabled = true;
+            if (button) button.classList.add('d-none');
+        } catch (error) {
+            if (status) status.textContent = error.message || 'Unable to verify this check.';
+        } finally {
+            if (button && !button.classList.contains('d-none')) setCheckBusy(button, false);
+        }
+    }
+
+    if (hearingPlay) hearingPlay.addEventListener('click', speakHearingCode);
+    if (hearingReplay) hearingReplay.addEventListener('click', speakHearingCode);
+    if (hearingVerify) hearingVerify.addEventListener('click', function () {
+        verifyAccessibilityCheck('hearing', hearingAnswer, hearingVerify, hearingStatus, hearingCard);
+    });
+    if (hearingAnswer) hearingAnswer.addEventListener('keydown', function (event) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            hearingVerify?.click();
+        }
+    });
+
+    if (visionRefresh && visionImage) {
+        visionRefresh.addEventListener('click', function () {
+            setCheckBusy(visionRefresh, true);
+            visionImage.src = 'accessibility_captcha.php?' + Date.now();
+            if (visionAnswer) visionAnswer.value = '';
+            if (visionStatus && !visionCard.classList.contains('is-passed')) visionStatus.textContent = 'New visual code generated.';
+            window.setTimeout(function () { setCheckBusy(visionRefresh, false); }, 250);
+        });
+    }
+    if (visionVerify) visionVerify.addEventListener('click', function () {
+        verifyAccessibilityCheck('vision', visionAnswer, visionVerify, visionStatus, visionCard);
+    });
+    if (visionAnswer) visionAnswer.addEventListener('keydown', function (event) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            visionVerify?.click();
+        }
+    });
 
     const form = document.querySelector('.step5-form');
     if (form) {

@@ -12,6 +12,9 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 $user_id = (int) $_SESSION['user_id'];
+
+require_once 'includes/service_reviews.php';
+
 $booking_id = (int) ($_GET['id'] ?? 0);
 
 if ($booking_id <= 0) {
@@ -92,6 +95,11 @@ $result = mysqli_stmt_get_result($stmt);
 while ($row = mysqli_fetch_assoc($result)) $items[] = $row;
 mysqli_stmt_close($stmt);
 
+$reviews_by_detail = [];
+if (($booking['booking_status'] ?? '') === 'Completed') {
+    $reviews_by_detail = service_review_get_for_booking($conn, $user_id, $booking_id);
+}
+
 include 'includes/header.php';
 ?>
 
@@ -157,6 +165,51 @@ include 'includes/header.php';
                 <?php if (!empty($item['special_instruction'])): ?>
                     <div class="booking-instruction"><i class="fa-solid fa-note-sticky"></i><div><strong>Special instruction</strong><p><?= nl2br(htmlspecialchars($item['special_instruction'])); ?></p></div></div>
                 <?php endif; ?>
+
+                <?php if (($booking['booking_status'] ?? '') === 'Completed'): ?>
+                    <?php $existing_review = $reviews_by_detail[(int) $item['detail_id']] ?? null; ?>
+                    <section class="service-review-card<?= $existing_review ? ' is-reviewed' : ''; ?>" data-review-card data-booking-detail-id="<?= (int) $item['detail_id']; ?>">
+                        <?php if ($existing_review): ?>
+                            <div class="service-review-head">
+                                <div>
+                                    <span class="service-review-kicker"><i class="fa-solid fa-circle-check"></i> YOUR REVIEW</span>
+                                    <h4>Thanks for sharing your experience</h4>
+                                </div>
+                                <span class="service-review-published">Published</span>
+                            </div>
+                            <div class="service-review-rating" aria-label="<?= (int) $existing_review['rating']; ?> out of 5 stars">
+                                <?php for ($star = 1; $star <= 5; $star++): ?>
+                                    <i class="fa-solid fa-star<?= $star <= (int) $existing_review['rating'] ? ' active' : ''; ?>"></i>
+                                <?php endfor; ?>
+                                <strong><?= (int) $existing_review['rating']; ?>/5</strong>
+                            </div>
+                            <?php if (trim((string) ($existing_review['review_text'] ?? '')) !== ''): ?>
+                                <p class="service-review-text">“<?= nl2br(htmlspecialchars($existing_review['review_text'])); ?>”</p>
+                            <?php endif; ?>
+                            <small class="service-review-date">Submitted <?= date('d M Y', strtotime($existing_review['created_at'])); ?></small>
+                        <?php else: ?>
+                            <div class="service-review-head">
+                                <div>
+                                    <span class="service-review-kicker"><i class="fa-regular fa-star"></i> SERVICE REVIEW</span>
+                                    <h4>How was this service?</h4>
+                                    <p>Your completed booking gives you a verified opportunity to rate this package.</p>
+                                </div>
+                            </div>
+                            <form class="service-review-form" data-review-form novalidate>
+                                <div class="service-review-stars" role="radiogroup" aria-label="Choose a rating from 1 to 5 stars">
+                                    <?php for ($star = 1; $star <= 5; $star++): ?>
+                                        <button type="button" class="service-review-star" data-rating="<?= $star; ?>" role="radio" aria-checked="false" aria-label="<?= $star; ?> star<?= $star > 1 ? 's' : ''; ?>"><i class="fa-solid fa-star"></i></button>
+                                    <?php endfor; ?>
+                                    <span class="service-review-rating-label" data-rating-label>Choose a rating</span>
+                                </div>
+                                <textarea name="review_text" maxlength="2000" placeholder="Tell us what you liked about the service (optional)" data-review-text></textarea>
+                                <div class="service-review-form-meta"><span data-review-count>0/2000</span><span>Only one review per booked package.</span></div>
+                                <div class="service-review-feedback" data-review-feedback aria-live="polite"></div>
+                                <button type="submit" class="service-review-submit"><i class="fa-solid fa-paper-plane"></i> Submit Review</button>
+                            </form>
+                        <?php endif; ?>
+                    </section>
+                <?php endif; ?>
             <?php endforeach; ?>
         </section>
 
@@ -172,5 +225,8 @@ include 'includes/header.php';
         <?php endif; ?>
     </main>
 </div>
+
+<script>window.SM_SERVICE_REVIEW = { csrf: <?= json_encode($csrf); ?>, endpoint: <?= json_encode(BASE_URL . 'ajax/service_review.php'); ?> };</script>
+<script src="<?= BASE_URL; ?>assets/js/service-reviews.js?v=1"></script>
 
 <?php include 'includes/footer.php'; ?>

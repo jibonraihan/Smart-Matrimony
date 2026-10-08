@@ -365,13 +365,6 @@ include '../includes/navbar.php';
                         </div>
                     </div>
 
-                    <div class="step4-privacy-note">
-                        <i class="bi bi-shield-check"></i>
-                        <div>
-                            <strong>Your exact location stays under your control.</strong>
-                            <span>Location visibility settings can be managed in the Privacy step.</span>
-                        </div>
-                    </div>
 
                     <div class="step4-actions">
                         <a href="../profile/view_profile.php" class="btn step4-back">

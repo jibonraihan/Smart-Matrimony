@@ -6,6 +6,7 @@ if (session_status() === PHP_SESSION_NONE) {
 
 $currentPage = basename($_SERVER['PHP_SELF']);
 $isHomePage = $currentPage === 'index.php';
+$isChatRequestsPage = $currentPage === 'chat_requests.php';
 
 $navItems = [
     [
@@ -36,7 +37,7 @@ $navItems = [
 ];
 ?>
 
-<nav class="navbar navbar-expand-lg navbar-dark smart-navbar shadow-sm">
+<nav class="navbar navbar-expand-lg navbar-dark smart-navbar shadow-sm<?= $isChatRequestsPage ? ' chat-requests-navbar' : ''; ?>">
 
     <div class="container smart-navbar-container">
 
@@ -49,6 +50,20 @@ $navItems = [
             </span>
         </a>
 
+        <?php if ($isChatRequestsPage): ?>
+            <div class="smart-navbar-actions chat-requests-navbar-actions">
+                <?php if (isset($_SESSION['user_id'])): ?>
+                    <a href="<?= BASE_URL; ?>dashboard.php" class="smart-user-greeting">
+                        <span class="smart-user-greeting-icon"><i class="fa-solid fa-user" aria-hidden="true"></i></span>
+                        <span>Hi, <?= htmlspecialchars($_SESSION['first_name'] ?? 'User'); ?></span>
+                    </a>
+                    <a href="<?= BASE_URL; ?>logout.php" class="btn smart-nav-btn smart-nav-logout">
+                        <i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i>
+                        <span>Logout</span>
+                    </a>
+                <?php endif; ?>
+            </div>
+        <?php else: ?>
         <button
             class="navbar-toggler smart-navbar-toggler"
             type="button"
@@ -156,6 +171,7 @@ $navItems = [
             </div>
 
         </div>
+        <?php endif; ?>
 
     </div>
 

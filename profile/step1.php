@@ -378,13 +378,13 @@ $progress = $completion['percentage'];
                     <div class="step1-field">
                         <label for="age">Age</label>
                         <input type="text" id="age" value="" placeholder="Auto calculated" readonly aria-readonly="true">
-                        <small>Age is calculated automatically from your date of birth.</small>
+                        <small>Calculated automatically from your date of birth.</small>
                     </div>
 
                     <div class="step1-field step1-nid-field">
                         <label for="nid_number">NID or Birth Certificate Number</label>
                         <input type="text" id="nid_number" name="nid_number" value="<?= htmlspecialchars((string) $old['nid_number']) ?>" maxlength="30" placeholder="Optional">
-                        <small>Optional · Enter your NID or Birth Certificate Number.</small>
+                        
                     </div>
 
                     <div class="step1-field">
@@ -439,7 +439,7 @@ $progress = $completion['percentage'];
                     <div class="step1-field">
                         <label for="weight_kg">Weight (kg) <em>*</em></label>
                         <input type="number" id="weight_kg" name="weight_kg" value="<?= htmlspecialchars((string) $old['weight_kg']) ?>" placeholder="Enter weight" min="30" max="200" step="1" required>
-                        <small>Use the arrows or type your weight.</small>
+                        
                     </div>
 
                     <div class="step1-field">
@@ -455,7 +455,7 @@ $progress = $completion['percentage'];
                     <div class="step1-field step1-bio-field">
                         <label for="bio">Short Bio</label>
                         <textarea id="bio" name="bio" maxlength="500" rows="5" placeholder="Write something about your personal life" ><?= htmlspecialchars($old['bio']) ?></textarea>
-                        <small>Optional · Maximum 500 characters.</small>
+                        <small>Maximum 500 characters.</small>
                     </div>
                 </div>
             </section>
@@ -488,13 +488,13 @@ $progress = $completion['percentage'];
                                 <option value="<?= htmlspecialchars($item) ?>" <?= $old['profession'] === $item ? 'selected' : '' ?>><?= htmlspecialchars($item) ?></option>
                             <?php endforeach; ?>
                         </select>
-                        <small id="profession-help">Select your current profession or occupation.</small>
+                        
                     </div>
 
                     <div class="step1-field">
                         <label for="occupation_details">Occupation Details</label>
                         <input type="text" id="occupation_details" name="occupation_details" value="<?= htmlspecialchars((string) $old['occupation_details']) ?>" maxlength="150" placeholder="e.g. Software Engineer at a private company">
-                        <small>Optional · Add a little more detail about your work.</small>
+                        <small>Add a little more detail about your work.</small>
                     </div>
 
                     <div class="step1-field">

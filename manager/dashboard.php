@@ -20,6 +20,7 @@ if (session_status() === PHP_SESSION_NONE) {
 
 require_once '../config/db.php';
 require_once '../config/mail.php';
+require_once '../includes/service_reviews.php';
 
 if (empty($_SESSION['user_id'])) {
     header('Location: login.php');
@@ -459,8 +460,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $discount_percent = max(0, min(100, (float) ($_POST['discount_percent'] ?? 0)));
                 $contact_number = trim($_POST['contact_number'] ?? '');
                 $location = trim($_POST['location'] ?? '');
-                $rating = max(0, min(5, (float) ($_POST['rating'] ?? 0)));
-                $review_count = max(0, (int) ($_POST['review_count'] ?? 0));
                 $status = ($_POST['status'] ?? 'Active') === 'Inactive' ? 'Inactive' : 'Active';
 
                 if ($service_id <= 0 || $provider_name === '' || $package_name === '' || $price < 0 || $discount_percent < 0 || $discount_percent > 100) {
@@ -481,8 +480,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $image = $owned['image'];
                     if ($upload['name']) $image = $upload['name'];
 
-                    $stmt = mysqli_prepare($conn, 'UPDATE service_providers SET service_id=?, provider_name=?, package_name=?, package_details=?, price=?, discount_percent=?, contact_number=?, location=?, rating=?, review_count=?, status=?, image=? WHERE provider_id=? AND manager_id=?');
-                    mysqli_stmt_bind_param($stmt, 'isssddssdissii', $service_id, $provider_name, $package_name, $package_details, $price, $discount_percent, $contact_number, $location, $rating, $review_count, $status, $image, $provider_id, $manager_id);
+                    $stmt = mysqli_prepare($conn, 'UPDATE service_providers SET service_id=?, provider_name=?, package_name=?, package_details=?, price=?, discount_percent=?, contact_number=?, location=?, status=?, image=? WHERE provider_id=? AND manager_id=?');
+                    mysqli_stmt_bind_param($stmt, 'isssddssssii', $service_id, $provider_name, $package_name, $package_details, $price, $discount_percent, $contact_number, $location, $status, $image, $provider_id, $manager_id);
                     mysqli_stmt_execute($stmt);
                     mysqli_stmt_close($stmt);
 
@@ -491,8 +490,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $message = 'Package updated successfully.';
                 } else {
                     $image = $upload['name'] ?? null;
-                    $stmt = mysqli_prepare($conn, 'INSERT INTO service_providers (service_id, provider_name, package_name, package_details, price, discount_percent, contact_number, location, rating, review_count, manager_id, original_manager_id, status, image) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)');
-                    mysqli_stmt_bind_param($stmt, 'isssddssdiiiss', $service_id, $provider_name, $package_name, $package_details, $price, $discount_percent, $contact_number, $location, $rating, $review_count, $manager_id, $manager_id, $status, $image);
+                    $stmt = mysqli_prepare($conn, 'INSERT INTO service_providers (service_id, provider_name, package_name, package_details, price, discount_percent, contact_number, location, manager_id, original_manager_id, status, image) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)');
+                    mysqli_stmt_bind_param($stmt, 'isssddssiiss', $service_id, $provider_name, $package_name, $package_details, $price, $discount_percent, $contact_number, $location, $manager_id, $manager_id, $status, $image);
                     mysqli_stmt_execute($stmt);
                     $new_provider_id = mysqli_insert_id($conn);
                     mysqli_stmt_close($stmt);
@@ -561,6 +560,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     manager_json_response(true, 'Package removed.', ['stats' => $live_stats, 'service_coverage_html' => manager_render_service_coverage($coverage_rows)]);
                 }
                 header('Location: dashboard.php?manager_sid=' . urlencode($manager_sid) . '&success=' . urlencode('Package removed.') . '&catalog_tab=my#catalog');
+                exit;
+            }
+
+            if ($action === 'review_status_update') {
+                $review_id = (int) ($_POST['review_id'] ?? 0);
+                $new_status = ($_POST['status'] ?? '') === 'Hidden' ? 'Hidden' : 'Published';
+                if ($review_id <= 0) throw new RuntimeException('Invalid review selected.');
+                if (!service_review_update_manager_status($conn, $manager_id, $review_id, $new_status)) {
+                    throw new RuntimeException('You can moderate only reviews belonging to your own service packages.');
+                }
+                manager_log_activity($conn, $manager_id, $manager_name, $new_status === 'Hidden' ? 'review_hidden' : 'review_published', null, null, 0, 'Customer review status changed to ' . $new_status . '.');
+                $message = $new_status === 'Hidden' ? 'Review hidden successfully.' : 'Review published successfully.';
+                header('Location: dashboard.php?manager_sid=' . urlencode($manager_sid) . '&success=' . urlencode($message) . '#reviews');
                 exit;
             }
 
@@ -869,6 +881,11 @@ $res = mysqli_stmt_get_result($stmt);
 while ($row = mysqli_fetch_assoc($res)) $bookings[] = $row;
 mysqli_stmt_close($stmt);
 
+$review_filter = $_GET['review_filter'] ?? 'All';
+if (!in_array($review_filter, ['All', 'Published', 'Hidden'], true)) $review_filter = 'All';
+$review_counts = service_review_get_manager_counts($conn, $manager_id);
+$manager_reviews = service_review_get_manager_reviews($conn, $manager_id, $review_filter);
+
 $my_package_count = 0;
 $active_my_packages = 0;
 foreach ($all_packages as $p) {
@@ -953,6 +970,7 @@ include '../includes/header.php';
         <div class="manager-hero-actions">
             <button type="button" class="manager-primary-btn js-open-package-modal"><i class="fa-solid fa-plus"></i> Add Package</button>
             <a href="#bookings" class="manager-secondary-btn js-bookings-jump"><i class="fa-solid fa-calendar-check"></i> Customer Bookings</a>
+            <a href="#reviews" class="manager-secondary-btn"><i class="fa-solid fa-star"></i> Customer Reviews <b class="manager-review-count-badge"><?= (int)$review_counts['All']; ?></b></a>
         </div>
 
         <?php if ($message): ?><div class="manager-alert <?= $email_failed_notice ? 'warning' : 'success'; ?>"><i class="fa-solid <?= $email_failed_notice ? 'fa-triangle-exclamation' : 'fa-circle-check'; ?>"></i><?= htmlspecialchars($message); ?></div><?php endif; ?>
@@ -1075,8 +1093,6 @@ include '../includes/header.php';
                         <div><label>Location</label><input name="location" id="packageLocation" maxlength="255" placeholder="Dhaka, Bangladesh"></div>
                         <div><label>Contact number</label><input name="contact_number" id="packageContact" maxlength="20" placeholder="01XXXXXXXXX"></div>
                         <div class="full-field"><label>Package image</label><input name="package_image" id="packageImage" type="file" accept="image/jpeg,image/png,image/webp"><small class="field-help" id="packageImageHelp">JPG, PNG or WebP · max 10 MB</small></div>
-                        <div><label>Rating</label><input name="rating" id="packageRating" type="number" min="0" max="5" step="0.1" value="0"></div>
-                        <div><label>Review count</label><input name="review_count" id="packageReviewCount" type="number" min="0" value="0"></div>
                         <div><label>Status</label><select name="status" id="packageStatus"><option value="Active">Active</option><option value="Inactive">Inactive</option></select></div>
                     </div>
                     <div class="package-details-field"><label>Package details</label><textarea name="package_details" id="packageDetails" rows="4" maxlength="3000" placeholder="What's included, duration, terms, etc."></textarea></div>
@@ -1160,6 +1176,42 @@ include '../includes/header.php';
                 </div>
             </div>
         </section>
+
+        <section class="manager-panel review-panel" id="reviews">
+            <div class="manager-panel-heading review-panel-heading">
+                <div><span class="manager-kicker">CUSTOMER FEEDBACK</span><h2>Service reviews</h2><p class="review-panel-copy">Reviews from customers who completed bookings for your packages.</p></div>
+                <span class="manager-count"><?= (int)$review_counts[$review_filter]; ?></span>
+            </div>
+            <nav class="review-tabs" aria-label="Review status filters">
+                <?php foreach (['All','Published','Hidden'] as $tab): ?>
+                    <a class="review-tab<?= $review_filter === $tab ? ' is-active' : ''; ?>" data-review-filter="<?= htmlspecialchars($tab); ?>" href="<?= htmlspecialchars($manager_url('dashboard.php', ['booking_tab'=>$booking_tab, 'catalog_tab'=>$catalog_tab, 'review_filter'=>$tab], 'reviews')); ?>"><span><?= htmlspecialchars($tab); ?></span><b><?= (int)$review_counts[$tab]; ?></b></a>
+                <?php endforeach; ?>
+            </nav>
+            <?php if (!$manager_reviews): ?>
+                <div class="manager-empty review-empty"><i class="fa-regular fa-star"></i><h3>No <?= htmlspecialchars(strtolower($review_filter)); ?> reviews</h3><p>Customer reviews for your completed bookings will appear here.</p></div>
+            <?php else: ?>
+                <div class="review-list">
+                    <?php foreach ($manager_reviews as $review): ?>
+                        <article class="manager-review-card">
+                            <div class="manager-review-head">
+                                <div><strong><?= htmlspecialchars(trim($review['first_name'].' '.$review['last_name'])); ?></strong><small><?= htmlspecialchars($review['service_name']); ?> · <?= htmlspecialchars($review['package_name']); ?></small></div>
+                                <span class="review-status-pill <?= strtolower($review['status']); ?>"><?= htmlspecialchars($review['status']); ?></span>
+                            </div>
+                            <div class="manager-review-rating" aria-label="<?= (int)$review['rating']; ?> out of 5 stars"><?php for ($i=1; $i<=5; $i++): ?><i class="fa-solid fa-star<?= $i <= (int)$review['rating'] ? ' is-filled' : ''; ?>"></i><?php endfor; ?><span><?= (int)$review['rating']; ?>/5</span></div>
+                            <?php if (trim((string)$review['review_text']) !== ''): ?><p class="manager-review-text"><?= nl2br(htmlspecialchars($review['review_text'])); ?></p><?php else: ?><p class="manager-review-text is-empty">No written comment.</p><?php endif; ?>
+                            <div class="manager-review-foot"><span><i class="fa-regular fa-calendar"></i> <?= date('d M Y', strtotime($review['created_at'])); ?> · Booking #<?= (int)$review['booking_id']; ?></span>
+                                <form method="post" action="<?= htmlspecialchars($manager_url('dashboard.php')); ?>" class="manager-review-action-form">
+                                    <input type="hidden" name="csrf" value="<?= htmlspecialchars($csrf); ?>">
+                                    <input type="hidden" name="action" value="review_status_update">
+                                    <input type="hidden" name="review_id" value="<?= (int)$review['review_id']; ?>">
+                                    <?php if ($review['status'] === 'Published'): ?><input type="hidden" name="status" value="Hidden"><button class="review-moderation-btn hide" type="submit"><i class="fa-solid fa-eye-slash"></i> Hide review</button><?php else: ?><input type="hidden" name="status" value="Published"><button class="review-moderation-btn publish" type="submit"><i class="fa-solid fa-eye"></i> Publish review</button><?php endif; ?>
+                                </form>
+                            </div>
+                        </article>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
+        </section>
     </main>
 </div>
 <script>
@@ -1235,4 +1287,5 @@ include '../includes/header.php';
 </script>
 <script src="<?= BASE_URL; ?>assets/js/manager-bookings.js?v=4"></script>
 <script src="<?= BASE_URL; ?>assets/js/manager-catalog.js?v=1"></script>
+<script src="<?= BASE_URL; ?>assets/js/manager-reviews.js?v=1"></script>
 <?php include '../includes/footer.php'; ?>
