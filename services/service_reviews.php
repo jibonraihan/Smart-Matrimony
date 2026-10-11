@@ -12,11 +12,6 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-if (!isset($_SESSION['user_id'])) {
-    header('Location: ../login.php');
-    exit;
-}
-
 $provider_id = (int) ($_GET['provider_id'] ?? 0);
 $page = max(1, (int) ($_GET['page'] ?? 1));
 $rating_filter = (int) ($_GET['rating'] ?? 0);

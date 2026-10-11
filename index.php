@@ -87,6 +87,31 @@ foreach ($home_service_packages as $service_package_group) {
     }
 }
 
+/* Latest published review snippets for featured service packages. */
+$home_package_reviews = [];
+$home_review_result = mysqli_query($conn, "
+    SELECT r.provider_id, r.rating, r.review_text, r.created_at,
+           CONCAT(u.first_name, ' ', u.last_name) AS reviewer_name
+    FROM service_reviews r
+    INNER JOIN users u ON u.user_id = r.user_id
+    INNER JOIN (
+        SELECT provider_id, MAX(created_at) AS latest_review
+        FROM service_reviews
+        WHERE status = 'Published'
+        GROUP BY provider_id
+    ) latest ON latest.provider_id = r.provider_id AND latest.latest_review = r.created_at
+    WHERE r.status = 'Published'
+    ORDER BY r.created_at DESC
+");
+if ($home_review_result) {
+    while ($review_row = mysqli_fetch_assoc($home_review_result)) {
+        $pid = (int) $review_row['provider_id'];
+        if (!isset($home_package_reviews[$pid])) {
+            $home_package_reviews[$pid] = $review_row;
+        }
+    }
+}
+
 $home_service_icons = [
     'Photography' => 'fa-camera-retro',
     'Catering' => 'fa-utensils',
@@ -131,6 +156,9 @@ if ($featured_result) {
 }
 
 $home_is_logged_in = isset($_SESSION['user_id']);
+if ($home_is_logged_in && empty($_SESSION['cart_csrf'])) {
+    $_SESSION['cart_csrf'] = bin2hex(random_bytes(24));
+}
 if ($home_is_logged_in && empty($_SESSION['cart_csrf'])) {
     $_SESSION['cart_csrf'] = bin2hex(random_bytes(24));
 }
@@ -1096,6 +1124,29 @@ include 'includes/navbar.php';
                                             <strong>৳<?= number_format($final_price, 0); ?></strong>
                                             <?php if ($discount > 0): ?><span>after discount</span><?php endif; ?>
                                         </div>
+                                        <?php $featured_review = $home_package_reviews[(int) $package['provider_id']] ?? null; ?>
+                                        <?php if ($featured_review): ?>
+                                            <a class="featured-package-review" href="<?= BASE_URL; ?>services/service_reviews.php?provider_id=<?= (int) $package['provider_id']; ?>">
+                                                <span class="featured-package-review-meta"><i class="fa-solid fa-star"></i> <?= (int) $featured_review['rating']; ?>/5 · <?= htmlspecialchars($featured_review['reviewer_name'] ?: 'Verified customer'); ?></span>
+                                                <?php if (trim((string) $featured_review['review_text']) !== ''): ?><span class="featured-package-review-text"><?= htmlspecialchars(mb_strimwidth(trim($featured_review['review_text']), 0, 105, '…', 'UTF-8')); ?></span><?php endif; ?>
+                                                <span class="featured-package-review-more">Read reviews <i class="fa-solid fa-arrow-right"></i></span>
+                                            </a>
+                                        <?php else: ?>
+                                            <a class="featured-package-review featured-package-review-empty" href="<?= BASE_URL; ?>services/service_reviews.php?provider_id=<?= (int) $package['provider_id']; ?>">No written reviews yet · View reviews</a>
+                                        <?php endif; ?>
+                                        <div class="featured-package-card-footer">
+                                            <span class="featured-package-secure-note"><i class="fa-solid fa-shield-heart"></i> Secure booking</span>
+                                            <?php if ($home_is_logged_in): ?>
+                                                <form method="post" action="<?= BASE_URL; ?>cart.php" class="featured-package-cart-form">
+                                                    <input type="hidden" name="csrf" value="<?= htmlspecialchars($_SESSION['cart_csrf']); ?>">
+                                                    <input type="hidden" name="action" value="add">
+                                                    <input type="hidden" name="provider_id" value="<?= (int) $package['provider_id']; ?>">
+                                                    <button type="submit" class="featured-package-cart-btn"><i class="fa-solid fa-cart-plus"></i> Add to Cart</button>
+                                                </form>
+                                            <?php else: ?>
+                                                <button type="button" class="featured-package-cart-btn featured-package-guest-cart" data-login-required><i class="fa-solid fa-cart-plus"></i> Add to Cart</button>
+                                            <?php endif; ?>
+                                        </div>
                                     </div>
                                 </article>
                             <?php endforeach; ?>
@@ -1618,7 +1669,58 @@ include 'includes/navbar.php';
     window.SMART_SERVICE_BASE_URL = <?= json_encode(BASE_URL); ?>;
     window.SMART_SERVICE_CART_CSRF = <?= json_encode($home_is_logged_in ? ($_SESSION['cart_csrf'] ?? '') : ''); ?>;
 </script>
+<script>
+document.querySelectorAll('[data-login-required]').forEach(function (button) {
+    button.addEventListener('click', function () {
+        var goToLogin = function () {
+            if (window.confirm('Please log in or register to add packages to your cart. Continue to Login / Register?')) {
+                window.location.href = <?= json_encode(BASE_URL . 'login.php'); ?>;
+            }
+        };
+        if (window.Swal && typeof window.Swal.fire === 'function') {
+            window.Swal.fire({
+                icon: 'info',
+                title: 'Login Required',
+                text: 'Please log in or register to add this package to your cart.',
+                confirmButtonText: 'Login / Register',
+                showCancelButton: true,
+                cancelButtonText: 'Continue Browsing',
+                confirmButtonColor: '#0f766e'
+            }).then(function (result) {
+                if (result.isConfirmed) window.location.href = <?= json_encode(BASE_URL . 'login.php'); ?>;
+            });
+        } else {
+            goToLogin();
+        }
+    });
+});
+</script>
 <script src="<?= BASE_URL; ?>assets/js/home-services.js?v=1"></script>
 <script src="<?= BASE_URL; ?>assets/js/home-packages.js?v=1"></script>
+
+<!-- Homepage floating Back to Top control -->
+<button type="button" class="home-back-to-top" id="homeBackToTop" aria-label="Back to top" title="Back to top" hidden>
+    <span>Back to Top</span><span class="home-back-to-top-arrow" aria-hidden="true">↑</span>
+</button>
+<script>
+(function () {
+    const button = document.getElementById('homeBackToTop');
+    if (!button) return;
+
+    const updateVisibility = () => {
+        button.hidden = window.scrollY < 360;
+    };
+
+    button.addEventListener('click', () => {
+        window.scrollTo({
+            top: 0,
+            behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'
+        });
+    });
+
+    window.addEventListener('scroll', updateVisibility, { passive: true });
+    updateVisibility();
+})();
+</script>
 
 <?php include 'includes/footer.php'; ?>
