@@ -344,6 +344,9 @@ if ($search_submitted && in_array($target_gender, ['Male', 'Female'], true)) {
         LEFT JOIN districts d ON d.id = up.district_id
         LEFT JOIN upazilas uz ON uz.id = up.upazila_id
         LEFT JOIN divisions dv ON dv.id = up.division_id
+        LEFT JOIN districts pd ON pd.id = up.permanent_district_id
+        LEFT JOIN upazilas puz ON puz.id = up.permanent_upazila_id
+        LEFT JOIN divisions pdv ON pdv.id = up.permanent_division_id
         WHERE {$where_sql}
     ";
 
@@ -398,18 +401,31 @@ if ($search_submitted && in_array($target_gender, ['Male', 'Female'], true)) {
             up.mahram_maintained,
             up.islamic_knowledge,
             up.monthly_income,
+            up.area,
+            up.area_type,
+            up.residence_type,
+            up.post_office,
+            up.postal_code,
             up.district_id,
             up.upazila_id,
             up.division_id,
             d.name_en AS district_name,
             uz.name_en AS upazila_name,
-            dv.name_en AS division_name
+            dv.name_en AS division_name,
+            up.permanent_country, up.permanent_area, up.permanent_area_type, up.permanent_residence_type, up.permanent_post_office, up.permanent_postal_code,
+            up.permanent_division_id, up.permanent_district_id, up.permanent_upazila_id,
+            pd.name_en AS permanent_district_name,
+            puz.name_en AS permanent_upazila_name,
+            pdv.name_en AS permanent_division_name
         FROM users u
         INNER JOIN user_profiles up ON up.user_id = u.user_id
         LEFT JOIN health_profiles hp ON hp.user_id = up.user_id
         LEFT JOIN districts d ON d.id = up.district_id
         LEFT JOIN upazilas uz ON uz.id = up.upazila_id
         LEFT JOIN divisions dv ON dv.id = up.division_id
+        LEFT JOIN districts pd ON pd.id = up.permanent_district_id
+        LEFT JOIN upazilas puz ON puz.id = up.permanent_upazila_id
+        LEFT JOIN divisions pdv ON pdv.id = up.permanent_division_id
         WHERE {$where_sql}
         ORDER BY
             CASE WHEN up.verification_status = 'Verified' THEN 0 ELSE 1 END,
@@ -1370,7 +1386,9 @@ include 'includes/header.php';
                                         <?php if (!empty($profile['prayer_status'])): ?><span><i class="fa-solid fa-mosque"></i><?= htmlspecialchars($profile['prayer_status']); ?></span><?php endif; ?>
                                         <?php if (!empty($profile['smoking_status'])): ?><span><i class="fa-solid fa-ban-smoking"></i><?= htmlspecialchars($profile['smoking_status']); ?></span><?php endif; ?>
                                         <?php if (!empty($profile['blood_group'])): ?><span><i class="fa-solid fa-droplet"></i><?= htmlspecialchars($profile['blood_group']); ?></span><?php endif; ?>
-                                        <?php if (!empty($profile['district_name']) || !empty($profile['district'])): ?><span><i class="fa-solid fa-location-dot"></i><?= htmlspecialchars($profile['district_name'] ?? $profile['district'] ?? ''); ?></span><?php endif; ?>
+                                        <?php if (!empty($profile['district_name']) || !empty($profile['district'])): ?><span><i class="fa-solid fa-location-dot"></i>Current: <?= htmlspecialchars($profile['district_name'] ?? $profile['district'] ?? ''); ?></span><?php endif; ?>
+                                        <?php $hasPermanentLocation = !empty($profile['permanent_division_id']) || !empty($profile['permanent_district_id']) || !empty($profile['permanent_upazila_id']) || !empty($profile['permanent_area']); $sameLocation = !$hasPermanentLocation || ((string)($profile['division_id']??'')===(string)($profile['permanent_division_id']??'') && (string)($profile['district_id']??'')===(string)($profile['permanent_district_id']??'') && (string)($profile['upazila_id']??'')===(string)($profile['permanent_upazila_id']??'') && (string)($profile['area']??'')===(string)($profile['permanent_area']??'') && (string)($profile['area_type']??'')===(string)($profile['permanent_area_type']??'') && (string)($profile['residence_type']??'')===(string)($profile['permanent_residence_type']??'') && (string)($profile['post_office']??'')===(string)($profile['permanent_post_office']??'') && (string)($profile['postal_code']??'')===(string)($profile['permanent_postal_code']??'')); ?>
+                                        <?php if ($sameLocation): ?><span><i class="fa-solid fa-house"></i>Permanent: Same as current location</span><?php elseif (!empty($profile['permanent_district_name'])): ?><span><i class="fa-solid fa-house"></i>Permanent: <?= htmlspecialchars($profile['permanent_district_name']); ?></span><?php endif; ?>
                                     </div>
 
                                     <div class="profile-card-actions">

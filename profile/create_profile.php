@@ -4,6 +4,7 @@ error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
 require_once '../config/db.php';
+require_once '../includes/profile_completion.php';
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -16,7 +17,9 @@ if (!isset($_SESSION['user_id'])) {
 
 }
 
-$user_id = $_SESSION['user_id'];
+$user_id = (int) $_SESSION['user_id'];
+$profileCompletion = sm_get_profile_completion($conn, $user_id);
+$completionPercentage = (int) ($profileCompletion['percentage'] ?? 0);
 
 $page_css = 'assets/css/create-profile.css';
 
@@ -69,15 +72,15 @@ include '../includes/navbar.php';
 
                             <span class="text-success fw-bold">
 
-                                0%
+                                <?= $completionPercentage ?>%
 
                             </span>
 
                         </div>
 
-                        <div class="create-profile-progress progress" role="progressbar" aria-label="Profile completion" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                        <div class="create-profile-progress progress" role="progressbar" aria-label="Profile completion" aria-valuenow="<?= $completionPercentage ?>" aria-valuemin="0" aria-valuemax="100">
 
-                            <div class="progress-bar bg-success" style="width:0%;"></div>
+                            <div class="progress-bar bg-success" style="width:<?= $completionPercentage ?>%;"></div>
 
                         </div>
 

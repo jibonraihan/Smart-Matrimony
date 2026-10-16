@@ -85,6 +85,10 @@ if (isset($_POST['save_step3'])) {
     $islamic_knowledge    = clean_input($_POST['islamic_knowledge'] ?? '');
     $halal_lifestyle      = clean_input($_POST['halal_lifestyle'] ?? '');
     $islamic_activities   = clean_input($_POST['islamic_activities'] ?? '');
+    $favorite_scholars = clean_input($_POST['favorite_scholars'] ?? '');
+    $favorite_books = clean_input($_POST['favorite_books'] ?? '');
+    $religious_knowledge_sources = clean_input($_POST['religious_knowledge_sources'] ?? '');
+    $bidah_shrine_stance = clean_input($_POST['bidah_shrine_stance'] ?? '');
     $tea_coffee           = clean_input($_POST['tea_coffee'] ?? '');
     $diet_preference      = clean_input($_POST['diet_preference'] ?? '');
     $sleep_pattern        = clean_input($_POST['sleep_pattern'] ?? '');
@@ -192,6 +196,10 @@ if (isset($_POST['save_step3'])) {
                     islamic_knowledge=?,
                     halal_lifestyle=?,
                     islamic_activities=?,
+                    favorite_scholars=?,
+                    favorite_books=?,
+                    religious_knowledge_sources=?,
+                    bidah_shrine_stance=?,
                     tea_coffee=?,
                     diet_preference=?,
                     sleep_pattern=?,
@@ -206,7 +214,7 @@ if (isset($_POST['save_step3'])) {
 
             mysqli_stmt_bind_param(
                 $update,
-                'sssssisssssssssssssssi',
+                'sssssisssssssssssssssssssi',
                 $smoking_status,
                 $prayer_status,
                 $beard_status,
@@ -219,6 +227,10 @@ if (isset($_POST['save_step3'])) {
                 $islamic_knowledge,
                 $halal_lifestyle,
                 $islamic_activities,
+                $favorite_scholars,
+                $favorite_books,
+                $religious_knowledge_sources,
+                $bidah_shrine_stance,
                 $tea_coffee,
                 $diet_preference,
                 $sleep_pattern,
@@ -285,6 +297,10 @@ if (isset($_POST['save_step3'])) {
     $user['islamic_knowledge'] = $islamic_knowledge;
     $user['halal_lifestyle'] = $halal_lifestyle;
     $user['islamic_activities'] = $islamic_activities;
+    $user['favorite_scholars'] = $favorite_scholars;
+    $user['favorite_books'] = $favorite_books;
+    $user['religious_knowledge_sources'] = $religious_knowledge_sources;
+    $user['bidah_shrine_stance'] = $bidah_shrine_stance;
     $user['tea_coffee'] = $tea_coffee;
     $user['diet_preference'] = $diet_preference;
     $user['sleep_pattern'] = $sleep_pattern;
@@ -460,6 +476,26 @@ include '../includes/navbar.php';
                             <div class="col-12">
                                 <label class="form-label">Islamic Activities</label>
                                 <textarea name="islamic_activities" rows="3" maxlength="500" class="form-control" placeholder="Mention mosque visits, Islamic lectures, study circles or other activities."><?= htmlspecialchars($user['islamic_activities'] ?? '') ?></textarea>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Favorite Islamic Scholars (Optional)</label>
+                                <textarea name="favorite_scholars" rows="2" maxlength="1000" class="form-control" placeholder="Names of scholars you prefer to learn from."><?= htmlspecialchars($user['favorite_scholars'] ?? '') ?></textarea>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Favorite Books (Optional)</label>
+                                <textarea name="favorite_books" rows="2" maxlength="1000" class="form-control" placeholder="Names of Islamic books you like."><?= htmlspecialchars($user['favorite_books'] ?? '') ?></textarea>
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label">Religious Learning Sources (Optional)</label>
+                                <textarea name="religious_knowledge_sources" rows="2" maxlength="1500" class="form-control" placeholder="Where you practice or learn about Islam, such as classes, mosque, books or online lessons."><?= htmlspecialchars($user['religious_knowledge_sources'] ?? '') ?></textarea>
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label">Your View on Bid'ah (বিদাআত) and Shrine Worship (মাজার পূজা) </label>
+                                <textarea name="bidah_shrine_stance" rows="2" maxlength="500" class="form-control" placeholder="Briefly describe your views."><?= htmlspecialchars($user['bidah_shrine_stance'] ?? '') ?></textarea>
                             </div>
 
 
@@ -663,7 +699,7 @@ include '../includes/navbar.php';
                     </section>
 
                     <div class="step3-actions">
-                        <a href="view_profile.php" class="btn btn-outline-secondary step3-back">
+                        <a href="view_profile.php?user_id=<?php echo $user_id; ?>" class="btn btn-outline-secondary step3-back">
                             <i class="bi bi-arrow-left-circle"></i> Back to Profile
                         </a>
                         <button type="submit" name="save_step3" class="btn btn-success step3-save">

@@ -365,6 +365,11 @@ $admin_header_subtitle = 'System overview and administrative modules.';
         <span class="admin-module-copy"><strong>Operations Center</strong><small>Services, bookings, matching, communication and operational audit.</small></span>
         <span class="admin-module-arrow" aria-hidden="true">→</span>
       </a>
+      <a class="admin-module-card" href="reports.php">
+        <span class="admin-module-icon">▤</span>
+        <span class="admin-module-copy"><strong>Reports &amp; PDF Export</strong><small>Detailed platform analytics, account and booking registers, and staff audit reports.</small></span>
+        <span class="admin-module-arrow" aria-hidden="true">→</span>
+      </a>
     </div>
   </section>
   <section class="system-overview">

@@ -629,6 +629,7 @@ function qs(array $extra = []): string {
     </div>
     <div class="auth-header-actions">
         <span class="identity"><span>AUTHENTICATOR</span> <?= htmlspecialchars($auth['first_name'].' '.$auth['last_name']) ?></span>
+        <a href="reports.php" class="header-btn"><i class="fa-solid fa-file-pdf"></i> Reports &amp; PDF</a>
         <a href="logout.php" class="header-btn danger"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
     </div>
 </header>

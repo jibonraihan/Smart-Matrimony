@@ -56,11 +56,25 @@ $stmt = mysqli_prepare($conn, "
         up.madhhab,
         up.marital_status,
         up.bio,
+        up.biodata_created_by,
+        up.guardian_consent,
         up.photo,
         up.height_cm,
         up.weight_kg,
         up.complexion,
         up.country,
+        up.division_id,
+        up.district_id,
+        up.upazila_id,
+        up.permanent_country,
+        up.permanent_division_id,
+        up.permanent_district_id,
+        up.permanent_upazila_id,
+        up.permanent_area,
+        up.permanent_area_type,
+        up.permanent_residence_type,
+        up.permanent_post_office,
+        up.permanent_postal_code,
         up.area,
         up.highest_education,
         up.profession,
@@ -68,8 +82,15 @@ $stmt = mysqli_prepare($conn, "
         up.monthly_income,
         up.father_name,
         up.father_profession,
+        up.father_alive,
         up.mother_name,
         up.mother_profession,
+        up.mother_alive,
+        up.parents_details,
+        up.brothers_details,
+        up.sisters_details,
+        up.paternal_uncles_details,
+        up.paternal_aunts_details,
         up.guardian_name,
         up.guardian_relation,
         up.guardian_contact,
@@ -100,6 +121,10 @@ $stmt = mysqli_prepare($conn, "
         up.islamic_knowledge,
         up.halal_lifestyle,
         up.islamic_activities,
+        up.favorite_scholars,
+        up.favorite_books,
+        up.religious_knowledge_sources,
+        up.bidah_shrine_stance,
         up.tea_coffee,
         up.diet_preference,
         up.sleep_pattern,
@@ -116,12 +141,18 @@ $stmt = mysqli_prepare($conn, "
         up.photo_visibility,
         d.name_en AS district_name,
         dv.name_en AS division_name,
-        uz.name_en AS upazila_name
+        uz.name_en AS upazila_name,
+        pd.name_en AS permanent_district_name,
+        pdv.name_en AS permanent_division_name,
+        puz.name_en AS permanent_upazila_name
     FROM users u
     INNER JOIN user_profiles up ON up.user_id = u.user_id
     LEFT JOIN divisions dv ON dv.id = up.division_id
     LEFT JOIN districts d ON d.id = up.district_id
     LEFT JOIN upazilas uz ON uz.id = up.upazila_id
+    LEFT JOIN divisions pdv ON pdv.id = up.permanent_division_id
+    LEFT JOIN districts pd ON pd.id = up.permanent_district_id
+    LEFT JOIN upazilas puz ON puz.id = up.permanent_upazila_id
     WHERE u.user_id = ?
       AND u.account_status = 'Active'
       AND (up.profile_visibility = 'Public' OR u.user_id = ?)
@@ -481,6 +512,9 @@ include '../includes/header.php';
                 <?php endif; ?>
 
                 <div class="profile-view-actions">
+                    <a class="profile-action secondary" href="<?= BASE_URL; ?>profile/download_biodata.php?user_id=<?= $profile_user_id; ?>">
+                        <i class="fa-solid fa-file-pdf"></i> Download Biodata PDF
+                    </a>
                     <?php if ($is_own_profile): ?>
                         <a class="profile-action primary" href="<?= BASE_URL; ?>profile/create_profile.php">
                             <i class="fa-solid fa-user-pen"></i> Edit My Profile
@@ -615,6 +649,10 @@ include '../includes/header.php';
                     <div><span>Education</span><strong><?= htmlspecialchars($profile['highest_education'] ?? 'Not provided'); ?></strong></div>
                     <div><span>Profession</span><strong><?= htmlspecialchars($profile['profession'] ?? 'Not provided'); ?></strong></div>
                     <div><span>Occupation Details</span><strong><?= htmlspecialchars($profile['occupation_details'] ?? 'Not provided'); ?></strong></div>
+                    <div><span>Biodata Created By</span><strong><?= htmlspecialchars(trim((string)($profile['biodata_created_by'] ?? '')) !== '' ? $profile['biodata_created_by'] : 'Not provided'); ?></strong></div>
+                    <?php if (($profile['biodata_created_by'] ?? '') === 'Self'): ?>
+                        <div><span>Guardian Consent for Biodata Creation</span><strong><?= array_key_exists('guardian_consent', $profile) && $profile['guardian_consent'] !== null ? ((int)$profile['guardian_consent'] === 1 ? 'Yes' : 'No') : 'Not provided'; ?></strong></div>
+                    <?php endif; ?>
                 </div>
             </section>
 
@@ -688,22 +726,62 @@ include '../includes/header.php';
                     <?php else: ?>
                         <div><span>Hijab</span><strong><?= htmlspecialchars($profile['hijab_status'] ?? 'Not provided'); ?></strong></div>
                     <?php endif; ?>
+                    <?php if (trim((string)($profile['favorite_scholars'] ?? '')) !== ''): ?>
+                        <div class="detail-wide"><span>Favorite Islamic Scholars</span><strong><?= nl2br(htmlspecialchars($profile['favorite_scholars'])); ?></strong></div>
+                    <?php endif; ?>
+                    <?php if (trim((string)($profile['favorite_books'] ?? '')) !== ''): ?>
+                        <div class="detail-wide"><span>Favorite Islamic Books</span><strong><?= nl2br(htmlspecialchars($profile['favorite_books'])); ?></strong></div>
+                    <?php endif; ?>
+                    <?php if (trim((string)($profile['religious_knowledge_sources'] ?? '')) !== ''): ?>
+                        <div class="detail-wide"><span>Religious Learning &amp; Practice Sources</span><strong><?= nl2br(htmlspecialchars($profile['religious_knowledge_sources'])); ?></strong></div>
+                    <?php endif; ?>
+                    <?php if (trim((string)($profile['bidah_shrine_stance'] ?? '')) !== ''): ?>
+                        <div class="detail-wide"><span>Views on Bid'ah &amp; Shrine Worship</span><strong><?= nl2br(htmlspecialchars($profile['bidah_shrine_stance'])); ?></strong></div>
+                    <?php endif; ?>
                 </div>
             </section>
 
+            <?php
+                $currentAddressKeys = ['country','division_id','district_id','upazila_id','area','area_type','residence_type','post_office','postal_code'];
+                $permanentAddressKeys = ['permanent_country','permanent_division_id','permanent_district_id','permanent_upazila_id','permanent_area','permanent_area_type','permanent_residence_type','permanent_post_office','permanent_postal_code'];
+                $hasPermanentAddress = false;
+                foreach ($permanentAddressKeys as $addressKey) { if (trim((string)($profile[$addressKey] ?? '')) !== '') { $hasPermanentAddress = true; break; } }
+                $sameAsCurrent = !$hasPermanentAddress;
+                if ($hasPermanentAddress) {
+                    $sameAsCurrent = true;
+                    foreach (array_combine($currentAddressKeys, $permanentAddressKeys) as $currentKey => $permanentKey) {
+                        if (trim((string)($profile[$currentKey] ?? '')) !== trim((string)($profile[$permanentKey] ?? ''))) { $sameAsCurrent = false; break; }
+                    }
+                }
+            ?>
             <section class="profile-detail-card profile-part4-card">
-                <div class="detail-card-heading"><i class="fa-solid fa-location-dot"></i><div><h2>Location</h2><small>Current residence &amp; hometown details</small></div></div>
+                <div class="detail-card-heading"><i class="fa-solid fa-location-dot"></i><div><h2>Location</h2><small>Current and permanent address details</small></div></div>
                 <div class="detail-list">
+                    <div class="detail-wide"><strong>Current Address</strong></div>
                     <div><span>Country</span><strong><?= htmlspecialchars($profile['country'] ?? 'Not provided'); ?></strong></div>
                     <div><span>Division</span><strong><?= htmlspecialchars($profile['division_name'] ?? 'Not provided'); ?></strong></div>
                     <div><span>District</span><strong><?= htmlspecialchars($profile['district_name'] ?? 'Not provided'); ?></strong></div>
                     <div><span>Upazila</span><strong><?= htmlspecialchars($profile['upazila_name'] ?? 'Not provided'); ?></strong></div>
                     <div><span>Area</span><strong><?= htmlspecialchars($profile['area'] ?? 'Not provided'); ?></strong></div>
                     <div><span>Area Type</span><strong><?= htmlspecialchars($profile['area_type'] ?? 'Not provided'); ?></strong></div>
-                    <div><span>Residence Type</span><strong><?= htmlspecialchars($profile['residence_type'] ?? 'Not provided'); ?></strong></div>
+                    <div><span>Residential Details</span><strong><?= htmlspecialchars($profile['residence_type'] ?? 'Not provided'); ?></strong></div>
                     <div><span>Post Office</span><strong><?= htmlspecialchars($profile['post_office'] ?? 'Not provided'); ?></strong></div>
                     <div><span>Postal Code</span><strong><?= htmlspecialchars($profile['postal_code'] ?? 'Not provided'); ?></strong></div>
-                    <div><span>Permanent Hometown</span><strong><?= htmlspecialchars($profile['permanent_hometown'] ?? 'Not provided'); ?></strong></div>
+                    <div class="detail-wide"><strong>Permanent Address</strong></div>
+                    <?php if ($sameAsCurrent): ?>
+                        <div class="detail-wide"><span>Permanent Address</span><strong>Same as current location</strong></div>
+                    <?php else: ?>
+                        <div><span>Country</span><strong><?= htmlspecialchars($profile['permanent_country'] ?? 'Not provided'); ?></strong></div>
+                        <div><span>Division</span><strong><?= htmlspecialchars($profile['permanent_division_name'] ?? 'Not provided'); ?></strong></div>
+                        <div><span>District</span><strong><?= htmlspecialchars($profile['permanent_district_name'] ?? 'Not provided'); ?></strong></div>
+                        <div><span>Upazila</span><strong><?= htmlspecialchars($profile['permanent_upazila_name'] ?? 'Not provided'); ?></strong></div>
+                        <div><span>Area</span><strong><?= htmlspecialchars($profile['permanent_area'] ?? 'Not provided'); ?></strong></div>
+                        <div><span>Area Type</span><strong><?= htmlspecialchars($profile['permanent_area_type'] ?? 'Not provided'); ?></strong></div>
+                        <div><span>Residential Details</span><strong><?= htmlspecialchars($profile['permanent_residence_type'] ?? 'Not provided'); ?></strong></div>
+                        <div><span>Post Office</span><strong><?= htmlspecialchars($profile['permanent_post_office'] ?? 'Not provided'); ?></strong></div>
+                        <div><span>Postal Code</span><strong><?= htmlspecialchars($profile['permanent_postal_code'] ?? 'Not provided'); ?></strong></div>
+                    <?php endif; ?>
+                    <div><span>Permanent Home / Hometown</span><strong><?= htmlspecialchars($profile['permanent_hometown'] ?? 'Not provided'); ?></strong></div>
                     <div><span>Address Details</span><strong><?= htmlspecialchars($profile['address_details'] ?? 'Not provided'); ?></strong></div>
                 </div>
             </section>
@@ -714,13 +792,20 @@ include '../includes/header.php';
                     <div><span>Family Type</span><strong><?= htmlspecialchars($profile['family_type'] ?? 'Not provided'); ?></strong></div>
                     <div><span>Family Status</span><strong><?= htmlspecialchars($profile['family_status'] ?? 'Not provided'); ?></strong></div>
                     <div><span>Father</span><strong><?= htmlspecialchars($profile['father_name'] ?? 'Not provided'); ?></strong></div>
-                    <div><span>Father's Profession</span><strong><?= htmlspecialchars($profile['father_profession'] ?? 'Not provided'); ?></strong></div>
+                    <?php if (!empty($profile['father_alive'])): ?><div><span>Father Alive?</span><strong><?= htmlspecialchars($profile['father_alive']); ?></strong></div><?php endif; ?>
+                    <?php if (!empty($profile['father_profession'])): ?><div><span>Father's Profession</span><strong><?= htmlspecialchars($profile['father_profession']); ?></strong></div><?php endif; ?>
                     <div><span>Mother</span><strong><?= htmlspecialchars($profile['mother_name'] ?? 'Not provided'); ?></strong></div>
-                    <div><span>Mother's Profession</span><strong><?= htmlspecialchars($profile['mother_profession'] ?? 'Not provided'); ?></strong></div>
+                    <?php if (!empty($profile['mother_alive'])): ?><div><span>Mother Alive?</span><strong><?= htmlspecialchars($profile['mother_alive']); ?></strong></div><?php endif; ?>
+                    <?php if (!empty($profile['mother_profession'])): ?><div><span>Mother's Profession</span><strong><?= htmlspecialchars($profile['mother_profession']); ?></strong></div><?php endif; ?>
+                    <?php if (!empty($profile['parents_details'])): ?><div><span>Additional Details About Parents</span><strong><?= nl2br(htmlspecialchars($profile['parents_details'])); ?></strong></div><?php endif; ?>
                     <div><span>Brothers</span><strong><?= $profile['brothers_count'] !== null ? (int)$profile['brothers_count'] : 'Not provided'; ?></strong></div>
                     <div><span>Sisters</span><strong><?= $profile['sisters_count'] !== null ? (int)$profile['sisters_count'] : 'Not provided'; ?></strong></div>
                     <div><span>Paternal Uncles</span><strong><?= $profile['paternal_uncles_count'] !== null ? (int)$profile['paternal_uncles_count'] : 'Not provided'; ?></strong></div>
                     <div><span>Paternal Aunts</span><strong><?= $profile['paternal_aunts_count'] !== null ? (int)$profile['paternal_aunts_count'] : 'Not provided'; ?></strong></div>
+                    <?php if (!empty($profile['brothers_details'])): ?><div><span>Brothers' Details</span><strong><?= nl2br(htmlspecialchars($profile['brothers_details'])); ?></strong></div><?php endif; ?>
+                    <?php if (!empty($profile['sisters_details'])): ?><div><span>Sisters' Details</span><strong><?= nl2br(htmlspecialchars($profile['sisters_details'])); ?></strong></div><?php endif; ?>
+                    <?php if (!empty($profile['paternal_uncles_details'])): ?><div><span>Father's Brothers' Details</span><strong><?= nl2br(htmlspecialchars($profile['paternal_uncles_details'])); ?></strong></div><?php endif; ?>
+                    <?php if (!empty($profile['paternal_aunts_details'])): ?><div><span>Father's Sisters' Details</span><strong><?= nl2br(htmlspecialchars($profile['paternal_aunts_details'])); ?></strong></div><?php endif; ?>
                     <div><span>Paternal Siblings Married</span><strong><?= htmlspecialchars($profile['paternal_siblings_married'] ?? 'Not provided'); ?></strong></div>
                     <div><span>Family Purdah Environment</span><strong><?= htmlspecialchars($profile['family_purdah_environment'] ?? 'Not provided'); ?></strong></div>
                     <div><span>Family Religious Lifestyle</span><strong><?= htmlspecialchars($profile['family_religious_lifestyle'] ?? 'Not provided'); ?></strong></div>
@@ -883,6 +968,13 @@ include '../includes/header.php';
                         <div class="preference-additional">
                             <span>Additional Preferences</span>
                             <p><?= nl2br(htmlspecialchars($partner_preferences['additional_preferences'])); ?></p>
+                        </div>
+                    <?php endif; ?>
+
+                    <?php if (!empty($partner_preferences['partner_description'])): ?>
+                        <div class="preference-additional">
+                            <span>Detailed Description of Your Ideal Partner</span>
+                            <p><?= nl2br(htmlspecialchars($partner_preferences['partner_description'])); ?></p>
                         </div>
                     <?php endif; ?>
 

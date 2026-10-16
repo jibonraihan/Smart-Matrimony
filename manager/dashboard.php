@@ -971,6 +971,7 @@ include '../includes/header.php';
             <button type="button" class="manager-primary-btn js-open-package-modal"><i class="fa-solid fa-plus"></i> Add Package</button>
             <a href="#bookings" class="manager-secondary-btn js-bookings-jump"><i class="fa-solid fa-calendar-check"></i> Customer Bookings</a>
             <a href="#reviews" class="manager-secondary-btn"><i class="fa-solid fa-star"></i> Customer Reviews <b class="manager-review-count-badge"><?= (int)$review_counts['All']; ?></b></a>
+            <a href="<?= htmlspecialchars($manager_url('reports.php')); ?>" class="manager-secondary-btn"><i class="fa-solid fa-file-pdf"></i> PDF Reports</a>
         </div>
 
         <?php if ($message): ?><div class="manager-alert <?= $email_failed_notice ? 'warning' : 'success'; ?>"><i class="fa-solid <?= $email_failed_notice ? 'fa-triangle-exclamation' : 'fa-circle-check'; ?>"></i><?= htmlspecialchars($message); ?></div><?php endif; ?>

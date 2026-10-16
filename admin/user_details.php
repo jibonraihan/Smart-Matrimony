@@ -105,14 +105,20 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
   }
  }
 }
-$stmt=mysqli_prepare($conn,"SELECT u.*,up.profile_id,up.date_of_birth,up.religion,up.madhhab,up.marital_status,up.bio,up.photo,up.height_cm,up.weight_kg,up.complexion,up.country,up.area,up.area_type,up.residence_type,up.permanent_hometown,up.division_id,up.district_id,up.upazila_id,up.nid_number,up.post_office,up.postal_code,up.highest_education,up.profession,up.occupation_details,up.monthly_income,up.father_name,up.father_profession,up.mother_name,up.mother_profession,up.family_type,up.family_status,up.siblings,up.brothers_count,up.sisters_count,up.living_with_family,up.smoking_status,up.prayer_status,up.beard_status,up.hijab_status,up.quran_reading,up.fasting_status,up.religious_practice,up.islamic_knowledge,up.halal_lifestyle,up.tea_coffee,up.diet_preference,up.sleep_pattern,up.personality_type,up.social_nature,up.free_time_interests,up.travel_interest,up.spending_style,up.pets,up.verification_status,up.profile_visibility,up.photo_visibility,up.updated_at,dv.name_bn AS division_name_bn,ds.name_bn AS district_name_bn,uz.name_bn AS upazila_name_bn
-FROM users u LEFT JOIN user_profiles up ON up.user_id=u.user_id LEFT JOIN divisions dv ON dv.id=up.division_id LEFT JOIN districts ds ON ds.id=up.district_id LEFT JOIN upazilas uz ON uz.id=up.upazila_id WHERE u.user_id=? AND u.role<>'Admin' LIMIT 1");
+$stmt=mysqli_prepare($conn,"SELECT u.*,up.profile_id,up.date_of_birth,up.religion,up.madhhab,up.marital_status,up.bio,up.photo,up.height_cm,up.weight_kg,up.complexion,up.country,up.area,up.area_type,up.residence_type,up.permanent_hometown,up.permanent_country,up.permanent_division_id,up.permanent_district_id,up.permanent_upazila_id,up.permanent_area,up.permanent_area_type,up.permanent_residence_type,up.permanent_post_office,up.permanent_postal_code,up.division_id,up.district_id,up.upazila_id,up.nid_number,up.post_office,up.postal_code,up.highest_education,up.profession,up.occupation_details,up.monthly_income,up.father_name,up.father_profession,up.mother_name,up.mother_profession,up.father_alive,up.mother_alive,up.parents_details,up.brothers_details,up.sisters_details,up.paternal_uncles_details,up.paternal_aunts_details,up.biodata_created_by,up.guardian_consent,up.favorite_scholars,up.favorite_books,up.religious_knowledge_sources,up.bidah_shrine_stance,up.family_type,up.family_status,up.siblings,up.brothers_count,up.sisters_count,up.living_with_family,up.smoking_status,up.prayer_status,up.beard_status,up.hijab_status,up.quran_reading,up.fasting_status,up.religious_practice,up.islamic_knowledge,up.halal_lifestyle,up.tea_coffee,up.diet_preference,up.sleep_pattern,up.personality_type,up.social_nature,up.free_time_interests,up.travel_interest,up.spending_style,up.pets,up.verification_status,up.profile_visibility,up.photo_visibility,up.updated_at,dv.name_bn AS division_name_bn,ds.name_bn AS district_name_bn,uz.name_bn AS upazila_name_bn,pdv.name_bn AS permanent_division_name_bn,pds.name_bn AS permanent_district_name_bn,puz.name_bn AS permanent_upazila_name_bn
+FROM users u LEFT JOIN user_profiles up ON up.user_id=u.user_id LEFT JOIN divisions dv ON dv.id=up.division_id LEFT JOIN districts ds ON ds.id=up.district_id LEFT JOIN upazilas uz ON uz.id=up.upazila_id LEFT JOIN divisions pdv ON pdv.id=up.permanent_division_id LEFT JOIN districts pds ON pds.id=up.permanent_district_id LEFT JOIN upazilas puz ON puz.id=up.permanent_upazila_id WHERE u.user_id=? AND u.role<>'Admin' LIMIT 1");
 mysqli_stmt_bind_param($stmt,'i',$uid);mysqli_stmt_execute($stmt);$res=mysqli_stmt_get_result($stmt);$user=mysqli_fetch_assoc($res);mysqli_stmt_close($stmt);if(!$user){header('Location: users.php');exit;}
+$partner_description=''; $partner_stmt=mysqli_prepare($conn,"SELECT partner_description FROM search_preferences WHERE user_id=? LIMIT 1"); if($partner_stmt){mysqli_stmt_bind_param($partner_stmt,'i',$uid);mysqli_stmt_execute($partner_stmt);$partner_row=mysqli_fetch_assoc(mysqli_stmt_get_result($partner_stmt));$partner_description=(string)($partner_row['partner_description']??'');mysqli_stmt_close($partner_stmt);}
 $manager_package_count=0; $manager_replacements=[];
 if(($user['role']??'')==='Manager'){ $manager_package_count=manager_current_package_count($conn,$uid); $manager_replacements=manager_available_replacements($conn,$uid); }
 $age='Not informed'; if(!empty($user['date_of_birth'])){$dob=new DateTime($user['date_of_birth']);$now=new DateTime();$age=$dob->diff($now)->y.' yrs';}
 $height='Not informed'; if(!empty($user['height_cm'])){$cm=(int)$user['height_cm'];$in=round($cm/2.54);$ft=intdiv($in,12);$inch=$in%12;$height=$ft.' ft '. $inch.' in';}
 $location_parts=[];foreach(['area','upazila_name_bn','district_name_bn','division_name_bn'] as $f){if(!empty($user[$f]))$location_parts[]=$user[$f];}$location=$location_parts?implode(', ',$location_parts):'Not informed';
+$permanent_parts=[];foreach(['permanent_area','permanent_upazila_name_bn','permanent_district_name_bn','permanent_division_name_bn'] as $f){if(!empty($user[$f]))$permanent_parts[]=$user[$f];}
+$permanent_fields=['permanent_division_id','permanent_district_id','permanent_upazila_id','permanent_area','permanent_area_type','permanent_residence_type','permanent_post_office','permanent_postal_code'];
+$has_permanent=false;foreach($permanent_fields as $f){if(isset($user[$f]) && $user[$f] !== '' && $user[$f] !== null){$has_permanent=true;break;}}
+$same_address=!$has_permanent || ((string)($user['division_id']??'')===(string)($user['permanent_division_id']??'') && (string)($user['district_id']??'')===(string)($user['permanent_district_id']??'') && (string)($user['upazila_id']??'')===(string)($user['permanent_upazila_id']??'') && (string)($user['area']??'')===(string)($user['permanent_area']??'') && (string)($user['area_type']??'')===(string)($user['permanent_area_type']??'') && (string)($user['residence_type']??'')===(string)($user['permanent_residence_type']??'') && (string)($user['post_office']??'')===(string)($user['permanent_post_office']??'') && (string)($user['postal_code']??'')===(string)($user['permanent_postal_code']??''));
+$permanent_location=$same_address?'Same as current location':($permanent_parts?implode(', ',$permanent_parts):'Not informed');
 $interest_tags=[]; if(!empty($user['free_time_interests'])){ $decoded=json_decode((string)$user['free_time_interests'],true); if(is_array($decoded)){ foreach($decoded as $tag){ if(is_scalar($tag) && trim((string)$tag)!=='') $interest_tags[]=trim((string)$tag); } } else { $parts=preg_split('/\s*,\s*/',(string)$user['free_time_interests']); foreach($parts as $tag){ if(trim($tag)!=='') $interest_tags[]=trim($tag); } } }
 $activity=[
  'interests_sent'=>0,'interests_received'=>0,'accepted_matches'=>0,'active_matches'=>0,
@@ -210,6 +216,8 @@ $booking_records=[]; $st=mysqli_prepare($conn,"SELECT b.booking_id,b.total_price
       <dt>Occupation</dt><dd><?=h($user['occupation_details']?:'Not informed')?></dd>
       <dt>Income</dt><dd><?=!empty($user['monthly_income'])?'৳ '.number_format((float)$user['monthly_income'],2):'Not informed'?></dd>
       <dt>Bio</dt><dd><?=h($user['bio']?:'Not informed')?></dd>
+      <dt>Biodata created by</dt><dd><?=h($user['biodata_created_by']?:'Not informed')?></dd>
+      <?php if(($user['biodata_created_by']??'')==='Self'): ?><dt>Guardian consent</dt><dd><?=!isset($user['guardian_consent'])||$user['guardian_consent']===null?'Not informed':((int)$user['guardian_consent']===1?'Yes':'No')?></dd><?php endif; ?>
     </dl>
   </div>
   <div class="panel profile-view-panel">
@@ -218,11 +226,13 @@ $booking_records=[]; $st=mysqli_prepare($conn,"SELECT b.booking_id,b.total_price
       <dt>Height</dt><dd><?=h($height)?></dd>
       <dt>Weight</dt><dd><?=!empty($user['weight_kg'])?h($user['weight_kg']).' kg':'Not informed'?></dd>
       <dt>Complexion</dt><dd><?=h($user['complexion']?:'Not informed')?></dd>
-      <dt>Location</dt><dd><?=h($location)?></dd>
-      <dt>Area type</dt><dd><?=h($user['area_type']?:'Not informed')?></dd>
-      <dt>Residence</dt><dd><?=h($user['residence_type']?:'Not informed')?></dd>
-      <dt>Hometown</dt><dd><?=h($user['permanent_hometown']?:'Not informed')?></dd>
-      <dt>Post office</dt><dd><?=h($user['post_office']?:'Not informed')?><?=!empty($user['postal_code'])?' · '.h($user['postal_code']):''?></dd>
+      <dt>Current address</dt><dd><?=h(($user['country']?:'Bangladesh').' · '.$location)?></dd>
+      <dt>Current area type</dt><dd><?=h($user['area_type']?:'Not informed')?></dd>
+      <dt>Current residence</dt><dd><?=h($user['residence_type']?:'Not informed')?></dd>
+      <dt>Current post office / postal code</dt><dd><?=h($user['post_office']?:'Not informed')?><?=!empty($user['postal_code'])?' · '.h($user['postal_code']):''?></dd>
+      <dt>Permanent address</dt><dd><?=h($same_address?'Same as current location':(($user['permanent_country']?:'Bangladesh').' · '.$permanent_location))?></dd>
+      <?php if(!$same_address): ?><dt>Permanent area type</dt><dd><?=h($user['permanent_area_type']?:'Not informed')?></dd><dt>Permanent residence</dt><dd><?=h($user['permanent_residence_type']?:'Not informed')?></dd><dt>Permanent post office / postal code</dt><dd><?=h($user['permanent_post_office']?:'Not informed')?><?=!empty($user['permanent_postal_code'])?' · '.h($user['permanent_postal_code']):''?></dd><?php endif; ?>
+      <dt>Permanent home / hometown</dt><dd><?=h($user['permanent_hometown']?:'Not informed')?></dd>
     </dl>
   </div>
   <div class="panel profile-view-panel">
@@ -232,6 +242,8 @@ $booking_records=[]; $st=mysqli_prepare($conn,"SELECT b.booking_id,b.total_price
       <dt>Family status</dt><dd><?=h($user['family_status']?:'Not informed')?></dd>
       <dt>Father</dt><dd><?=h($user['father_name']?:'Not informed')?><?=!empty($user['father_profession'])?' · '.h($user['father_profession']):''?></dd>
       <dt>Mother</dt><dd><?=h($user['mother_name']?:'Not informed')?><?=!empty($user['mother_profession'])?' · '.h($user['mother_profession']):''?></dd>
+      <dt>Father alive</dt><dd><?=h($user['father_alive']?:'Not informed')?></dd><dt>Mother alive</dt><dd><?=h($user['mother_alive']?:'Not informed')?></dd>
+      <?php foreach(['parents_details'=>'Parents details','brothers_details'=>'Brothers details','sisters_details'=>'Sisters details','paternal_uncles_details'=>'Father’s brothers details','paternal_aunts_details'=>'Father’s sisters details'] as $field=>$label): if(!empty($user[$field])): ?><dt><?=h($label)?></dt><dd><?=nl2br(h($user[$field]))?></dd><?php endif; endforeach; ?>
       <dt>Siblings</dt><dd><?=isset($user['siblings']) && $user['siblings']!==null?h($user['siblings']):'Not informed'?></dd>
       <dt>Brothers / Sisters</dt><dd><?=isset($user['brothers_count']) && $user['brothers_count']!==null?h($user['brothers_count']):'—'?> / <?=isset($user['sisters_count']) && $user['sisters_count']!==null?h($user['sisters_count']):'—'?></dd>
       <dt>Living with family</dt><dd><?=h($user['living_with_family']?:'Not informed')?></dd>
@@ -247,6 +259,8 @@ $booking_records=[]; $st=mysqli_prepare($conn,"SELECT b.booking_id,b.total_price
       <dt>Smoking</dt><dd><?=h($user['smoking_status']?:'Not informed')?></dd>
       <dt>Diet</dt><dd><?=h($user['diet_preference']?:'Not informed')?></dd>
       <dt>Personality</dt><dd><?=h($user['personality_type']?:'Not informed')?></dd>
+      <dt>Favorite Islamic scholars</dt><dd><?=h($user['favorite_scholars']?:'Not informed')?></dd><dt>Favorite Islamic books</dt><dd><?=h($user['favorite_books']?:'Not informed')?></dd><dt>Religious learning sources</dt><dd><?=h($user['religious_knowledge_sources']?:'Not informed')?></dd><dt>Views on Bid’ah / shrine worship</dt><dd><?=h($user['bidah_shrine_stance']?:'Not informed')?></dd>
+      <dt>Ideal partner description</dt><dd><?=h($partner_description?:'Not informed')?></dd>
       <dt>Interests</dt><dd><?php if($interest_tags): ?><div class="interest-tags"><?php foreach($interest_tags as $tag): ?><span class="interest-tag"><?=h($tag)?></span><?php endforeach; ?></div><?php else: ?>Not informed<?php endif; ?></dd>
     </dl>
   </div>

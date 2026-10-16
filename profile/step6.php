@@ -21,7 +21,7 @@ $user_row = mysqli_fetch_assoc(mysqli_stmt_get_result($user_stmt)) ?: [];
 mysqli_stmt_close($user_stmt);
 
 $pref = [];
-$pref_stmt = mysqli_prepare($conn, 'SELECT preferred_gender, min_age, max_age, min_height_cm, max_height_cm, complexion, min_weight_kg, max_weight_kg, religion, marital_status, family_status, madhhab, prayer_status, halal_lifestyle, mahram_maintained, islamic_knowledge, hijab_status, beard_status, personality_type, education, profession, min_monthly_income, division_id, district_id, upazila_id, blood_group, accept_smoker, accept_alcohol, accept_disability, accept_chronic_disease, additional_preferences FROM search_preferences WHERE user_id=? LIMIT 1');
+$pref_stmt = mysqli_prepare($conn, 'SELECT preferred_gender, min_age, max_age, min_height_cm, max_height_cm, complexion, min_weight_kg, max_weight_kg, religion, marital_status, family_status, madhhab, prayer_status, halal_lifestyle, mahram_maintained, islamic_knowledge, hijab_status, beard_status, personality_type, education, profession, min_monthly_income, division_id, district_id, upazila_id, blood_group, accept_smoker, accept_alcohol, accept_disability, accept_chronic_disease, additional_preferences, partner_description FROM search_preferences WHERE user_id=? LIMIT 1');
 if ($pref_stmt) {
     mysqli_stmt_bind_param($pref_stmt, 'i', $user_id);
     mysqli_stmt_execute($pref_stmt);
@@ -66,7 +66,8 @@ $form = [
     'accept_alcohol' => isset($pref['accept_alcohol']) ? (string)$pref['accept_alcohol'] : '1',
     'accept_disability' => isset($pref['accept_disability']) ? (string)$pref['accept_disability'] : '1',
     'accept_chronic_disease' => isset($pref['accept_chronic_disease']) ? (string)$pref['accept_chronic_disease'] : '1',
-    'additional_preferences' => $pref['additional_preferences'] ?? ''
+    'additional_preferences' => $pref['additional_preferences'] ?? '',
+    'partner_description' => $pref['partner_description'] ?? ''
 ];
 
 $trait_questions = [];
@@ -128,6 +129,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'  && isset($_POST['save_step6'])) {
     $form['accept_disability'] = trim($_POST['accept_disability'] ?? '1');
     $form['accept_chronic_disease'] = trim($_POST['accept_chronic_disease'] ?? '1');
     $form['additional_preferences'] = trim($_POST['additional_preferences'] ?? '');
+    $form['partner_description'] = trim($_POST['partner_description'] ?? '');
     $trait_answers_post = $_POST['trait_answer'] ?? [];
     if (!is_array($trait_answers_post)) {
         $trait_answers_post = [];
@@ -208,6 +210,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'  && isset($_POST['save_step6'])) {
         $error = 'Please select a valid personality preference.';
     } elseif (mb_strlen($form['additional_preferences']) > 5000) {
         $error = 'Additional preferences must be 5000 characters or fewer.';
+    } elseif (mb_strlen($form['partner_description']) > 5000) {
+        $error = 'Partner description must be 5000 characters or fewer.';
     }
 
     $validated_trait_answers = [];
@@ -300,20 +304,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'  && isset($_POST['save_step6'])) {
         $accept_disability = (int) $form['accept_disability'];
         $accept_chronic = (int) $form['accept_chronic_disease'];
         $additional_preferences = $form['additional_preferences'] === '' ? null : $form['additional_preferences'];
+        $partner_description = $form['partner_description'] === '' ? null : $form['partner_description'];
         $complexion = $form['complexion'] === '' ? null : $form['complexion'];
 
         mysqli_begin_transaction($conn);
         try {
             if ($exists) {
-                $sql = 'UPDATE search_preferences SET preferred_gender=?, min_age=?, max_age=?, min_height_cm=?, max_height_cm=?, complexion=?, min_weight_kg=?, max_weight_kg=?, religion=?, marital_status=?, family_status=?, madhhab=?, prayer_status=?, halal_lifestyle=?, mahram_maintained=?, islamic_knowledge=?, hijab_status=?, beard_status=?, personality_type=?, education=?, profession=?, min_monthly_income=?, division_id=?, district_id=?, upazila_id=?, blood_group=?, accept_smoker=?, accept_alcohol=?, accept_disability=?, accept_chronic_disease=?, additional_preferences=? WHERE user_id=?';
+                $sql = 'UPDATE search_preferences SET preferred_gender=?, min_age=?, max_age=?, min_height_cm=?, max_height_cm=?, complexion=?, min_weight_kg=?, max_weight_kg=?, religion=?, marital_status=?, family_status=?, madhhab=?, prayer_status=?, halal_lifestyle=?, mahram_maintained=?, islamic_knowledge=?, hijab_status=?, beard_status=?, personality_type=?, education=?, profession=?, min_monthly_income=?, division_id=?, district_id=?, upazila_id=?, blood_group=?, accept_smoker=?, accept_alcohol=?, accept_disability=?, accept_chronic_disease=?, additional_preferences=?, partner_description=? WHERE user_id=?';
                 $stmt = mysqli_prepare($conn, $sql);
                 if (!$stmt) throw new Exception('Preference update could not be prepared.');
-                mysqli_stmt_bind_param($stmt, 'siiddsddssssssissssssdiiisiiiisi', $form['preferred_gender'], $min_age, $max_age, $min_height, $max_height, $complexion, $min_weight_kg, $max_weight_kg, $religion, $marital, $family_status, $madhhab, $prayer_status, $halal_lifestyle, $mahram_maintained, $islamic_knowledge, $hijab_status, $beard_status, $personality_type, $education, $profession, $min_income, $division_id, $district_id, $upazila_id, $blood_group, $accept_smoker, $accept_alcohol, $accept_disability, $accept_chronic, $additional_preferences, $user_id);
+                mysqli_stmt_bind_param($stmt, 'siiddsddssssssissssssdiiisiiiissi', $form['preferred_gender'], $min_age, $max_age, $min_height, $max_height, $complexion, $min_weight_kg, $max_weight_kg, $religion, $marital, $family_status, $madhhab, $prayer_status, $halal_lifestyle, $mahram_maintained, $islamic_knowledge, $hijab_status, $beard_status, $personality_type, $education, $profession, $min_income, $division_id, $district_id, $upazila_id, $blood_group, $accept_smoker, $accept_alcohol, $accept_disability, $accept_chronic, $additional_preferences, $partner_description, $user_id);
             } else {
-                $sql = 'INSERT INTO search_preferences (user_id, preferred_gender, min_age, max_age, min_height_cm, max_height_cm, complexion, min_weight_kg, max_weight_kg, religion, marital_status, family_status, madhhab, prayer_status, halal_lifestyle, mahram_maintained, islamic_knowledge, hijab_status, beard_status, personality_type, education, profession, min_monthly_income, division_id, district_id, upazila_id, blood_group, accept_smoker, accept_alcohol, accept_disability, accept_chronic_disease, additional_preferences) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)';
+                $sql = 'INSERT INTO search_preferences (user_id, preferred_gender, min_age, max_age, min_height_cm, max_height_cm, complexion, min_weight_kg, max_weight_kg, religion, marital_status, family_status, madhhab, prayer_status, halal_lifestyle, mahram_maintained, islamic_knowledge, hijab_status, beard_status, personality_type, education, profession, min_monthly_income, division_id, district_id, upazila_id, blood_group, accept_smoker, accept_alcohol, accept_disability, accept_chronic_disease, additional_preferences, partner_description) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)';
                 $stmt = mysqli_prepare($conn, $sql);
                 if (!$stmt) throw new Exception('Preference insert could not be prepared.');
-                mysqli_stmt_bind_param($stmt, 'isiiddsddssssssissssssdiiisiiiis', $user_id, $form['preferred_gender'], $min_age, $max_age, $min_height, $max_height, $complexion, $min_weight_kg, $max_weight_kg, $religion, $marital, $family_status, $madhhab, $prayer_status, $halal_lifestyle, $mahram_maintained, $islamic_knowledge, $hijab_status, $beard_status, $personality_type, $education, $profession, $min_income, $division_id, $district_id, $upazila_id, $blood_group, $accept_smoker, $accept_alcohol, $accept_disability, $accept_chronic, $additional_preferences);
+                mysqli_stmt_bind_param($stmt, 'isiiddsddssssssissssssdiiisiiiiss', $user_id, $form['preferred_gender'], $min_age, $max_age, $min_height, $max_height, $complexion, $min_weight_kg, $max_weight_kg, $religion, $marital, $family_status, $madhhab, $prayer_status, $halal_lifestyle, $mahram_maintained, $islamic_knowledge, $hijab_status, $beard_status, $personality_type, $education, $profession, $min_income, $division_id, $district_id, $upazila_id, $blood_group, $accept_smoker, $accept_alcohol, $accept_disability, $accept_chronic, $additional_preferences, $partner_description);
             }
 
             if (!mysqli_stmt_execute($stmt)) {
@@ -798,8 +803,13 @@ include '../includes/navbar.php';
                     <textarea id="additional_preferences" name="additional_preferences" maxlength="5000" placeholder="বিশেষ কোনো শর্ত বা চাওয়া আছে কি?" rows="5"><?= htmlspecialchars($form['additional_preferences']) ?></textarea>
                     <small>Optional. You can mention important preferences that are not covered above.</small>
                 </div>
+                <div class="step6-field step6-additional-preferences">
+                    <label for="partner_description">Detailed Description of Your Ideal Partner (Optional)</label>
+                    <textarea id="partner_description" name="partner_description" maxlength="5000" placeholder="Describe the kind of life partner you are looking for, including qualities, values, lifestyle, or other important details." rows="5"><?= htmlspecialchars($form['partner_description']) ?></textarea>
+                    <small>Optional. Share any additional details about your ideal life partner.</small>
+                </div>
                 <div class="step6-actions">
-                    <a href="view_profile.php" class="step6-btn step6-btn-secondary"><i class="bi bi-arrow-left-circle"></i><span>Back to Profile</span></a>
+                    <a href="view_profile.php?user_id=<?php echo $user_id; ?>" class="step6-btn step6-btn-secondary"><i class="bi bi-arrow-left-circle"></i><span>Back to Profile</span></a>
                     <button type="submit" name="save_step6" class="step6-btn step6-btn-primary"><span>Save &amp; Dashboard</span><i class="bi bi-arrow-right-circle"></i></button>
                 </div>
             </section>

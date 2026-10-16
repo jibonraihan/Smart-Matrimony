@@ -40,7 +40,9 @@ $stmt = mysqli_prepare($conn, "
         up.bio,
         up.height_cm,
         up.weight_kg,
-        up.complexion
+        up.complexion,
+        up.biodata_created_by,
+        up.guardian_consent
     FROM users u
     LEFT JOIN user_profiles up ON up.user_id = u.user_id
     WHERE u.user_id = ?
@@ -71,7 +73,9 @@ $old = [
     'height_cm' => $user['height_cm'] ?? '',
     'weight_kg' => $user['weight_kg'] ?? '',
     'complexion' => $user['complexion'] ?? '',
-    'bio' => $user['bio'] ?? ''
+    'bio' => $user['bio'] ?? '',
+    'biodata_created_by' => $user['biodata_created_by'] ?? '',
+    'guardian_consent' => $user['guardian_consent'] ?? null
 ];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_step1'])) {
@@ -96,6 +100,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_step1'])) {
     $weight_kg = (float) ($_POST['weight_kg'] ?? 0);
     $complexion = trim($_POST['complexion'] ?? '');
     $bio = trim($_POST['bio'] ?? '');
+    $biodata_created_by = trim($_POST['biodata_created_by'] ?? '');
+    $allowed_biodata_creators = ['Self', 'Father', 'Mother', 'Brother', 'Sister', 'Uncle', 'Aunt'];
+    $guardian_consent_input = trim($_POST['guardian_consent'] ?? '');
+    $guardian_consent = ($biodata_created_by === 'Self' && in_array($guardian_consent_input, ['Yes', 'No'], true))
+        ? ($guardian_consent_input === 'Yes' ? 1 : 0)
+        : null;
 
     $old = [
         'date_of_birth' => $date_of_birth,
@@ -110,7 +120,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_step1'])) {
         'height_cm' => $height_cm,
         'weight_kg' => $weight_kg,
         'complexion' => $complexion,
-        'bio' => $bio
+        'bio' => $bio,
+        'biodata_created_by' => $biodata_created_by,
+        'guardian_consent' => $guardian_consent
     ];
 
     $allowed_religions = $religions;
@@ -155,6 +167,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_step1'])) {
         $error = 'Please select a valid complexion.';
     } elseif (mb_strlen($bio) > 500) {
         $error = 'Short bio must be 500 characters or fewer.';
+    } elseif (!in_array($biodata_created_by, $allowed_biodata_creators, true)) {
+        $error = 'Please select who created this biodata.';
+    } elseif ($biodata_created_by === 'Self' && !in_array($guardian_consent_input, ['Yes', 'No'], true)) {
+        $error = 'Please indicate whether your guardian consents to or is aware of this biodata.';
     }
 
     if ($error === '') {
@@ -180,13 +196,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_step1'])) {
                     bio = ?,
                     height_cm = ?,
                     weight_kg = ?,
-                    complexion = ?
+                    complexion = ?,
+                    biodata_created_by = ?,
+                    guardian_consent = ?
                 WHERE user_id = ?
             ");
 
             mysqli_stmt_bind_param(
                 $save,
-                "ssssssssdsidsi",
+                "ssssssssdsidssii",
                 $date_of_birth,
                 $nid_number,
                 $religion,
@@ -200,6 +218,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_step1'])) {
                 $height_cm,
                 $weight_kg,
                 $complexion,
+                $biodata_created_by,
+                $guardian_consent,
                 $user_id
             );
         } else {
@@ -222,14 +242,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_step1'])) {
                     bio,
                     height_cm,
                     weight_kg,
-                    complexion
+                    complexion,
+                    biodata_created_by,
+                    guardian_consent
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ");
 
             mysqli_stmt_bind_param(
                 $save,
-                "isssssssssssdsids",
+                "isssssssssssdsidssi",
                 $user_id,
                 $user['first_name'],
                 $user['last_name'],
@@ -246,7 +268,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_step1'])) {
                 $bio,
                 $height_cm,
                 $weight_kg,
-                $complexion
+                $complexion,
+                $biodata_created_by,
+                $guardian_consent
             );
         }
 
@@ -278,6 +302,52 @@ $steps = [
 $completion = sm_get_profile_completion($conn, $user_id);
 $progress = $completion['percentage'];
 ?>
+<style>
+    /* Keep guardian Yes/No controls compact and isolated from global form styles. */
+    #guardian-consent-field .step1-guardian-choice {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        flex-wrap: wrap;
+        margin-top: 8px;
+    }
+    #guardian-consent-field .step1-guardian-option {
+        display: inline-flex;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 7px;
+        width: auto;
+        min-width: 0;
+        margin: 0;
+        padding: 7px 12px;
+        border: 1px solid #d8e4e8;
+        border-radius: 8px;
+        cursor: pointer;
+        line-height: 1.2;
+    }
+    #guardian-consent-field .step1-guardian-option input[type="radio"] {
+        appearance: auto;
+        -webkit-appearance: radio;
+        display: inline-block;
+        flex: 0 0 16px;
+        width: 16px !important;
+        min-width: 16px;
+        max-width: 16px;
+        height: 16px !important;
+        min-height: 16px;
+        margin: 0;
+        padding: 0;
+        box-shadow: none;
+        accent-color: #1677ff;
+        cursor: pointer;
+    }
+    #guardian-consent-field .step1-guardian-option span {
+        display: inline;
+        margin: 0;
+        font-size: 14px;
+        font-weight: 600;
+    }
+</style>
 
 <main class="step1-page">
     <div class="step1-shell">
@@ -457,6 +527,30 @@ $progress = $completion['percentage'];
                         <textarea id="bio" name="bio" maxlength="500" rows="5" placeholder="Write something about your personal life" ><?= htmlspecialchars($old['bio']) ?></textarea>
                         <small>Maximum 500 characters.</small>
                     </div>
+
+                    <div class="step1-field">
+                        <label for="biodata_created_by">Who is creating this biodata? <em>*</em></label>
+                        <select id="biodata_created_by" name="biodata_created_by" required>
+                            <option value="" disabled <?= $old['biodata_created_by'] === '' ? 'selected' : '' ?>>Select who is creating</option>
+                            <?php foreach (['Self', 'Father', 'Mother', 'Brother', 'Sister', 'Uncle', 'Aunt'] as $creator): ?>
+                                <option value="<?= htmlspecialchars($creator) ?>" <?= $old['biodata_created_by'] === $creator ? 'selected' : '' ?>><?= htmlspecialchars($creator) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+
+                    <div class="step1-field" id="guardian-consent-field" <?= $old['biodata_created_by'] !== 'Self' ? 'hidden' : '' ?>>
+                        <label>Does your guardian consent to creating this biodata? <em>*</em></label>
+                        <div class="step1-guardian-choice" role="radiogroup" aria-label="Guardian consent" >
+                            <label class="step1-guardian-option" for="guardian_consent_yes">
+                                <input type="radio" id="guardian_consent_yes" name="guardian_consent" value="Yes" <?= (string)$old['guardian_consent'] === '1' ? 'checked' : '' ?> <?= $old['biodata_created_by'] === 'Self' ? 'required' : '' ?>>
+                                <span>Yes</span>
+                            </label>
+                            <label class="step1-guardian-option" for="guardian_consent_no">
+                                <input type="radio" id="guardian_consent_no" name="guardian_consent" value="No" <?= (string)$old['guardian_consent'] === '0' && $old['guardian_consent'] !== null ? 'checked' : '' ?>>
+                                <span>No</span>
+                            </label>
+                        </div>
+                    </div>
                 </div>
             </section>
 
@@ -509,7 +603,7 @@ $progress = $completion['percentage'];
             </section>
 
             <div class="step1-actions">
-                <a href="view_profile.php" class="step1-btn step1-btn-secondary">
+                <a href="view_profile.php?user_id=<?php echo $user_id; ?>" class="step1-btn step1-btn-secondary">
                     <i class="bi bi-arrow-left"></i>
                     <span>Back to Profile</span>
                 </a>
@@ -675,6 +769,20 @@ $progress = $completion['percentage'];
 
     document.getElementById('profession').addEventListener('change', updateIncomeRequirement);
     updateIncomeRequirement();
+
+    const biodataCreator = document.getElementById('biodata_created_by');
+    const guardianConsentField = document.getElementById('guardian-consent-field');
+    const guardianConsentRadios = guardianConsentField.querySelectorAll('input[name="guardian_consent"]');
+    function updateGuardianConsentVisibility() {
+        const isSelf = biodataCreator.value === 'Self';
+        guardianConsentField.hidden = !isSelf;
+        guardianConsentRadios.forEach((radio) => {
+            radio.required = isSelf && radio.value === 'Yes';
+            if (!isSelf) radio.checked = false;
+        });
+    }
+    biodataCreator.addEventListener('change', updateGuardianConsentVisibility);
+    updateGuardianConsentVisibility();
 
     calculateAge();
     restoreHeight();

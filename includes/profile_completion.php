@@ -35,7 +35,8 @@ function sm_get_profile_completion(mysqli $conn, int $user_id): array
     /* Step 1: Personal required fields. */
     $step1Required = [
         'date_of_birth', 'religion', 'madhhab', 'marital_status',
-        'height_cm', 'weight_kg', 'complexion', 'highest_education', 'profession'
+        'height_cm', 'weight_kg', 'complexion', 'highest_education', 'profession',
+        'biodata_created_by'
     ];
     $steps[1] = true;
     foreach ($step1Required as $field) {
@@ -43,6 +44,12 @@ function sm_get_profile_completion(mysqli $conn, int $user_id): array
             $steps[1] = false;
             break;
         }
+    }
+
+    /* Guardian consent is required only when the user creates their own biodata. */
+    if ($steps[1] && ($profile['biodata_created_by'] ?? '') === 'Self'
+        && !sm_is_filled($profile['guardian_consent'] ?? null)) {
+        $steps[1] = false;
     }
 
     /* Profession-dependent monthly income requirement used by Step 1. */
@@ -56,8 +63,8 @@ function sm_get_profile_completion(mysqli $conn, int $user_id): array
 
     /* Step 2: Family required fields + conditional Wali fields. */
     $step2Required = [
-        'father_name', 'father_profession',
-        'mother_name', 'mother_profession',
+        'father_name', 'father_alive',
+        'mother_name', 'mother_alive',
         'brothers_count', 'sisters_count',
         'family_type', 'family_status', 'living_with_family'
     ];
@@ -66,6 +73,18 @@ function sm_get_profile_completion(mysqli $conn, int $user_id): array
         if (!sm_is_filled($profile[$field] ?? null)) {
             $steps[2] = false;
             break;
+        }
+    }
+
+    /* Parent profession is required only when that parent is alive. */
+    if ($steps[2]) {
+        if (($profile['father_alive'] ?? '') === 'Yes'
+            && !sm_is_filled($profile['father_profession'] ?? null)) {
+            $steps[2] = false;
+        }
+        if (($profile['mother_alive'] ?? '') === 'Yes'
+            && !sm_is_filled($profile['mother_profession'] ?? null)) {
+            $steps[2] = false;
         }
     }
 

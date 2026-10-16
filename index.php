@@ -174,167 +174,85 @@ include 'includes/navbar.php';
          HERO SECTION
     ========================== -->
     <section class="home-hero">
-
         <div class="container">
-
-            <div class="row align-items-center gy-5">
-
-                <!-- HERO CONTENT -->
-                <div class="col-lg-7">
-
+            <div class="row align-items-center hero-layout">
+                <div class="col-lg-6">
                     <div class="hero-content" data-aos="fade-right">
-
-                        <div class="hero-badge">
-                            <i class="fa-solid fa-shield-heart"></i>
-                            Secure • Respectful • Family-Friendly
-                        </div>
-
-                        <div class="hero-brand-mark">
-                            <img
-                                src="<?= BASE_URL; ?>assets/images/logo/logo.png"
-                                alt="Smart Matrimony Logo"
-                                class="hero-logo"
-                            >
-                        </div>
-
-                        <p class="hero-eyebrow">
-                            Smart Matrimony
-                        </p>
-
                         <h1 class="hero-title">
-                            Find a Life Partner
-                            <span>with Trust &amp; Dignity.</span>
+                            Find Your Perfect
+                            <span>Life Partner.</span>
                         </h1>
-
-                        <p class="hero-description">
-                            A modern, privacy-focused matrimony platform designed
-                            to help individuals and families discover compatible
-                            life partners in a respectful and secure environment.
-                        </p>
-
                         <div class="hero-actions">
-
-                            <a
-                                href="<?= BASE_URL; ?>register.php"
-                                class="btn btn-primary hero-btn-primary"
-                            >
-                                <i class="fa-solid fa-user-plus me-2"></i>
+                            <a href="<?= BASE_URL; ?>register.php" class="btn btn-primary hero-btn-primary">
+                                <i class="fa-solid fa-user-plus me-2" aria-hidden="true"></i>
                                 Create Account
+                                <i class="fa-solid fa-arrow-right hero-button-arrow" aria-hidden="true"></i>
                             </a>
-
-                            <a
-                                href="<?= BASE_URL; ?>login.php"
-                                class="btn hero-btn-secondary"
-                            >
-                                <i class="fa-solid fa-right-to-bracket me-2"></i>
+                            <a href="<?= BASE_URL; ?>login.php" class="btn hero-btn-secondary">
+                                <i class="fa-solid fa-right-to-bracket me-2" aria-hidden="true"></i>
                                 Login
                             </a>
-
                         </div>
-
-                        <div class="hero-trust-row">
-
-                            <div class="hero-trust-item">
-                                <i class="fa-solid fa-circle-check"></i>
-                                <span>Secure Authentication</span>
-                            </div>
-
-                            <div class="hero-trust-item">
-                                <i class="fa-solid fa-user-shield"></i>
-                                <span>Privacy Focused</span>
-                            </div>
-
-                            <div class="hero-trust-item">
-                                <i class="fa-solid fa-heart"></i>
-                                <span>Respectful Matching</span>
-                            </div>
-
-                        </div>
-
                     </div>
-
                 </div>
-
-                <!-- HERO VISUAL -->
-                <div class="col-lg-5">
-
+                <div class="col-lg-6">
                     <div class="hero-visual" data-aos="fade-left">
-
-                        <div class="hero-glow hero-glow-one"></div>
-                        <div class="hero-glow hero-glow-two"></div>
+                        <span class="hero-art-shape hero-art-shape-one" aria-hidden="true"></span>
+                        <span class="hero-art-shape hero-art-shape-two" aria-hidden="true"></span>
+                        <span class="hero-art-dots hero-art-dots-left" aria-hidden="true"></span>
+                        <span class="hero-art-dots hero-art-dots-right" aria-hidden="true"></span>
+                        <span class="hero-arch" aria-hidden="true"></span>
 
                         <div class="hero-card">
-
-                            <div class="hero-card-top">
-
-                                <div class="hero-card-icon">
-                                    <i class="fa-solid fa-heart"></i>
-                                </div>
-
-                                <div>
-                                    <span class="hero-card-label">
-                                        Built for meaningful connections
-                                    </span>
-                                    <h2>
-                                        Your journey starts here.
-                                    </h2>
-                                </div>
-
-                            </div>
-
-                            <div class="hero-card-divider"></div>
-
                             <div class="hero-card-feature">
-                                <div class="hero-feature-icon">
-                                    <i class="fa-solid fa-user-check"></i>
+                                <div class="hero-feature-icon"><i class="fa-solid fa-user-group" aria-hidden="true"></i></div>
+                                <div class="hero-feature-copy">
+                                    <strong>Verified Profiles</strong>
+                                    <p>Real people, genuine intentions.</p>
                                 </div>
-                                <div>
-                                    <strong>Verified profiles</strong>
-                                    <p>Encouraging authentic and trustworthy connections.</p>
-                                </div>
+                                <i class="fa-solid fa-chevron-right hero-feature-chevron" aria-hidden="true"></i>
                             </div>
-
                             <div class="hero-card-feature">
-                                <div class="hero-feature-icon">
-                                    <i class="fa-solid fa-sliders"></i>
+                                <div class="hero-feature-icon hero-feature-icon-gold"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i></div>
+                                <div class="hero-feature-copy">
+                                    <strong>Privacy &amp; Security</strong>
+                                    <p>Your information stays safe.</p>
                                 </div>
-                                <div>
-                                    <strong>Preference-based matching</strong>
-                                    <p>Find people based on the preferences that matter to you.</p>
-                                </div>
+                                <i class="fa-solid fa-chevron-right hero-feature-chevron" aria-hidden="true"></i>
                             </div>
-
                             <div class="hero-card-feature">
-                                <div class="hero-feature-icon">
-                                    <i class="fa-solid fa-lock"></i>
+                                <div class="hero-feature-icon"><i class="fa-solid fa-heart" aria-hidden="true"></i></div>
+                                <div class="hero-feature-copy">
+                                    <strong>Preference-based Matching</strong>
+                                    <p>Find people who truly match you.</p>
                                 </div>
-                                <div>
-                                    <strong>Privacy &amp; security</strong>
-                                    <p>Designed with respectful communication and privacy in mind.</p>
-                                </div>
+                                <i class="fa-solid fa-chevron-right hero-feature-chevron" aria-hidden="true"></i>
                             </div>
-
-                            <div class="hero-card-footer">
-                                <span>
-                                    <i class="fa-solid fa-shield-halved"></i>
-                                    Smart Matrimony
-                                </span>
-                                <span class="hero-card-status">
-                                    <i class="fa-solid fa-circle"></i>
-                                    Ready to begin
-                                </span>
-                            </div>
-
                         </div>
 
+                        <div class="hero-stats-shell">
+                            <div class="hero-stats-card" aria-label="Platform statistics">
+                                <div class="hero-stat">
+                                    <strong><?= number_format($registered_members); ?></strong>
+                                    <span>Active Members</span>
+                                </div>
+                                <span class="hero-stat-divider" aria-hidden="true"></span>
+                                <div class="hero-stat">
+                                    <strong><?= number_format($completed_profiles); ?></strong>
+                                    <span>Completed Profiles</span>
+                                </div>
+                                <span class="hero-stat-divider" aria-hidden="true"></span>
+                                <div class="hero-stat">
+                                    <strong><?= number_format($service_packages); ?></strong>
+                                    <span>Active Services</span>
+                                </div>
+                            </div>
+                            <div class="hero-stats-ornament" aria-hidden="true"><span></span><i class="fa-solid fa-heart"></i><span></span></div>
+                        </div>
                     </div>
-
                 </div>
-
             </div>
-
         </div>
-
     </section>
 
         <!-- =========================

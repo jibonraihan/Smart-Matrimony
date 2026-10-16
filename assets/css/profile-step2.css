@@ -158,6 +158,58 @@
     min-width: 0;
 }
 
+/* Added Step 2 parent status and optional family-detail fields. */
+.step2-alive-options {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    min-height: 52px;
+    padding: 8px 12px;
+    border: 1px solid #cedfdf;
+    border-radius: 13px;
+    background: #fff;
+}
+
+.step2-alive-options label {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    margin: 0;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.step2-alive-options input[type="radio"] {
+    width: 17px;
+    height: 17px;
+    min-height: 0;
+    margin: 0;
+    accent-color: #128c72;
+}
+
+.step2-details-grid {
+    margin-top: 18px;
+}
+
+.step2-wide-field {
+    grid-column: 1 / -1;
+}
+
+.step2-details-grid textarea {
+    min-height: 108px;
+}
+
+.step2-profession-field.is-not-applicable {
+    opacity: 0.62;
+}
+
+.step2-profession-field.is-not-applicable select {
+    background: #f3f6f6;
+    cursor: not-allowed;
+}
+
+
 .step2-field label {
     display: block;
     margin-bottom: 8px;
@@ -246,6 +298,10 @@
 
 .step2-family-extra-grid .step2-field textarea {
     min-height: 96px;
+}
+
+.step2-family-extra-grid .step2-field textarea::placeholder {
+    font-size: 0.68rem !important;
 }
 
 .step2-actions {

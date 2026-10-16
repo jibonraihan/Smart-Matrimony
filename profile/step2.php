@@ -48,9 +48,19 @@ $wali_required = ($gender === 'Female' && $religion === 'Islam');
 if (isset($_POST['save_step2'])) {
 
     $father_name       = clean_input($_POST['father_name'] ?? '');
+    $father_alive      = clean_input($_POST['father_alive'] ?? '');
     $father_profession = clean_input($_POST['father_profession'] ?? '');
     $mother_name       = clean_input($_POST['mother_name'] ?? '');
+    $mother_alive      = clean_input($_POST['mother_alive'] ?? '');
     $mother_profession = clean_input($_POST['mother_profession'] ?? '');
+    $parents_details   = trim((string) ($_POST['parents_details'] ?? ''));
+    $brothers_details  = trim((string) ($_POST['brothers_details'] ?? ''));
+    $sisters_details   = trim((string) ($_POST['sisters_details'] ?? ''));
+    $paternal_uncles_details = trim((string) ($_POST['paternal_uncles_details'] ?? ''));
+    $paternal_aunts_details  = trim((string) ($_POST['paternal_aunts_details'] ?? ''));
+
+    if ($father_alive === 'No') { $father_profession = ''; }
+    if ($mother_alive === 'No') { $mother_profession = ''; }
 
     $guardian_name     = clean_input($_POST['guardian_name'] ?? '');
     $guardian_relation = clean_input($_POST['guardian_relation'] ?? '');
@@ -74,8 +84,12 @@ if (isset($_POST['save_step2'])) {
     // Keep validation in sync with the centralized dropdown options.
     $valid_family_religious_lifestyles = $family_religious_lifestyle_options;
 
-    if ($father_name === '' || $father_profession === '' || $mother_name === '' || $mother_profession === '') {
-        $error = "Please complete all required parents' information.";
+    if ($father_name === '' || !in_array($father_alive, ['Yes', 'No'], true) ||
+        $mother_name === '' || !in_array($mother_alive, ['Yes', 'No'], true)) {
+        $error = "Please complete the required parents' information.";
+    } elseif (($father_alive === 'Yes' && $father_profession === '') ||
+              ($mother_alive === 'Yes' && $mother_profession === '')) {
+        $error = "Please select a profession for each living parent.";
     } elseif ($wali_required && ($guardian_name === '' || $guardian_relation === '' || $guardian_contact === '')) {
         $error = "Marriage Guardian (Wali) information is required for Muslim female profiles.";
     } elseif ($family_type === '' || $family_status === '' || $living_with_family === '') {
@@ -91,9 +105,16 @@ if (isset($_POST['save_step2'])) {
 
         $sql = "UPDATE user_profiles
                 SET father_name=?,
+                    father_alive=?,
                     father_profession=?,
                     mother_name=?,
+                    mother_alive=?,
                     mother_profession=?,
+                    parents_details=?,
+                    brothers_details=?,
+                    sisters_details=?,
+                    paternal_uncles_details=?,
+                    paternal_aunts_details=?,
                     guardian_name=?,
                     guardian_relation=?,
                     guardian_contact=?,
@@ -115,11 +136,18 @@ if (isset($_POST['save_step2'])) {
         if ($update) {
             mysqli_stmt_bind_param(
                 $update,
-                "sssssssssiiisiiissi",
+                "ssssssssssssssssiiisiisssi",
                 $father_name,
+                $father_alive,
                 $father_profession,
                 $mother_name,
+                $mother_alive,
                 $mother_profession,
+                $parents_details,
+                $brothers_details,
+                $sisters_details,
+                $paternal_uncles_details,
+                $paternal_aunts_details,
                 $guardian_name,
                 $guardian_relation,
                 $guardian_contact,
@@ -150,9 +178,16 @@ if (isset($_POST['save_step2'])) {
 
     // Preserve submitted values if validation fails.
     $user['father_name'] = $father_name;
+    $user['father_alive'] = $father_alive;
     $user['father_profession'] = $father_profession;
     $user['mother_name'] = $mother_name;
+    $user['mother_alive'] = $mother_alive;
     $user['mother_profession'] = $mother_profession;
+    $user['parents_details'] = $parents_details;
+    $user['brothers_details'] = $brothers_details;
+    $user['sisters_details'] = $sisters_details;
+    $user['paternal_uncles_details'] = $paternal_uncles_details;
+    $user['paternal_aunts_details'] = $paternal_aunts_details;
     $user['guardian_name'] = $guardian_name;
     $user['guardian_relation'] = $guardian_relation;
     $user['guardian_contact'] = $guardian_contact;
@@ -259,7 +294,15 @@ $completion = sm_get_profile_completion($conn, $user_id);
                     </div>
 
                     <div class="step2-field">
-                        <label for="father_profession">Father's Profession <span class="required">*</span></label>
+                        <label>Is your father alive? <span class="required">*</span></label>
+                        <div class="step2-alive-options" role="group" aria-label="Is your father alive?">
+                            <label><input type="radio" name="father_alive" value="Yes" required <?= (($user['father_alive'] ?? '') === 'Yes') ? 'checked' : '' ?>> Yes</label>
+                            <label><input type="radio" name="father_alive" value="No" required <?= (($user['father_alive'] ?? '') === 'No') ? 'checked' : '' ?>> No</label>
+                        </div>
+                    </div>
+
+                    <div class="step2-field step2-profession-field" id="father-profession-field">
+                        <label for="father_profession">Father's Profession <span class="required" id="father-profession-required">*</span></label>
                         <select id="father_profession" name="father_profession" required>
                             <option value="">Select father's profession</option>
                             <?php foreach ($father_professions as $profession): ?>
@@ -282,7 +325,15 @@ $completion = sm_get_profile_completion($conn, $user_id);
                     </div>
 
                     <div class="step2-field">
-                        <label for="mother_profession">Mother's Profession <span class="required">*</span></label>
+                        <label>Is your mother alive? <span class="required">*</span></label>
+                        <div class="step2-alive-options" role="group" aria-label="Is your mother alive?">
+                            <label><input type="radio" name="mother_alive" value="Yes" required <?= (($user['mother_alive'] ?? '') === 'Yes') ? 'checked' : '' ?>> Yes</label>
+                            <label><input type="radio" name="mother_alive" value="No" required <?= (($user['mother_alive'] ?? '') === 'No') ? 'checked' : '' ?>> No</label>
+                        </div>
+                    </div>
+
+                    <div class="step2-field step2-profession-field" id="mother-profession-field">
+                        <label for="mother_profession">Mother's Profession <span class="required" id="mother-profession-required">*</span></label>
                         <select id="mother_profession" name="mother_profession" required>
                             <option value="">Select mother's profession</option>
                             <?php foreach ($mother_professions as $profession): ?>
@@ -291,6 +342,13 @@ $completion = sm_get_profile_completion($conn, $user_id);
                                 </option>
                             <?php endforeach; ?>
                         </select>
+                    </div>
+                </div>
+
+                <div class="step2-grid step2-grid-2 step2-details-grid">
+                    <div class="step2-field step2-wide-field">
+                        <label for="parents_details">Additional Details About Parents <span class="optional">(Optional)</span></label>
+                        <textarea id="parents_details" name="parents_details" rows="3" maxlength="3000" placeholder="Share any other details about your father or mother, if you wish."><?= htmlspecialchars($user['parents_details'] ?? '') ?></textarea>
                     </div>
                 </div>
             </section>
@@ -457,10 +515,29 @@ $completion = sm_get_profile_completion($conn, $user_id);
                         </select>
                     </div>
                 </div>
+
+                <div class="step2-grid step2-grid-2 step2-details-grid step2-relative-details">
+                    <div class="step2-field">
+                        <label for="brothers_details">Brothers' Details <span class="optional">(Optional)</span></label>
+                        <textarea id="brothers_details" name="brothers_details" rows="3" maxlength="3000" placeholder="What do your brothers do? What do their wives do, and where do they live?"><?= htmlspecialchars($user['brothers_details'] ?? '') ?></textarea>
+                    </div>
+                    <div class="step2-field">
+                        <label for="sisters_details">Sisters' Details <span class="optional">(Optional)</span></label>
+                        <textarea id="sisters_details" name="sisters_details" rows="3" maxlength="3000" placeholder="What do your sisters do? What do their husbands do, and where do they live?"><?= htmlspecialchars($user['sisters_details'] ?? '') ?></textarea>
+                    </div>
+                    <div class="step2-field">
+                        <label for="paternal_uncles_details">Father's Brothers' Details <span class="optional">(Optional)</span></label>
+                        <textarea id="paternal_uncles_details" name="paternal_uncles_details" rows="3" maxlength="3000" placeholder="What do your father's brothers do? What do their wives do, and where do they live?"><?= htmlspecialchars($user['paternal_uncles_details'] ?? '') ?></textarea>
+                    </div>
+                    <div class="step2-field">
+                        <label for="paternal_aunts_details">Father's Sisters' Details <span class="optional">(Optional)</span></label>
+                        <textarea id="paternal_aunts_details" name="paternal_aunts_details" rows="3" maxlength="3000" placeholder="What do your father's sisters do? What do their husbands do, and where do they live?"><?= htmlspecialchars($user['paternal_aunts_details'] ?? '') ?></textarea>
+                    </div>
+                </div>
             </section>
 
             <div class="step2-actions">
-                <a href="view_profile.php" class="step2-btn step2-btn-back">
+                <a href="view_profile.php?user_id=<?php echo $user_id; ?>" class="step2-btn step2-btn-back">
                     <i class="bi bi-arrow-left-circle"></i>
                     <span>Back to Profile</span>
                 </a>
@@ -508,6 +585,28 @@ $completion = sm_get_profile_completion($conn, $user_id);
     }
 
     syncWaliState();
+
+    function syncParentProfession(parent) {
+        const aliveChoice = document.querySelector('input[name="' + parent + '_alive"]:checked');
+        const professionField = document.getElementById(parent + '-profession-field');
+        const profession = document.getElementById(parent + '_profession');
+        const requiredMark = document.getElementById(parent + '-profession-required');
+        const isAlive = aliveChoice && aliveChoice.value === 'Yes';
+        if (professionField) professionField.classList.toggle('is-not-applicable', !!aliveChoice && !isAlive);
+        if (profession) {
+            profession.required = !!isAlive;
+            profession.disabled = !!aliveChoice && !isAlive;
+            if (aliveChoice && !isAlive) profession.value = '';
+        }
+        if (requiredMark) requiredMark.hidden = !isAlive;
+    }
+
+    ['father', 'mother'].forEach(parent => {
+        document.querySelectorAll('input[name="' + parent + '_alive"]').forEach(radio => {
+            radio.addEventListener('change', () => syncParentProfession(parent));
+        });
+        syncParentProfession(parent);
+    });
 
     // Keep sibling counters integer-only even when users type manually.
     document.querySelectorAll('input[type="number"]').forEach(input => {

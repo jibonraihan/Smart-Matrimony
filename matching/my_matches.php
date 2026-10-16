@@ -42,16 +42,19 @@ elseif ($tab === 'history') { $where .= " AND m.relationship_active=0"; }
 $sql = "SELECT m.*, u.gender AS other_gender,
     CONCAT(up.first_name,' ',COALESCE(up.last_name,'')) AS other_name,
     up.photo, up.photo_visibility, up.profession, up.religion, up.date_of_birth,
-    up.madhhab, up.height_cm, up.area, up.post_office, up.postal_code,
-    up.country, up.division_id, up.district_id, up.upazila_id,
+    up.madhhab, up.height_cm, up.area, up.post_office, up.postal_code, up.area_type, up.residence_type, up.permanent_hometown,
+    up.country, up.division_id, up.district_id, up.upazila_id, up.permanent_country, up.permanent_area, up.permanent_area_type, up.permanent_residence_type, up.permanent_post_office, up.permanent_postal_code, up.permanent_division_id, up.permanent_district_id, up.permanent_upazila_id,
     up.profile_visibility,
-    dv.name_en AS division_name, dt.name_en AS district_name, uz.name_en AS upazila_name
+    dv.name_en AS division_name, dt.name_en AS district_name, uz.name_en AS upazila_name, pdv.name_en AS permanent_division_name, pdt.name_en AS permanent_district_name, puz.name_en AS permanent_upazila_name
     FROM matches m
     JOIN users u ON u.user_id = CASE WHEN m.sender_user_id=? THEN m.receiver_user_id ELSE m.sender_user_id END
     JOIN user_profiles up ON up.user_id=u.user_id
     LEFT JOIN divisions dv ON dv.id=up.division_id
     LEFT JOIN districts dt ON dt.id=up.district_id
     LEFT JOIN upazilas uz ON uz.id=up.upazila_id
+    LEFT JOIN divisions pdv ON pdv.id=up.permanent_division_id
+    LEFT JOIN districts pdt ON pdt.id=up.permanent_district_id
+    LEFT JOIN upazilas puz ON puz.id=up.permanent_upazila_id
     WHERE $where
     ORDER BY CASE WHEN m.status='Pending' AND m.receiver_user_id=? THEN 0 WHEN m.status='Accepted' THEN 1 ELSE 2 END, m.created_at DESC";
 
@@ -85,6 +88,14 @@ function match_location($r) {
         if ($value !== '' && !in_array($value, $parts, true)) $parts[] = $value;
     }
     return $parts ? implode(', ', $parts) : null;
+}
+function match_permanent_location($r) {
+    $fields = ['permanent_division_id','permanent_district_id','permanent_upazila_id','permanent_area','permanent_area_type','permanent_residence_type','permanent_post_office','permanent_postal_code'];
+    $has = false; foreach ($fields as $field) { if (isset($r[$field]) && $r[$field] !== '') { $has = true; break; } }
+    $same = !$has || ((string)($r['division_id']??'')===(string)($r['permanent_division_id']??'') && (string)($r['district_id']??'')===(string)($r['permanent_district_id']??'') && (string)($r['upazila_id']??'')===(string)($r['permanent_upazila_id']??'') && (string)($r['area']??'')===(string)($r['permanent_area']??'') && (string)($r['area_type']??'')===(string)($r['permanent_area_type']??'') && (string)($r['residence_type']??'')===(string)($r['permanent_residence_type']??'') && (string)($r['post_office']??'')===(string)($r['permanent_post_office']??'') && (string)($r['postal_code']??'')===(string)($r['permanent_postal_code']??''));
+    if ($same) return 'Same as current location';
+    $parts=[]; foreach (['permanent_area','permanent_upazila_name','permanent_district_name','permanent_division_name'] as $key) { $v=trim((string)($r[$key]??'')); if($v!=='')$parts[]=$v; }
+    return $parts ? implode(', ', $parts) : 'Not informed';
 }
 
 include '../includes/header.php'; include '../includes/navbar.php';
@@ -136,7 +147,7 @@ include '../includes/header.php'; include '../includes/navbar.php';
       <span><i class="fa-solid fa-ruler-vertical"></i> <?= ($h=match_height($r['height_cm'] ?? null)) !== null ? htmlspecialchars($h) : 'Height not informed' ?></span>
       <span><i class="fa-solid fa-mosque"></i> <?= !empty($r['madhhab']) ? htmlspecialchars($r['madhhab']) : 'Madhhab not informed' ?></span>
       <span><i class="fa-solid fa-briefcase"></i> <?= !empty($r['profession']) ? htmlspecialchars($r['profession']) : 'Profession not informed' ?></span>
-      <span><i class="fa-solid fa-location-dot"></i> <?= ($loc=match_location($r)) !== null ? htmlspecialchars($loc) : 'Location not informed' ?></span>
+      <span><i class="fa-solid fa-location-dot"></i> Current: <?= ($loc=match_location($r)) !== null ? htmlspecialchars($loc) : 'Location not informed' ?></span><span><i class="fa-solid fa-house"></i> Permanent: <?= htmlspecialchars(match_permanent_location($r)) ?></span>
     </div></div><span class="status-pill status-<?= strtolower($r['status']) ?>"><?= htmlspecialchars($r['status']) ?></span></div>
     <?php if (!empty($r['interest_message'])): ?><p class="match-message"><i class="fa-regular fa-message"></i> <?= htmlspecialchars($r['interest_message']) ?></p><?php endif; ?>
     <div class="match-meta"><span><i class="fa-regular fa-clock"></i> <?= htmlspecialchars(date('d M Y',strtotime($r['created_at']))) ?></span><span><i class="fa-solid fa-arrow-right-arrow-left"></i> <?= $is_received?'Received':'Sent' ?></span><?php if($is_accepted): ?><span class="match-connected"><i class="fa-solid fa-link"></i> Connected</span><?php endif; ?></div>

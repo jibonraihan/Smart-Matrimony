@@ -716,7 +716,7 @@ $preview = ($hasPhoto && $profile_media_id > 0) ? 'media.php?id=' . $profile_med
 
 
                     <div class="step5-actions">
-                        <a href="../profile/view_profile.php" class="btn step5-back">
+                        <a href="view_profile.php?user_id=<?php echo $user_id; ?>" class="btn step5-back">
                             <i class="bi bi-arrow-left-circle"></i> Back to Profile
                         </a>
                         <button type="submit" name="save_step5" value="1" class="btn step5-save">
