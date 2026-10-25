@@ -144,6 +144,22 @@
         updateDots();
     });
 
+    document.addEventListener('sm:show-home-package', (event) => {
+        const providerId = Number(event.detail && event.detail.providerId);
+        if (!providerId) return;
+        const originalIndex = originals.findIndex((card) => Number(card.dataset.providerId) === providerId);
+        if (originalIndex < 0) return;
+
+        stopAuto();
+        if (total > visible) goTo(cloneCount + originalIndex);
+        carousel.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'center' });
+        const targetCard = originals[originalIndex];
+        targetCard.classList.remove('contract-provider-target-highlight');
+        requestAnimationFrame(() => targetCard.classList.add('contract-provider-target-highlight'));
+        window.setTimeout(() => targetCard.classList.remove('contract-provider-target-highlight'), 2400);
+        window.setTimeout(startAuto, 2600);
+    });
+
     prev.addEventListener('click', () => { prevSlide(); startAuto(); });
     next.addEventListener('click', () => { nextSlide(); startAuto(); });
 

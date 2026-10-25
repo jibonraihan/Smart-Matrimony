@@ -1,4 +1,5 @@
 <?php
+require_once 'includes/language.php';
 $page_css = 'assets/css/booking.css';
 require_once 'config/db.php';
 
@@ -60,8 +61,8 @@ include 'includes/header.php';
                 </span>
             </a>
             <div class="site-page-actions">
-                <a href="<?= BASE_URL; ?>dashboard.php#wedding-services" class="site-page-btn"><i class="fa-solid fa-arrow-left"></i><span>Dashboard</span></a>
-                <a href="<?= BASE_URL; ?>cart.php" class="site-page-btn"><i class="fa-solid fa-cart-shopping"></i><span>My Cart</span></a>
+                <a href="<?= BASE_URL; ?>dashboard.php#wedding-services" class="site-page-btn"><i class="fa-solid fa-arrow-left"></i><span><?= sm_text('Dashboard', 'ড্যাশবোর্ড'); ?></span></a>
+                <a href="<?= BASE_URL; ?>cart.php" class="site-page-btn"><i class="fa-solid fa-cart-shopping"></i><span><?= sm_text('My Cart', 'আমার কার্ট'); ?></span></a>
             </div>
         </div>
     </header>
@@ -69,19 +70,19 @@ include 'includes/header.php';
     <main class="booking-container booking-main">
         <div class="booking-heading">
             <div>
-                <span class="booking-kicker">YOUR WEDDING SERVICES</span>
-                <h1>My Bookings</h1>
-                <p>Review your service requests, event dates, selected packages and current booking status.</p>
+                <span class="booking-kicker"><?= sm_text('YOUR WEDDING SERVICES', 'আপনার বিয়ের সেবা'); ?></span>
+                <h1><?= sm_text('My Bookings', 'আমার বুকিং'); ?></h1>
+                <p><?= sm_text('Review your service requests, event dates, selected packages and current booking status.', 'আপনার সেবার অনুরোধ, অনুষ্ঠানের তারিখ, বাছাই করা প্যাকেজ এবং বর্তমান বুকিংয়ের অবস্থা দেখুন।'); ?></p>
             </div>
-            <a href="<?= BASE_URL; ?>dashboard.php#wedding-services" class="booking-primary"><i class="fa-solid fa-plus"></i> Explore Services</a>
+            <a href="<?= BASE_URL; ?>dashboard.php#wedding-services" class="booking-primary"><i class="fa-solid fa-plus"></i> <?= sm_text('Explore Services', 'সেবাগুলো দেখুন'); ?></a>
         </div>
 
         <?php if (!$bookings): ?>
             <section class="booking-empty">
                 <div class="booking-empty-icon"><i class="fa-regular fa-calendar-check"></i></div>
-                <h2>No bookings yet</h2>
-                <p>Your confirmed and pending wedding service requests will appear here after you book a package.</p>
-                <a href="<?= BASE_URL; ?>dashboard.php#wedding-services">Explore Wedding Services</a>
+                <h2><?= sm_text('No bookings yet', 'এখনো কোনো বুকিং নেই'); ?></h2>
+                <p><?= sm_text('Your confirmed and pending wedding service requests will appear here after you book a package.', 'প্যাকেজ বুক করার পর আপনার নিশ্চিত ও অপেক্ষমাণ বিয়ের সেবার অনুরোধগুলো এখানে দেখা যাবে।'); ?></p>
+                <a href="<?= BASE_URL; ?>dashboard.php#wedding-services"><?= sm_text('Explore Wedding Services', 'বিয়ের সেবাগুলো দেখুন'); ?></a>
             </section>
         <?php else: ?>
             <section class="booking-list">
@@ -115,8 +116,8 @@ include 'includes/header.php';
                             </div>
                         </div>
                         <div class="booking-card-side">
-                            <div><small>Total</small><strong>৳<?= number_format((float) $booking['total_price'], 2); ?></strong></div>
-                            <a href="<?= BASE_URL; ?>booking_details.php?id=<?= (int) $booking['booking_id']; ?>">View Details <i class="fa-solid fa-arrow-right"></i></a>
+                            <div><small><?= sm_text('Total', 'মোট'); ?></small><strong>৳<?= number_format((float) $booking['total_price'], 2); ?></strong></div>
+                            <a href="<?= BASE_URL; ?>booking_details.php?id=<?= (int) $booking['booking_id']; ?>"><?= sm_text('View Details', 'বিস্তারিত দেখুন'); ?> <i class="fa-solid fa-arrow-right"></i></a>
                         </div>
                     </article>
                 <?php endforeach; ?>

@@ -1,6 +1,7 @@
 <?php
 require_once '../config/db.php';
 require_once '../includes/functions.php';
+require_once '../includes/language.php';
 require_once '../includes/dropdowns.php';
 require_once '../includes/profile_completion.php';
 
@@ -15,6 +16,42 @@ if (!isset($_SESSION['user_id'])) {
 
 $user_id = (int) $_SESSION['user_id'];
 $error = '';
+
+/* Display-only Bengali labels for selected Step 3 options; stored values stay unchanged. */
+function sm_step3_option_label($value) {
+    $labels = [
+        'Early sleeper' => 'রাতে তাড়াতাড়ি ঘুমান',
+        'Night owl' => 'রাতে দেরি করে ঘুমান',
+        'Normal' => 'স্বাভাবিক',
+        'Prefer small circle' => 'ছোট পরিসরে মেলামেশা পছন্দ',
+        'Private' => 'ব্যক্তিগত থাকতে পছন্দ করেন',
+        'Late sleeper' => 'রাতে দেরিতে ঘুমান',
+        'Regular sleeper' => 'নিয়মিত সময়ে ঘুমান',
+        'Moderately social' => 'মাঝামাঝি মিশুক',
+        'Very social' => 'খুব মিশুক',
+        'Introvert' => 'অন্তর্মুখী',
+        'Extrovert' => 'বহির্মুখী',
+        'Ambivert' => 'উভয়মুখী',
+        'Reading' => 'বই পড়া',
+        'Travelling' => 'ভ্রমণ',
+        'Sports' => 'খেলাধুলা',
+        'Photography' => 'ছবি তোলা',
+        'Cooking' => 'রান্না করা',
+        'Gaming' => 'গেম খেলা',
+        'Writing' => 'লেখালেখি',
+        'Gardening' => 'বাগান করা',
+        'Volunteering' => 'স্বেচ্ছাসেবা',
+        'Islamic learning' => 'ইসলামি জ্ঞানচর্চা',
+        'Offline Chatting' => 'সরাসরি আড্ডা',
+        'Riding' => 'সাইকেল/মোটরসাইকেল চালানো',
+        'Housework' => 'ঘরের কাজ',
+        'Social Media' => 'সামাজিক যোগাযোগমাধ্যম',
+        'Sleeping' => 'ঘুমানো',
+        'No diseases' => 'কোনো রোগ নেই',
+        'Hijab (Hand, Foot, Face Covered)' => 'হিজাব (হাত, পা ও মুখ আবৃত)',
+    ];
+    return sm_text($value, $labels[$value] ?? $value);
+}
 
 /* Load profile */
 $profileStmt = mysqli_prepare($conn, 'SELECT * FROM user_profiles WHERE user_id=? LIMIT 1');
@@ -85,6 +122,10 @@ if (isset($_POST['save_step3'])) {
     $islamic_knowledge    = clean_input($_POST['islamic_knowledge'] ?? '');
     $halal_lifestyle      = clean_input($_POST['halal_lifestyle'] ?? '');
     $islamic_activities   = clean_input($_POST['islamic_activities'] ?? '');
+    $favorite_scholars = clean_input($_POST['favorite_scholars'] ?? '');
+    $favorite_books = clean_input($_POST['favorite_books'] ?? '');
+    $religious_knowledge_sources = clean_input($_POST['religious_knowledge_sources'] ?? '');
+    $bidah_shrine_stance = clean_input($_POST['bidah_shrine_stance'] ?? '');
     $tea_coffee           = clean_input($_POST['tea_coffee'] ?? '');
     $diet_preference      = clean_input($_POST['diet_preference'] ?? '');
     $sleep_pattern        = clean_input($_POST['sleep_pattern'] ?? '');
@@ -192,6 +233,10 @@ if (isset($_POST['save_step3'])) {
                     islamic_knowledge=?,
                     halal_lifestyle=?,
                     islamic_activities=?,
+                    favorite_scholars=?,
+                    favorite_books=?,
+                    religious_knowledge_sources=?,
+                    bidah_shrine_stance=?,
                     tea_coffee=?,
                     diet_preference=?,
                     sleep_pattern=?,
@@ -206,7 +251,7 @@ if (isset($_POST['save_step3'])) {
 
             mysqli_stmt_bind_param(
                 $update,
-                'sssssisssssssssssssssi',
+                'sssssisssssssssssssssssssi',
                 $smoking_status,
                 $prayer_status,
                 $beard_status,
@@ -219,6 +264,10 @@ if (isset($_POST['save_step3'])) {
                 $islamic_knowledge,
                 $halal_lifestyle,
                 $islamic_activities,
+                $favorite_scholars,
+                $favorite_books,
+                $religious_knowledge_sources,
+                $bidah_shrine_stance,
                 $tea_coffee,
                 $diet_preference,
                 $sleep_pattern,
@@ -285,6 +334,10 @@ if (isset($_POST['save_step3'])) {
     $user['islamic_knowledge'] = $islamic_knowledge;
     $user['halal_lifestyle'] = $halal_lifestyle;
     $user['islamic_activities'] = $islamic_activities;
+    $user['favorite_scholars'] = $favorite_scholars;
+    $user['favorite_books'] = $favorite_books;
+    $user['religious_knowledge_sources'] = $religious_knowledge_sources;
+    $user['bidah_shrine_stance'] = $bidah_shrine_stance;
     $user['tea_coffee'] = $tea_coffee;
     $user['diet_preference'] = $diet_preference;
     $user['sleep_pattern'] = $sleep_pattern;
@@ -310,15 +363,15 @@ include '../includes/navbar.php';
             <div class="step3-shell">
                 <?php
                 $currentStep = 3;
-                $pageTitle = 'Lifestyle & Health';
+                $pageTitle = sm_text('Lifestyle & Health', 'জীবনযাপন ও স্বাস্থ্য');
                 $pageDescription = '';
                 $steps = [
-                    1 => ['title' => 'Personal', 'icon' => 'bi-person-circle', 'url' => 'step1.php'],
-                    2 => ['title' => 'Family', 'icon' => 'bi-people', 'url' => 'step2.php'],
-                    3 => ['title' => 'Lifestyle', 'icon' => 'bi-heart', 'url' => 'step3.php'],
-                    4 => ['title' => 'Location', 'icon' => 'bi-geo-alt', 'url' => 'step4.php'],
-                    5 => ['title' => 'Privacy', 'icon' => 'bi-shield-lock', 'url' => 'step5.php'],
-                    6 => ['title' => 'PP & QnA', 'icon' => 'bi-patch-question', 'url' => 'step6.php']
+                    1 => ['title' => sm_text('Personal', 'ব্যক্তিগত তথ্য'), 'icon' => 'bi-person-circle', 'url' => 'step1.php'],
+                    2 => ['title' => sm_text('Family', 'পারিবারিক তথ্য'), 'icon' => 'bi-people', 'url' => 'step2.php'],
+                    3 => ['title' => sm_text('Lifestyle', 'জীবনযাপন'), 'icon' => 'bi-heart', 'url' => 'step3.php'],
+                    4 => ['title' => sm_text('Location', 'ঠিকানা'), 'icon' => 'bi-geo-alt', 'url' => 'step4.php'],
+                    5 => ['title' => sm_text('Privacy', 'গোপনীয়তা'), 'icon' => 'bi-shield-lock', 'url' => 'step5.php'],
+                    6 => ['title' => sm_text('PP & QnA', 'সঙ্গীর পছন্দ ও প্রশ্নোত্তর'), 'icon' => 'bi-patch-question', 'url' => 'step6.php']
                 ];
                 $completion = sm_get_profile_completion($conn, $user_id);
                 $progress = $completion['percentage'];
@@ -327,8 +380,8 @@ include '../includes/navbar.php';
                 <header class="step3-wizard-head">
                     <div class="step3-heading-row">
                         <div>
-                            <span class="step3-kicker">PROFILE BUILDER</span>
-                            <h1>Step <?= $currentStep ?></h1>
+                            <span class="step3-kicker"><?= sm_text('PROFILE BUILDER', 'প্রোফাইল তৈরি') ?></span>
+                            <h1><?= sm_text('Step', 'ধাপ') ?> <?= (($GLOBALS['current_language'] ?? 'bn') === 'en' ? $currentStep : strtr((string)$currentStep, ['0'=>'০','1'=>'১','2'=>'২','3'=>'৩','4'=>'৪','5'=>'৫','6'=>'৬','7'=>'৭','8'=>'৮','9'=>'৯'])) ?></h1>
                             <p><?= htmlspecialchars($pageTitle) ?></p>
                         </div>
                         <a class="step3-logo" href="../dashboard.php" aria-label="Back to dashboard">
@@ -352,8 +405,8 @@ include '../includes/navbar.php';
                             <div class="step3-progress-fill" style="width: <?= $progress ?>%"></div>
                         </div>
                         <div class="step3-progress-meta">
-                            <span>Step <?= $currentStep ?> of <?= count($steps) ?></span>
-                            <strong><?= $progress ?>% complete</strong>
+                            <span><?= sm_text('Step', 'ধাপ') ?> <?= (($GLOBALS['current_language'] ?? 'bn') === 'en' ? $currentStep : strtr((string)$currentStep, ['0'=>'০','1'=>'১','2'=>'২','3'=>'৩','4'=>'৪','5'=>'৫','6'=>'৬','7'=>'৭','8'=>'৮','9'=>'৯'])) ?> <?= sm_text('of', 'এর মধ্যে') ?> <?= count($steps) ?></span>
+                            <strong><?= $progress ?><?= sm_text('% complete', '% সম্পন্ন') ?></strong>
                         </div>
                     </div>
                 </header>
@@ -371,121 +424,141 @@ include '../includes/navbar.php';
                         <div class="section-heading">
                             <div class="section-icon"><i class="bi bi-stars"></i></div>
                             <div>
-                                <h2>Islamic Lifestyle</h2>
-                                <p>Your regular practices and Islamic lifestyle.</p>
+                                <h2><?= sm_text('Islamic Lifestyle', 'ইসলামি জীবনযাপন') ?></h2>
+                                <p><?= sm_text('Your regular practices and Islamic lifestyle.', 'আপনার নিয়মিত আমল ও ইসলামি জীবনযাপনের তথ্য দিন।') ?></p>
                             </div>
                         </div>
 
                         <div class="row g-4">
                             <div class="col-md-6">
-                                <label class="form-label">Smoking Status <span class="required">*</span></label>
+                                <label class="form-label"><?= sm_text('Smoking Status', 'ধূমপানের অভ্যাস') ?> <span class="required">*</span></label>
                                 <select name="smoking_status" class="form-select" required>
-                                    <option value="">Select smoking status</option>
+                                    <option value=""><?= sm_text('Select smoking status', 'ধূমপানের অবস্থা নির্বাচন করুন') ?></option>
                                     <?php foreach ($smoking_statuses as $status): ?>
-                                        <option value="<?= htmlspecialchars($status) ?>" <?= (($user['smoking_status'] ?? '') === $status) ? 'selected' : '' ?>><?= htmlspecialchars($status) ?></option>
+                                        <option value="<?= htmlspecialchars($status) ?>" <?= (($user['smoking_status'] ?? '') === $status) ? 'selected' : '' ?>><?= htmlspecialchars(sm_dropdown_label($status)) ?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
 
                             <div class="col-md-6">
-                                <label class="form-label">Prayer Status <span class="required">*</span></label>
+                                <label class="form-label"><?= sm_text('Prayer Status', 'নামাজের অভ্যাস') ?> <span class="required">*</span></label>
                                 <select name="prayer_status" class="form-select" required>
-                                    <option value="">Select prayer status</option>
+                                    <option value=""><?= sm_text('Select prayer status', 'নামাজের অবস্থা নির্বাচন করুন') ?></option>
                                     <?php foreach ($prayer_statuses as $status): ?>
-                                        <option value="<?= htmlspecialchars($status) ?>" <?= (($user['prayer_status'] ?? '') === $status) ? 'selected' : '' ?>><?= htmlspecialchars($status) ?></option>
+                                        <option value="<?= htmlspecialchars($status) ?>" <?= (($user['prayer_status'] ?? '') === $status) ? 'selected' : '' ?>><?= htmlspecialchars(sm_dropdown_label($status)) ?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
 
                             <div class="col-md-6">
-                                <label class="form-label">Quran Reading</label>
+                                <label class="form-label"><?= sm_text('Quran Reading', 'কোরআন তিলাওয়াত') ?></label>
                                 <select name="quran_reading" class="form-select">
-                                    <option value="">Select Quran reading</option>
+                                    <option value=""><?= sm_text('Select Quran reading', 'কোরআন তিলাওয়াতের অভ্যাস নির্বাচন করুন') ?></option>
                                     <?php foreach ($quran_reading_options as $option): ?>
-                                        <option value="<?= htmlspecialchars($option) ?>" <?= (($user['quran_reading'] ?? '') === $option) ? 'selected' : '' ?>><?= htmlspecialchars($option) ?></option>
+                                        <option value="<?= htmlspecialchars($option) ?>" <?= (($user['quran_reading'] ?? '') === $option) ? 'selected' : '' ?>><?= htmlspecialchars(sm_dropdown_label($option)) ?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
 
                             <div class="col-md-6">
-                                <label class="form-label">Fasting</label>
+                                <label class="form-label"><?= sm_text('Fasting', 'রোজা') ?></label>
                                 <select name="fasting_status" class="form-select">
-                                    <option value="">Select fasting</option>
+                                    <option value=""><?= sm_text('Select fasting', 'রোজা রাখার অভ্যাস নির্বাচন করুন') ?></option>
                                     <?php foreach ($fasting_options as $option): ?>
-                                        <option value="<?= htmlspecialchars($option) ?>" <?= (($user['fasting_status'] ?? '') === $option) ? 'selected' : '' ?>><?= htmlspecialchars($option) ?></option>
+                                        <option value="<?= htmlspecialchars($option) ?>" <?= (($user['fasting_status'] ?? '') === $option) ? 'selected' : '' ?>><?= htmlspecialchars(sm_dropdown_label($option)) ?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
 
                             <div class="col-md-6">
-                                <label class="form-label">Religious Practice</label>
+                                <label class="form-label"><?= sm_text('Religious Practice', 'ধর্মীয় অনুশীলন') ?></label>
                                 <select name="religious_practice" class="form-select">
-                                    <option value="">Select religious practice</option>
+                                    <option value=""><?= sm_text('Select religious practice', 'ধর্মীয় অনুশীলনের মাত্রা নির্বাচন করুন') ?></option>
                                     <?php foreach ($religious_practice_options as $option): ?>
-                                        <option value="<?= htmlspecialchars($option) ?>" <?= (($user['religious_practice'] ?? '') === $option) ? 'selected' : '' ?>><?= htmlspecialchars($option) ?></option>
+                                        <option value="<?= htmlspecialchars($option) ?>" <?= (($user['religious_practice'] ?? '') === $option) ? 'selected' : '' ?>><?= htmlspecialchars(sm_dropdown_label($option)) ?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
 
                             <div class="col-md-6">
-                                <label class="form-label">Islamic Knowledge <span class="required">*</span></label>
+                                <label class="form-label"><?= sm_text('Islamic Knowledge', 'ইসলামি জ্ঞান') ?> <span class="required">*</span></label>
                                 <select name="islamic_knowledge" class="form-select" required>
-                                    <option value="">Select Islamic knowledge</option>
+                                    <option value=""><?= sm_text('Select Islamic knowledge', 'ইসলামি জ্ঞানের স্তর নির্বাচন করুন') ?></option>
                                     <?php foreach ($islamic_knowledge_levels as $option): ?>
-                                        <option value="<?= htmlspecialchars($option) ?>" <?= (($user['islamic_knowledge'] ?? '') === $option) ? 'selected' : '' ?>><?= htmlspecialchars($option) ?></option>
+                                        <option value="<?= htmlspecialchars($option) ?>" <?= (($user['islamic_knowledge'] ?? '') === $option) ? 'selected' : '' ?>><?= htmlspecialchars(sm_dropdown_label($option)) ?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
 
                             <div class="col-md-6">
-                                <label class="form-label">Halal Lifestyle <span class="required">*</span></label>
+                                <label class="form-label"><?= sm_text('Halal Lifestyle', 'হালাল জীবনযাপন') ?> <span class="required">*</span></label>
                                 <select name="halal_lifestyle" class="form-select" required>
-                                    <option value="">Select halal lifestyle</option>
+                                    <option value=""><?= sm_text('Select halal lifestyle', 'হালাল জীবনযাপনের ধরন নির্বাচন করুন') ?></option>
                                     <?php foreach ($halal_lifestyle_options as $option): ?>
-                                        <option value="<?= htmlspecialchars($option) ?>" <?= (($user['halal_lifestyle'] ?? '') === $option) ? 'selected' : '' ?>><?= htmlspecialchars($option) ?></option>
+                                        <option value="<?= htmlspecialchars($option) ?>" <?= (($user['halal_lifestyle'] ?? '') === $option) ? 'selected' : '' ?>><?= htmlspecialchars(sm_dropdown_label($option)) ?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
 
                             <div class="col-md-6">
-                                <label class="form-label">Mahram Maintained</label>
+                                <label class="form-label"><?= sm_text('Mahram Maintained', 'মাহরাম মেনে চলেন কি না') ?></label>
                                 <select name="mahram_maintained" class="form-select">
-                                    <option value="">Select mahram practice</option>
+                                    <option value=""><?= sm_text('Select mahram practice', 'মাহরাম মেনে চলার অবস্থা নির্বাচন করুন') ?></option>
                                     <?php foreach ($mahram_options as $option): ?>
-                                        <option value="<?= htmlspecialchars($option) ?>" <?= (($user['mahram_maintained'] ?? null) === ($option === 'Yes' ? 1 : 0)) ? 'selected' : '' ?>><?= htmlspecialchars($option) ?></option>
+                                        <option value="<?= htmlspecialchars($option) ?>" <?= (($user['mahram_maintained'] ?? null) === ($option === 'Yes' ? 1 : 0)) ? 'selected' : '' ?>><?= htmlspecialchars(sm_dropdown_label($option)) ?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
 
                             <div class="col-12">
-                                <label class="form-label">Islamic Activities</label>
-                                <textarea name="islamic_activities" rows="3" maxlength="500" class="form-control" placeholder="Mention mosque visits, Islamic lectures, study circles or other activities."><?= htmlspecialchars($user['islamic_activities'] ?? '') ?></textarea>
+                                <label class="form-label"><?= sm_text('Islamic Activities', 'ইসলামি কার্যক্রম') ?></label>
+                                <textarea name="islamic_activities" rows="3" maxlength="500" class="form-control" placeholder="<?= sm_text('Mention mosque visits, Islamic lectures, study circles or other activities.', 'মসজিদে যাওয়া, ইসলামি আলোচনা, পাঠচক্র বা অন্যান্য কার্যক্রমের কথা লিখুন।') ?>"><?= htmlspecialchars($user['islamic_activities'] ?? '') ?></textarea>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label"><?= sm_text('Favorite Islamic Scholars (Optional)', 'প্রিয় ইসলামি আলেম (ঐচ্ছিক)') ?></label>
+                                <textarea name="favorite_scholars" rows="2" maxlength="1000" class="form-control" placeholder="<?= sm_text('Names of scholars you prefer to learn from.', 'যেসব আলেমের কাছ থেকে শিখতে পছন্দ করেন, তাঁদের নাম লিখুন।') ?>"><?= htmlspecialchars($user['favorite_scholars'] ?? '') ?></textarea>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label"><?= sm_text('Favorite Books (Optional)', 'প্রিয় বই (ঐচ্ছিক)') ?></label>
+                                <textarea name="favorite_books" rows="2" maxlength="1000" class="form-control" placeholder="<?= sm_text('Names of Islamic books you like.', 'আপনার পছন্দের ইসলামি বইগুলোর নাম লিখুন।') ?>"><?= htmlspecialchars($user['favorite_books'] ?? '') ?></textarea>
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label"><?= sm_text('Religious Learning Sources (Optional)', 'ধর্মীয় জ্ঞান অর্জনের উৎস (ঐচ্ছিক)') ?></label>
+                                <textarea name="religious_knowledge_sources" rows="2" maxlength="1500" class="form-control" placeholder="<?= sm_text('Where you practice or learn about Islam, such as classes, mosque, books or online lessons.', 'ক্লাস, মসজিদ, বই বা অনলাইন পাঠের মতো যেসব মাধ্যমে ইসলাম সম্পর্কে শেখেন, তা লিখুন।') ?>"><?= htmlspecialchars($user['religious_knowledge_sources'] ?? '') ?></textarea>
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label"><?= sm_text('Your View on Bid\'ah and Shrine Worship (Optional)', 'বিদআত ও মাজারকেন্দ্রিক উপাসনা সম্পর্কে আপনার মতামত (ঐচ্ছিক)') ?></label>
+                                <textarea name="bidah_shrine_stance" rows="2" maxlength="500" class="form-control" placeholder="<?= sm_text('Briefly describe your views.', 'এ বিষয়ে আপনার মতামত সংক্ষেপে লিখুন।') ?>"><?= htmlspecialchars($user['bidah_shrine_stance'] ?? '') ?></textarea>
                             </div>
 
 
                             <?php if (($user['gender'] ?? '') === 'Male'): ?>
                                 <div class="col-md-6">
-                                    <label class="form-label">Beard Status</label>
+                                    <label class="form-label"><?= sm_text('Beard Status', 'দাড়ির অবস্থা') ?></label>
                                     <select name="beard_status" class="form-select">
-                                        <option value="">Select beard status</option>
+                                        <option value=""><?= sm_text('Select beard status', 'দাড়ির অবস্থা নির্বাচন করুন') ?></option>
                                         <?php foreach ($beard_statuses as $status): ?>
-                                            <option value="<?= htmlspecialchars($status) ?>" <?= (($user['beard_status'] ?? '') === $status) ? 'selected' : '' ?>><?= htmlspecialchars($status) ?></option>
+                                            <option value="<?= htmlspecialchars($status) ?>" <?= (($user['beard_status'] ?? '') === $status) ? 'selected' : '' ?>><?= htmlspecialchars(sm_dropdown_label($status)) ?></option>
                                         <?php endforeach; ?>
                                     </select>
                                 </div>
                             <?php else: ?>
                                 <div class="col-md-6">
-                                    <label class="form-label">Hijab Status</label>
+                                    <label class="form-label"><?= sm_text('Hijab Status', 'হিজাবের অবস্থা') ?></label>
                                     <select name="hijab_status" class="form-select">
-                                        <option value="">Select hijab status</option>
+                                        <option value=""><?= sm_text('Select hijab status', 'হিজাবের অবস্থা নির্বাচন করুন') ?></option>
                                         <?php foreach ($hijab_statuses as $status): ?>
-                                            <option value="<?= htmlspecialchars($status) ?>" <?= (($user['hijab_status'] ?? '') === $status) ? 'selected' : '' ?>><?= htmlspecialchars($status) ?></option>
+                                            <option value="<?= htmlspecialchars($status) ?>" <?= (($user['hijab_status'] ?? '') === $status) ? 'selected' : '' ?>><?= htmlspecialchars(sm_dropdown_label($status)) ?></option>
                                         <?php endforeach; ?>
                                     </select>
                                 </div>
                                 <div class="col-12">
-                                    <label class="form-label">Hijab Details</label>
-                                    <textarea name="hijab_details" rows="3" maxlength="500" class="form-control" placeholder="Add any helpful details about your hijab practice."><?= htmlspecialchars($user['hijab_details'] ?? '') ?></textarea>
+                                    <label class="form-label"><?= sm_text('Hijab Details', 'হিজাব সম্পর্কে বিস্তারিত') ?></label>
+                                    <textarea name="hijab_details" rows="3" maxlength="500" class="form-control" placeholder="<?= sm_text('Add any helpful details about your hijab practice.', 'আপনার হিজাব পালনের বিষয়ে প্রয়োজনীয় তথ্য লিখুন।') ?>"><?= htmlspecialchars($user['hijab_details'] ?? '') ?></textarea>
                                 </div>
                             <?php endif; ?>
 
@@ -497,38 +570,38 @@ include '../includes/navbar.php';
                         <div class="section-heading">
                             <div class="section-icon"><i class="bi bi-sunrise"></i></div>
                             <div>
-                                <h2>Daily Lifestyle</h2>
-                                <p>Simple everyday preferences that help describe your lifestyle.</p>
+                                <h2><?= sm_text('Daily Lifestyle', 'দৈনন্দিন জীবনযাপন') ?></h2>
+                                <p><?= sm_text('Simple everyday preferences that help describe your lifestyle.', 'আপনার দৈনন্দিন জীবনযাপনের ধরন বোঝাতে এই পছন্দগুলো নির্বাচন করুন।') ?></p>
                             </div>
                         </div>
 
                         <div class="row g-4">
                             <div class="col-md-6">
-                                <label class="form-label">Diet Preference</label>
+                                <label class="form-label"><?= sm_text('Diet Preference', 'খাদ্যাভ্যাস') ?></label>
                                 <select name="diet_preference" class="form-select">
-                                    <option value="">Select diet preference</option>
+                                    <option value=""><?= sm_text('Select diet preference', 'খাদ্যাভ্যাস নির্বাচন করুন') ?></option>
                                     <?php foreach ($diet_preferences as $option): ?>
-                                        <option value="<?= htmlspecialchars($option) ?>" <?= (($user['diet_preference'] ?? '') === $option) ? 'selected' : '' ?>><?= htmlspecialchars($option) ?></option>
+                                        <option value="<?= htmlspecialchars($option) ?>" <?= (($user['diet_preference'] ?? '') === $option) ? 'selected' : '' ?>><?= htmlspecialchars(sm_dropdown_label($option)) ?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
 
                             <div class="col-md-6">
-                                <label class="form-label">Sleep Pattern <span class="required">*</span></label>
+                                <label class="form-label"><?= sm_text('Sleep Pattern', 'ঘুমের অভ্যাস') ?> <span class="required">*</span></label>
                                 <select name="sleep_pattern" class="form-select" required>
-                                    <option value="">Select sleep pattern</option>
+                                    <option value=""><?= sm_text('Select sleep pattern', 'ঘুমের ধরন নির্বাচন করুন') ?></option>
                                     <?php foreach ($sleep_patterns as $option): ?>
-                                        <option value="<?= htmlspecialchars($option) ?>" <?= (($user['sleep_pattern'] ?? '') === $option) ? 'selected' : '' ?>><?= htmlspecialchars($option) ?></option>
+                                        <option value="<?= htmlspecialchars($option) ?>" <?= (($user['sleep_pattern'] ?? '') === $option) ? 'selected' : '' ?>><?= htmlspecialchars(sm_step3_option_label($option)) ?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
 
                             <div class="col-md-6">
-                                <label class="form-label">Tea / Coffee Habit</label>
+                                <label class="form-label"><?= sm_text('Tea / Coffee Habit', 'চা-কফি পানের অভ্যাস') ?></label>
                                 <select name="tea_coffee" class="form-select">
-                                    <option value="">Select tea / coffee habit</option>
+                                    <option value=""><?= sm_text('Select tea / coffee habit', 'চা বা কফি পানের অভ্যাস নির্বাচন করুন') ?></option>
                                     <?php foreach ($tea_coffee_options as $option): ?>
-                                        <option value="<?= htmlspecialchars($option) ?>" <?= (($user['tea_coffee'] ?? '') === $option) ? 'selected' : '' ?>><?= htmlspecialchars($option) ?></option>
+                                        <option value="<?= htmlspecialchars($option) ?>" <?= (($user['tea_coffee'] ?? '') === $option) ? 'selected' : '' ?>><?= htmlspecialchars(sm_dropdown_label($option)) ?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
@@ -540,43 +613,43 @@ include '../includes/navbar.php';
                         <div class="section-heading">
                             <div class="section-icon"><i class="bi bi-people"></i></div>
                             <div>
-                                <h2>Personality & Social</h2>
-                                <p>Tell others a little more about how you naturally interact.</p>
+                                <h2><?= sm_text('Personality & Social', 'ব্যক্তিত্ব ও সামাজিকতা') ?></h2>
+                                <p><?= sm_text('Tell others a little more about how you naturally interact.', 'আপনি সাধারণত অন্যদের সঙ্গে কীভাবে মেলামেশা করেন, তা জানান।') ?></p>
                             </div>
                         </div>
 
                         <div class="row g-4">
                             <div class="col-md-6">
-                                <label class="form-label">Personality Type <span class="required">*</span></label>
+                                <label class="form-label"><?= sm_text('Personality Type', 'ব্যক্তিত্বের ধরন') ?> <span class="required">*</span></label>
                                 <select name="personality_type" class="form-select" required>
-                                    <option value="">Select personality type</option>
+                                    <option value=""><?= sm_text('Select personality type', 'ব্যক্তিত্বের ধরন নির্বাচন করুন') ?></option>
                                     <?php foreach ($personality_types as $option): ?>
-                                        <option value="<?= htmlspecialchars($option) ?>" <?= (($user['personality_type'] ?? '') === $option) ? 'selected' : '' ?>><?= htmlspecialchars($option) ?></option>
+                                        <option value="<?= htmlspecialchars($option) ?>" <?= (($user['personality_type'] ?? '') === $option) ? 'selected' : '' ?>><?= htmlspecialchars(sm_dropdown_label($option)) ?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
 
                             <div class="col-md-6">
-                                <label class="form-label">Social Nature <span class="required">*</span></label>
+                                <label class="form-label"><?= sm_text('Social Nature', 'সামাজিক স্বভাব') ?> <span class="required">*</span></label>
                                 <select name="social_nature" class="form-select" required>
-                                    <option value="">Select social nature</option>
+                                    <option value=""><?= sm_text('Select social nature', 'সামাজিক স্বভাব নির্বাচন করুন') ?></option>
                                     <?php foreach ($social_natures as $option): ?>
-                                        <option value="<?= htmlspecialchars($option) ?>" <?= (($user['social_nature'] ?? '') === $option) ? 'selected' : '' ?>><?= htmlspecialchars($option) ?></option>
+                                        <option value="<?= htmlspecialchars($option) ?>" <?= (($user['social_nature'] ?? '') === $option) ? 'selected' : '' ?>><?= htmlspecialchars(sm_step3_option_label($option)) ?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
 
                             <div class="col-12">
-                                <label class="form-label">Free-time Interests</label>
+                                <label class="form-label"><?= sm_text('Free-time Interests', 'অবসর সময়ের আগ্রহ') ?></label>
                                 <div class="interest-grid">
                                     <?php foreach ($free_time_interest_options as $interest): ?>
                                         <label class="interest-option">
                                             <input type="checkbox" name="free_time_interests[]" value="<?= htmlspecialchars($interest) ?>" <?= in_array($interest, $selected_interests, true) ? 'checked' : '' ?>>
-                                            <span><?= htmlspecialchars($interest) ?></span>
+                                            <span><?= htmlspecialchars(sm_step3_option_label($interest)) ?></span>
                                         </label>
                                     <?php endforeach; ?>
                                 </div>
-                                <div class="field-help">Choose any interests that describe how you enjoy your free time.</div>
+                                <div class="field-help"><?= sm_text('Choose any interests that describe how you enjoy your free time.', 'অবসর সময়ে যেসব কাজ করতে ভালোবাসেন, সেগুলো নির্বাচন করুন।') ?></div>
                             </div>
                         </div>
                     </section>
@@ -586,38 +659,38 @@ include '../includes/navbar.php';
                         <div class="section-heading">
                             <div class="section-icon"><i class="bi bi-compass"></i></div>
                             <div>
-                                <h2>Lifestyle Preferences</h2>
-                                <p>Optional details that make your profile more informative.</p>
+                                <h2><?= sm_text('Lifestyle Preferences', 'জীবনযাপনের পছন্দ') ?></h2>
+                                <p><?= sm_text('Optional details that make your profile more informative.', 'ঐচ্ছিক এই তথ্যগুলো আপনার প্রোফাইলকে আরও পূর্ণাঙ্গ করবে।') ?></p>
                             </div>
                         </div>
 
                         <div class="row g-4">
                             <div class="col-md-4">
-                                <label class="form-label">Travel Interest</label>
+                                <label class="form-label"><?= sm_text('Travel Interest', 'ভ্রমণের আগ্রহ') ?></label>
                                 <select name="travel_interest" class="form-select">
-                                    <option value="">Select travel interest</option>
+                                    <option value=""><?= sm_text('Select travel interest', 'ভ্রমণের আগ্রহ নির্বাচন করুন') ?></option>
                                     <?php foreach ($travel_interest_options as $option): ?>
-                                        <option value="<?= htmlspecialchars($option) ?>" <?= (($user['travel_interest'] ?? '') === $option) ? 'selected' : '' ?>><?= htmlspecialchars($option) ?></option>
+                                        <option value="<?= htmlspecialchars($option) ?>" <?= (($user['travel_interest'] ?? '') === $option) ? 'selected' : '' ?>><?= htmlspecialchars(sm_dropdown_label($option)) ?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
 
                             <div class="col-md-4">
-                                <label class="form-label">Spending Style</label>
+                                <label class="form-label"><?= sm_text('Spending Style', 'খরচের ধরন') ?></label>
                                 <select name="spending_style" class="form-select">
-                                    <option value="">Select spending style</option>
+                                    <option value=""><?= sm_text('Select spending style', 'খরচের ধরন নির্বাচন করুন') ?></option>
                                     <?php foreach ($spending_style_options as $option): ?>
-                                        <option value="<?= htmlspecialchars($option) ?>" <?= (($user['spending_style'] ?? '') === $option) ? 'selected' : '' ?>><?= htmlspecialchars($option) ?></option>
+                                        <option value="<?= htmlspecialchars($option) ?>" <?= (($user['spending_style'] ?? '') === $option) ? 'selected' : '' ?>><?= htmlspecialchars(sm_dropdown_label($option)) ?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
 
                             <div class="col-md-4">
-                                <label class="form-label">Pets</label>
+                                <label class="form-label"><?= sm_text('Pets', 'পোষা প্রাণী') ?></label>
                                 <select name="pets" class="form-select">
-                                    <option value="">Select pet preference</option>
+                                    <option value=""><?= sm_text('Select pet preference', 'পোষা প্রাণী সম্পর্কে পছন্দ নির্বাচন করুন') ?></option>
                                     <?php foreach ($pet_options as $option): ?>
-                                        <option value="<?= htmlspecialchars($option) ?>" <?= (($user['pets'] ?? '') === $option) ? 'selected' : '' ?>><?= htmlspecialchars($option) ?></option>
+                                        <option value="<?= htmlspecialchars($option) ?>" <?= (($user['pets'] ?? '') === $option) ? 'selected' : '' ?>><?= htmlspecialchars(sm_dropdown_label($option)) ?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
@@ -629,45 +702,45 @@ include '../includes/navbar.php';
                         <div class="section-heading">
                             <div class="section-icon"><i class="bi bi-heart-pulse"></i></div>
                             <div>
-                                <h2>Health Information</h2>
-                                <p>Basic health details for a more complete profile.</p>
+                                <h2><?= sm_text('Health Information', 'স্বাস্থ্যসংক্রান্ত তথ্য') ?></h2>
+                                <p><?= sm_text('Basic health details for a more complete profile.', 'প্রোফাইল পূর্ণাঙ্গ করতে স্বাস্থ্যসংক্রান্ত প্রাথমিক তথ্য দিন।') ?></p>
                             </div>
                         </div>
 
                         <div class="row g-4">
                             <div class="col-md-6">
-                                <label class="form-label">Blood Group</label>
+                                <label class="form-label"><?= sm_text('Blood Group', 'রক্তের গ্রুপ') ?></label>
                                 <select name="blood_group" class="form-select">
-                                    <option value="">Select blood group</option>
+                                    <option value=""><?= sm_text('Select blood group', 'রক্তের গ্রুপ নির্বাচন করুন') ?></option>
                                     <?php foreach ($blood_groups as $blood): ?>
-                                        <option value="<?= htmlspecialchars($blood) ?>" <?= (($health['blood_group'] ?? '') === $blood) ? 'selected' : '' ?>><?= htmlspecialchars($blood) ?></option>
+                                        <option value="<?= htmlspecialchars($blood) ?>" <?= (($health['blood_group'] ?? '') === $blood) ? 'selected' : '' ?>><?= htmlspecialchars(sm_dropdown_label($blood)) ?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
 
                             <div class="col-md-6">
-                                <label class="form-label">Physical Disability</label>
+                                <label class="form-label"><?= sm_text('Physical Disability', 'শারীরিক প্রতিবন্ধকতা') ?></label>
                                 <select name="physical_disability" class="form-select">
-                                    <option value="">Select physical disability</option>
+                                    <option value=""><?= sm_text('Select physical disability', 'শারীরিক প্রতিবন্ধকতার অবস্থা নির্বাচন করুন') ?></option>
                                     <?php foreach ($physical_disabilities as $option): ?>
-                                        <option value="<?= htmlspecialchars($option) ?>" <?= (($health['disability_status'] ?? '') === $option) ? 'selected' : '' ?>><?= htmlspecialchars($option) ?></option>
+                                        <option value="<?= htmlspecialchars($option) ?>" <?= (($health['disability_status'] ?? '') === $option) ? 'selected' : '' ?>><?= htmlspecialchars(sm_dropdown_label($option)) ?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
 
                             <div class="col-12">
-                                <label class="form-label">Medical Notes <span class="optional">(Optional)</span></label>
-                                <textarea name="health_notes" rows="3" maxlength="500" class="form-control" placeholder="Mention chronic diseases, allergies or important medical information."><?= htmlspecialchars($health['medical_notes'] ?? '') ?></textarea>
+                                <label class="form-label"><?= sm_text('Medical Notes', 'স্বাস্থ্যসংক্রান্ত তথ্য') ?> <span class="optional"><?= sm_text('(Optional)', '(ঐচ্ছিক)') ?></span></label>
+                                <textarea name="health_notes" rows="3" maxlength="500" class="form-control" placeholder="<?= sm_text('Mention chronic diseases, allergies or important medical information.', 'দীর্ঘমেয়াদি রোগ, অ্যালার্জি বা গুরুত্বপূর্ণ স্বাস্থ্যতথ্য লিখুন।') ?>"><?= htmlspecialchars($health['medical_notes'] ?? '') ?></textarea>
                             </div>
                         </div>
                     </section>
 
                     <div class="step3-actions">
-                        <a href="view_profile.php" class="btn btn-outline-secondary step3-back">
-                            <i class="bi bi-arrow-left-circle"></i> Back to Profile
+                        <a href="view_profile.php?user_id=<?= (int)$user_id ?>" class="btn btn-outline-secondary step3-back">
+                            <i class="bi bi-arrow-left-circle"></i> <?= sm_text('Back to Profile', 'প্রোফাইলে ফিরে যান') ?>
                         </a>
                         <button type="submit" name="save_step3" class="btn btn-success step3-save">
-                            Save & Continue <i class="bi bi-arrow-right-circle"></i>
+                            <?= sm_text('Save & Continue', 'সংরক্ষণ করে এগিয়ে যান') ?> <i class="bi bi-arrow-right-circle"></i>
                         </button>
                     </div>
                 </form>

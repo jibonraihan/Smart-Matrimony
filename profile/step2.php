@@ -1,6 +1,7 @@
 <?php
 require_once '../config/db.php';
 require_once '../includes/functions.php';
+require_once '../includes/language.php';
 require_once '../includes/dropdowns.php';
 require_once '../includes/profile_completion.php';
 
@@ -48,9 +49,19 @@ $wali_required = ($gender === 'Female' && $religion === 'Islam');
 if (isset($_POST['save_step2'])) {
 
     $father_name       = clean_input($_POST['father_name'] ?? '');
+    $father_alive      = clean_input($_POST['father_alive'] ?? '');
     $father_profession = clean_input($_POST['father_profession'] ?? '');
     $mother_name       = clean_input($_POST['mother_name'] ?? '');
+    $mother_alive      = clean_input($_POST['mother_alive'] ?? '');
     $mother_profession = clean_input($_POST['mother_profession'] ?? '');
+    $parents_details   = trim((string) ($_POST['parents_details'] ?? ''));
+    $brothers_details  = trim((string) ($_POST['brothers_details'] ?? ''));
+    $sisters_details   = trim((string) ($_POST['sisters_details'] ?? ''));
+    $paternal_uncles_details = trim((string) ($_POST['paternal_uncles_details'] ?? ''));
+    $paternal_aunts_details  = trim((string) ($_POST['paternal_aunts_details'] ?? ''));
+
+    if ($father_alive === 'No') { $father_profession = ''; }
+    if ($mother_alive === 'No') { $mother_profession = ''; }
 
     $guardian_name     = clean_input($_POST['guardian_name'] ?? '');
     $guardian_relation = clean_input($_POST['guardian_relation'] ?? '');
@@ -74,8 +85,12 @@ if (isset($_POST['save_step2'])) {
     // Keep validation in sync with the centralized dropdown options.
     $valid_family_religious_lifestyles = $family_religious_lifestyle_options;
 
-    if ($father_name === '' || $father_profession === '' || $mother_name === '' || $mother_profession === '') {
-        $error = "Please complete all required parents' information.";
+    if ($father_name === '' || !in_array($father_alive, ['Yes', 'No'], true) ||
+        $mother_name === '' || !in_array($mother_alive, ['Yes', 'No'], true)) {
+        $error = "Please complete the required parents' information.";
+    } elseif (($father_alive === 'Yes' && $father_profession === '') ||
+              ($mother_alive === 'Yes' && $mother_profession === '')) {
+        $error = "Please select a profession for each living parent.";
     } elseif ($wali_required && ($guardian_name === '' || $guardian_relation === '' || $guardian_contact === '')) {
         $error = "Marriage Guardian (Wali) information is required for Muslim female profiles.";
     } elseif ($family_type === '' || $family_status === '' || $living_with_family === '') {
@@ -91,9 +106,16 @@ if (isset($_POST['save_step2'])) {
 
         $sql = "UPDATE user_profiles
                 SET father_name=?,
+                    father_alive=?,
                     father_profession=?,
                     mother_name=?,
+                    mother_alive=?,
                     mother_profession=?,
+                    parents_details=?,
+                    brothers_details=?,
+                    sisters_details=?,
+                    paternal_uncles_details=?,
+                    paternal_aunts_details=?,
                     guardian_name=?,
                     guardian_relation=?,
                     guardian_contact=?,
@@ -115,11 +137,18 @@ if (isset($_POST['save_step2'])) {
         if ($update) {
             mysqli_stmt_bind_param(
                 $update,
-                "sssssssssiiisiiissi",
+                "ssssssssssssssssiiisiisssi",
                 $father_name,
+                $father_alive,
                 $father_profession,
                 $mother_name,
+                $mother_alive,
                 $mother_profession,
+                $parents_details,
+                $brothers_details,
+                $sisters_details,
+                $paternal_uncles_details,
+                $paternal_aunts_details,
                 $guardian_name,
                 $guardian_relation,
                 $guardian_contact,
@@ -150,9 +179,16 @@ if (isset($_POST['save_step2'])) {
 
     // Preserve submitted values if validation fails.
     $user['father_name'] = $father_name;
+    $user['father_alive'] = $father_alive;
     $user['father_profession'] = $father_profession;
     $user['mother_name'] = $mother_name;
+    $user['mother_alive'] = $mother_alive;
     $user['mother_profession'] = $mother_profession;
+    $user['parents_details'] = $parents_details;
+    $user['brothers_details'] = $brothers_details;
+    $user['sisters_details'] = $sisters_details;
+    $user['paternal_uncles_details'] = $paternal_uncles_details;
+    $user['paternal_aunts_details'] = $paternal_aunts_details;
     $user['guardian_name'] = $guardian_name;
     $user['guardian_relation'] = $guardian_relation;
     $user['guardian_contact'] = $guardian_contact;
@@ -170,7 +206,7 @@ if (isset($_POST['save_step2'])) {
 }
 
 $currentStep = 2;
-$pageTitle = "Family Information";
+$pageTitle = sm_text('Family Information', 'পারিবারিক তথ্য');
 $pageDescription = "";
 $page_css = 'assets/css/profile-step2.css';
 
@@ -183,12 +219,12 @@ include '../includes/navbar.php';
 
         <?php
 $steps = [
-    1 => ['title' => 'Personal', 'icon' => 'bi-person-circle', 'url' => 'step1.php'],
-    2 => ['title' => 'Family', 'icon' => 'bi-people', 'url' => 'step2.php'],
-    3 => ['title' => 'Lifestyle', 'icon' => 'bi-heart', 'url' => 'step3.php'],
-    4 => ['title' => 'Location', 'icon' => 'bi-geo-alt', 'url' => 'step4.php'],
-    5 => ['title' => 'Privacy', 'icon' => 'bi-shield-lock', 'url' => 'step5.php'],
-    6 => ['title' => 'PP & QnA', 'icon' => 'bi-patch-question', 'url' => 'step6.php']
+    1 => ['title' => sm_text('Personal', 'ব্যক্তিগত তথ্য'), 'icon' => 'bi-person-circle', 'url' => 'step1.php'],
+    2 => ['title' => sm_text('Family', 'পারিবারিক তথ্য'), 'icon' => 'bi-people', 'url' => 'step2.php'],
+    3 => ['title' => sm_text('Lifestyle', 'জীবনযাপন'), 'icon' => 'bi-heart', 'url' => 'step3.php'],
+    4 => ['title' => sm_text('Location', 'ঠিকানা'), 'icon' => 'bi-geo-alt', 'url' => 'step4.php'],
+    5 => ['title' => sm_text('Privacy', 'গোপনীয়তা'), 'icon' => 'bi-shield-lock', 'url' => 'step5.php'],
+    6 => ['title' => sm_text('PP & QnA', 'জীবনসঙ্গীর পছন্দ ও প্রশ্নোত্তর'), 'icon' => 'bi-patch-question', 'url' => 'step6.php']
 ];
 $completion = sm_get_profile_completion($conn, $user_id);
                 $progress = $completion['percentage'];
@@ -197,8 +233,8 @@ $completion = sm_get_profile_completion($conn, $user_id);
 <header class="step2-wizard-head">
     <div class="step2-heading-row">
         <div>
-            <span class="step2-kicker">PROFILE BUILDER</span>
-            <h1>Step <?= $currentStep ?></h1>
+            <span class="step2-kicker"><?= sm_text('PROFILE BUILDER', 'প্রোফাইল তৈরি') ?></span>
+            <h1><?= sm_text('Step', 'ধাপ') ?> <?= (($GLOBALS['current_language'] ?? 'bn') === 'en' ? $currentStep : strtr((string)$currentStep, ['0'=>'০','1'=>'১','2'=>'২','3'=>'৩','4'=>'৪','5'=>'৫','6'=>'৬','7'=>'৭','8'=>'৮','9'=>'৯'])) ?></h1>
             <p><?= htmlspecialchars($pageTitle) ?></p>
         </div>
         <a class="step2-logo" href="../dashboard.php" aria-label="Back to dashboard">
@@ -218,12 +254,12 @@ $completion = sm_get_profile_completion($conn, $user_id);
     </nav>
 
     <div class="step2-progress-wrap">
-        <div class="step2-progress-track" role="progressbar" aria-valuenow="<?= $progress ?>" aria-valuemin="0" aria-valuemax="100" aria-label="Profile completion">
+        <div class="step2-progress-track" role="progressbar" aria-valuenow="<?= $progress ?>" aria-valuemin="0" aria-valuemax="100" aria-label="<?= sm_text('Profile completion', 'প্রোফাইল সম্পন্নের অগ্রগতি') ?>">
             <div class="step2-progress-fill" style="width: <?= $progress ?>%"></div>
         </div>
         <div class="step2-progress-meta">
-            <span>Step <?= $currentStep ?> of <?= count($steps) ?></span>
-            <strong><?= $progress ?>% complete</strong>
+            <span><?= sm_text('Step', 'ধাপ') ?> <?= (($GLOBALS['current_language'] ?? 'bn') === 'en' ? $currentStep : strtr((string)$currentStep, ['0'=>'০','1'=>'১','2'=>'২','3'=>'৩','4'=>'৪','5'=>'৫','6'=>'৬','7'=>'৭','8'=>'৮','9'=>'৯'])) ?> / <?= count($steps) ?></span>
+            <strong><?= $progress ?><?= sm_text('% complete', '% সম্পন্ন') ?></strong>
         </div>
     </div>
 </header>
@@ -241,56 +277,79 @@ $completion = sm_get_profile_completion($conn, $user_id);
                 <div class="step2-section-heading">
                     <span class="step2-heading-icon"><i class="bi bi-people-fill"></i></span>
                     <div>
-                        <h3>Parents' Information</h3>
-                        <p>Tell us about your parents.</p>
+                        <h3><?= sm_text('Parents\' Information', 'বাবা-মায়ের তথ্য') ?></h3>
+                        <p><?= sm_text('Tell us about your parents.', 'আপনার বাবা-মা সম্পর্কে তথ্য দিন।') ?></p>
                     </div>
                 </div>
 
                 <div class="step2-grid step2-grid-2">
                     <div class="step2-field">
-                        <label for="father_name">Father's Name <span class="required">*</span></label>
+                        <label for="father_name"><?= sm_text('Father\'s Name', 'বাবার নাম') ?> <span class="required">*</span></label>
                         <input
                             type="text"
                             id="father_name"
                             name="father_name"
                             value="<?= htmlspecialchars($user['father_name'] ?? '') ?>"
-                            placeholder="Enter father's name"
+                            placeholder="<?= sm_text('Enter father\'s name', 'বাবার নাম লিখুন') ?>"
                             required>
                     </div>
 
                     <div class="step2-field">
-                        <label for="father_profession">Father's Profession <span class="required">*</span></label>
+                        <label><?= sm_text('Is your father alive?', 'আপনার বাবা কি জীবিত?') ?> <span class="required">*</span></label>
+                        <div class="step2-alive-options" role="group" aria-label="<?= sm_text('Is your father alive?', 'আপনার বাবা কি জীবিত?') ?>">
+                            <label><input type="radio" name="father_alive" value="Yes" required <?= (($user['father_alive'] ?? '') === 'Yes') ? 'checked' : '' ?>> <?= sm_text('Yes', 'হ্যাঁ') ?></label>
+                            <label><input type="radio" name="father_alive" value="No" required <?= (($user['father_alive'] ?? '') === 'No') ? 'checked' : '' ?>> <?= sm_text('No', 'না') ?></label>
+                        </div>
+                    </div>
+
+                    <div class="step2-field step2-profession-field" id="father-profession-field">
+                        <label for="father_profession"><?= sm_text('Father\'s Profession', 'বাবার পেশা') ?> <span class="required" id="father-profession-required">*</span></label>
                         <select id="father_profession" name="father_profession" required>
-                            <option value="">Select father's profession</option>
+                            <option value=""><?= sm_text('Select father\'s profession', 'বাবার পেশা নির্বাচন করুন') ?></option>
                             <?php foreach ($father_professions as $profession): ?>
                                 <option value="<?= htmlspecialchars($profession) ?>" <?= (($user['father_profession'] ?? '') === $profession) ? 'selected' : '' ?>>
-                                    <?= htmlspecialchars($profession) ?>
+                                    <?= htmlspecialchars(sm_dropdown_label($profession)) ?>
                                 </option>
                             <?php endforeach; ?>
                         </select>
                     </div>
 
                     <div class="step2-field">
-                        <label for="mother_name">Mother's Name <span class="required">*</span></label>
+                        <label for="mother_name"><?= sm_text('Mother\'s Name', 'মায়ের নাম') ?> <span class="required">*</span></label>
                         <input
                             type="text"
                             id="mother_name"
                             name="mother_name"
                             value="<?= htmlspecialchars($user['mother_name'] ?? '') ?>"
-                            placeholder="Enter mother's name"
+                            placeholder="<?= sm_text('Enter mother\'s name', 'মায়ের নাম লিখুন') ?>"
                             required>
                     </div>
 
                     <div class="step2-field">
-                        <label for="mother_profession">Mother's Profession <span class="required">*</span></label>
+                        <label><?= sm_text('Is your mother alive?', 'আপনার মা কি জীবিত?') ?> <span class="required">*</span></label>
+                        <div class="step2-alive-options" role="group" aria-label="<?= sm_text('Is your mother alive?', 'আপনার মা কি জীবিত?') ?>">
+                            <label><input type="radio" name="mother_alive" value="Yes" required <?= (($user['mother_alive'] ?? '') === 'Yes') ? 'checked' : '' ?>> <?= sm_text('Yes', 'হ্যাঁ') ?></label>
+                            <label><input type="radio" name="mother_alive" value="No" required <?= (($user['mother_alive'] ?? '') === 'No') ? 'checked' : '' ?>> <?= sm_text('No', 'না') ?></label>
+                        </div>
+                    </div>
+
+                    <div class="step2-field step2-profession-field" id="mother-profession-field">
+                        <label for="mother_profession"><?= sm_text('Mother\'s Profession', 'মায়ের পেশা') ?> <span class="required" id="mother-profession-required">*</span></label>
                         <select id="mother_profession" name="mother_profession" required>
-                            <option value="">Select mother's profession</option>
+                            <option value=""><?= sm_text('Select mother\'s profession', 'মায়ের পেশা নির্বাচন করুন') ?></option>
                             <?php foreach ($mother_professions as $profession): ?>
                                 <option value="<?= htmlspecialchars($profession) ?>" <?= (($user['mother_profession'] ?? '') === $profession) ? 'selected' : '' ?>>
-                                    <?= htmlspecialchars($profession) ?>
+                                    <?= htmlspecialchars(sm_dropdown_label($profession)) ?>
                                 </option>
                             <?php endforeach; ?>
                         </select>
+                    </div>
+                </div>
+
+                <div class="step2-grid step2-grid-2 step2-details-grid">
+                    <div class="step2-field step2-wide-field">
+                        <label for="parents_details"><?= sm_text('Additional Details About Parents', 'বাবা-মা সম্পর্কে অতিরিক্ত তথ্য') ?> <span class="optional"><?= sm_text('(Optional)', '(ঐচ্ছিক)') ?></span></label>
+                        <textarea id="parents_details" name="parents_details" rows="3" maxlength="3000" placeholder="Share any other details about your father or mother, if you wish."><?= htmlspecialchars($user['parents_details'] ?? '') ?></textarea>
                     </div>
                 </div>
             </section>
@@ -299,7 +358,7 @@ $completion = sm_get_profile_completion($conn, $user_id);
                 <div class="step2-section-heading">
                     <span class="step2-heading-icon"><i class="bi bi-shield-check"></i></span>
                     <div>
-                        <h3>Marriage Guardian (Wali) <span class="wali-required-mark" <?= $wali_required ? '' : 'hidden' ?>>*</span></h3>
+                        <h3><?= sm_text('Marriage Guardian (Wali)', 'বিয়ের অভিভাবক (ওলি)') ?> <span class="wali-required-mark" <?= $wali_required ? '' : 'hidden' ?>>*</span></h3>
                         <p id="wali-help">
                             <?= $wali_required
                                 ? 'Required for Muslim female profiles.'
@@ -313,7 +372,7 @@ $completion = sm_get_profile_completion($conn, $user_id);
 
                 <div class="step2-grid step2-grid-3">
                     <div class="step2-field">
-                        <label for="guardian_name">Guardian Name <span class="wali-required-mark" <?= $wali_required ? '' : 'hidden' ?>>*</span></label>
+                        <label for="guardian_name"><?= sm_text('Guardian Name', 'অভিভাবকের নাম') ?> <span class="wali-required-mark" <?= $wali_required ? '' : 'hidden' ?>>*</span></label>
                         <input
                             type="text"
                             id="guardian_name"
@@ -324,19 +383,19 @@ $completion = sm_get_profile_completion($conn, $user_id);
                     </div>
 
                     <div class="step2-field">
-                        <label for="guardian_relation">Relationship <span class="wali-required-mark" <?= $wali_required ? '' : 'hidden' ?>>*</span></label>
+                        <label for="guardian_relation"><?= sm_text('Relationship', 'সম্পর্ক') ?> <span class="wali-required-mark" <?= $wali_required ? '' : 'hidden' ?>>*</span></label>
                         <select id="guardian_relation" name="guardian_relation" <?= $wali_required ? 'required' : '' ?>>
-                            <option value="">Select relationship</option>
+                            <option value=""><?= sm_text('Select relationship', 'সম্পর্ক নির্বাচন করুন') ?></option>
                             <?php foreach ($guardian_relations as $relation): ?>
                                 <option value="<?= htmlspecialchars($relation) ?>" <?= (($user['guardian_relation'] ?? '') === $relation) ? 'selected' : '' ?>>
-                                    <?= htmlspecialchars($relation) ?>
+                                    <?= htmlspecialchars(sm_dropdown_label($relation)) ?>
                                 </option>
                             <?php endforeach; ?>
                         </select>
                     </div>
 
                     <div class="step2-field">
-                        <label for="guardian_contact">Guardian Mobile <span class="wali-required-mark" <?= $wali_required ? '' : 'hidden' ?>>*</span></label>
+                        <label for="guardian_contact"><?= sm_text('Guardian Mobile', 'অভিভাবকের মোবাইল নম্বর') ?> <span class="wali-required-mark" <?= $wali_required ? '' : 'hidden' ?>>*</span></label>
                         <input
                             type="tel"
                             id="guardian_contact"
@@ -353,14 +412,14 @@ $completion = sm_get_profile_completion($conn, $user_id);
                 <div class="step2-section-heading">
                     <span class="step2-heading-icon"><i class="bi bi-house-heart-fill"></i></span>
                     <div>
-                        <h3>Family Details</h3>
-                        <p>A few simple details about your family.</p>
+                        <h3><?= sm_text('Family Details', 'পারিবারিক তথ্য') ?></h3>
+                        <p><?= sm_text('A few simple details about your family.', 'আপনার পরিবার সম্পর্কে কিছু সাধারণ তথ্য দিন।') ?></p>
                     </div>
                 </div>
 
                 <div class="step2-grid step2-grid-5">
                     <div class="step2-field">
-                        <label for="brothers">Brothers <span class="required">*</span></label>
+                        <label for="brothers"><?= sm_text('Brothers', 'ভাইয়ের সংখ্যা') ?> <span class="required">*</span></label>
                         <input
                             type="number"
                             id="brothers"
@@ -375,7 +434,7 @@ $completion = sm_get_profile_completion($conn, $user_id);
                     </div>
 
                     <div class="step2-field">
-                        <label for="sisters">Sisters <span class="required">*</span></label>
+                        <label for="sisters"><?= sm_text('Sisters', 'বোনের সংখ্যা') ?> <span class="required">*</span></label>
                         <input
                             type="number"
                             id="sisters"
@@ -390,36 +449,36 @@ $completion = sm_get_profile_completion($conn, $user_id);
                     </div>
 
                     <div class="step2-field">
-                        <label for="family_type">Family Type <span class="required">*</span></label>
+                        <label for="family_type"><?= sm_text('Family Type', 'পরিবারের ধরন') ?> <span class="required">*</span></label>
                         <select id="family_type" name="family_type" required>
-                            <option value="">Family type</option>
+                            <option value=""><?= sm_text('Family type', 'পরিবারের ধরন নির্বাচন করুন') ?></option>
                             <?php foreach ($family_types as $type): ?>
                                 <option value="<?= htmlspecialchars($type) ?>" <?= (($user['family_type'] ?? '') === $type) ? 'selected' : '' ?>>
-                                    <?= htmlspecialchars($type) ?>
+                                    <?= htmlspecialchars(sm_dropdown_label($type)) ?>
                                 </option>
                             <?php endforeach; ?>
                         </select>
                     </div>
 
                     <div class="step2-field">
-                        <label for="family_status">Family Status <span class="required">*</span></label>
+                        <label for="family_status"><?= sm_text('Family Status', 'পারিবারিক অবস্থা') ?> <span class="required">*</span></label>
                         <select id="family_status" name="family_status" required>
-                            <option value="">Family status</option>
+                            <option value=""><?= sm_text('Family status', 'পারিবারিক অবস্থা নির্বাচন করুন') ?></option>
                             <?php foreach ($family_statuses as $status): ?>
                                 <option value="<?= htmlspecialchars($status) ?>" <?= (($user['family_status'] ?? '') === $status) ? 'selected' : '' ?>>
-                                    <?= htmlspecialchars($status) ?>
+                                    <?= htmlspecialchars(sm_dropdown_label($status)) ?>
                                 </option>
                             <?php endforeach; ?>
                         </select>
                     </div>
 
                     <div class="step2-field">
-                        <label for="living_with_family">Lives with Family <span class="required">*</span></label>
+                        <label for="living_with_family"><?= sm_text('Lives with Family', 'পরিবারের সঙ্গে থাকেন?') ?> <span class="required">*</span></label>
                         <select id="living_with_family" name="living_with_family" required>
-                            <option value="">Living status</option>
+                            <option value=""><?= sm_text('Living status', 'বসবাসের অবস্থা নির্বাচন করুন') ?></option>
                             <?php foreach ($living_with_family_options as $option): ?>
                                 <option value="<?= htmlspecialchars($option) ?>" <?= (($user['living_with_family'] ?? '') === $option) ? 'selected' : '' ?>>
-                                    <?= htmlspecialchars($option) ?>
+                                    <?= htmlspecialchars(sm_dropdown_label($option)) ?>
                                 </option>
                             <?php endforeach; ?>
                         </select>
@@ -428,45 +487,64 @@ $completion = sm_get_profile_completion($conn, $user_id);
 
                 <div class="step2-grid step2-grid-3 step2-family-extra-grid">
                     <div class="step2-field">
-                        <label for="paternal_uncles">Father's Brothers <span class="required">*</span></label>
-                        <input type="number" id="paternal_uncles" name="paternal_uncles" min="0" max="50" step="1" value="<?= htmlspecialchars((string) ($user['paternal_uncles_count'] ?? '')) ?>" placeholder="Number of paternal uncles" required>
+                        <label for="paternal_uncles"><?= sm_text('Father\'s Brothers', 'চাচার সংখ্যা') ?> <span class="required">*</span></label>
+                        <input type="number" id="paternal_uncles" name="paternal_uncles" min="0" max="50" step="1" value="<?= htmlspecialchars((string) ($user['paternal_uncles_count'] ?? 0)) ?>" placeholder="Number of paternal uncles" required>
                     </div>
 
                     <div class="step2-field">
-                        <label for="paternal_aunts">Father's Sisters <span class="required">*</span></label>
-                        <input type="number" id="paternal_aunts" name="paternal_aunts" min="0" max="50" step="1" value="<?= htmlspecialchars((string) ($user['paternal_aunts_count'] ?? '')) ?>" placeholder="Number of paternal aunts" required>
+                        <label for="paternal_aunts"><?= sm_text('Father\'s Sisters', 'ফুফুর সংখ্যা') ?> <span class="required">*</span></label>
+                        <input type="number" id="paternal_aunts" name="paternal_aunts" min="0" max="50" step="1" value="<?= htmlspecialchars((string) ($user['paternal_aunts_count'] ?? 0)) ?>" placeholder="Number of paternal aunts" required>
                     </div>
 
                     <div class="step2-field">
-                        <label for="paternal_married">How many are married? <span class="optional">(Optional)</span></label>
+                        <label for="paternal_married"><?= sm_text('How many are married?', 'তাঁদের মধ্যে কতজন বিবাহিত?') ?> <span class="optional"><?= sm_text('(Optional)', '(ঐচ্ছিক)') ?></span></label>
                         <input type="text" id="paternal_married" name="paternal_married" maxlength="255" value="<?= htmlspecialchars($user['paternal_siblings_married'] ?? '') ?>" placeholder="e.g. 2 uncles, 1 aunt">
                     </div>
 
                     <div class="step2-field">
-                        <label for="family_purdah_environment">Pordah Environment in Family <span class="required">*</span></label>
+                        <label for="family_purdah_environment"><?= sm_text('Pordah Environment in Family', 'পরিবারে পর্দার পরিবেশ') ?> <span class="required">*</span></label>
                         <textarea id="family_purdah_environment" name="family_purdah_environment" rows="3" maxlength="2000" placeholder="Describe the purdah environment in your family" required><?= htmlspecialchars($user['family_purdah_environment'] ?? '') ?></textarea>
                     </div>
 
                     <div class="step2-field">
-                        <label for="family_religious_lifestyle">Overall Family Religious Lifestyle <span class="required">*</span></label>
+                        <label for="family_religious_lifestyle"><?= sm_text('Overall Family Religious Lifestyle', 'পরিবারের সামগ্রিক ধর্মীয় জীবনযাপন') ?> <span class="required">*</span></label>
                         <select id="family_religious_lifestyle" name="family_religious_lifestyle" required>
-                            <option value="">Select family religious lifestyle</option>
+                            <option value=""><?= sm_text('Select family religious lifestyle', 'পরিবারের ধর্মীয় জীবনযাপনের ধরন নির্বাচন করুন') ?></option>
                             <?php foreach ($family_religious_lifestyle_options as $lifestyle): ?>
-                                <option value="<?= htmlspecialchars($lifestyle) ?>" <?= (($user['family_religious_lifestyle'] ?? '') === $lifestyle) ? 'selected' : '' ?>><?= htmlspecialchars($lifestyle) ?></option>
+                                <option value="<?= htmlspecialchars($lifestyle) ?>" <?= (($user['family_religious_lifestyle'] ?? '') === $lifestyle) ? 'selected' : '' ?>><?= htmlspecialchars(sm_dropdown_label($lifestyle)) ?></option>
                             <?php endforeach; ?>
                         </select>
+                    </div>
+                </div>
+
+                <div class="step2-grid step2-grid-2 step2-details-grid step2-relative-details">
+                    <div class="step2-field">
+                        <label for="brothers_details"><?= sm_text('Brothers\' Details', 'ভাইদের সম্পর্কে বিস্তারিত') ?> <span class="optional"><?= sm_text('(Optional)', '(ঐচ্ছিক)') ?></span></label>
+                        <textarea id="brothers_details" name="brothers_details" rows="3" maxlength="3000" placeholder="What do your brothers do? What do their wives do, and where do they live?"><?= htmlspecialchars($user['brothers_details'] ?? '') ?></textarea>
+                    </div>
+                    <div class="step2-field">
+                        <label for="sisters_details"><?= sm_text('Sisters\' Details', 'বোনদের সম্পর্কে বিস্তারিত') ?> <span class="optional"><?= sm_text('(Optional)', '(ঐচ্ছিক)') ?></span></label>
+                        <textarea id="sisters_details" name="sisters_details" rows="3" maxlength="3000" placeholder="What do your sisters do? What do their husbands do, and where do they live?"><?= htmlspecialchars($user['sisters_details'] ?? '') ?></textarea>
+                    </div>
+                    <div class="step2-field">
+                        <label for="paternal_uncles_details"><?= sm_text('Father\'s Brothers\' Details', 'চাচাদের সম্পর্কে বিস্তারিত') ?> <span class="optional"><?= sm_text('(Optional)', '(ঐচ্ছিক)') ?></span></label>
+                        <textarea id="paternal_uncles_details" name="paternal_uncles_details" rows="3" maxlength="3000" placeholder="What do your father's brothers do? What do their wives do, and where do they live?"><?= htmlspecialchars($user['paternal_uncles_details'] ?? '') ?></textarea>
+                    </div>
+                    <div class="step2-field">
+                        <label for="paternal_aunts_details"><?= sm_text('Father\'s Sisters\' Details', 'ফুফুদের সম্পর্কে বিস্তারিত') ?> <span class="optional"><?= sm_text('(Optional)', '(ঐচ্ছিক)') ?></span></label>
+                        <textarea id="paternal_aunts_details" name="paternal_aunts_details" rows="3" maxlength="3000" placeholder="What do your father's sisters do? What do their husbands do, and where do they live?"><?= htmlspecialchars($user['paternal_aunts_details'] ?? '') ?></textarea>
                     </div>
                 </div>
             </section>
 
             <div class="step2-actions">
-                <a href="view_profile.php" class="step2-btn step2-btn-back">
+                <a href="view_profile.php?user_id=<?= (int)$user_id ?>" class="step2-btn step2-btn-back">
                     <i class="bi bi-arrow-left-circle"></i>
-                    <span>Back to Profile</span>
+                    <span><?= sm_text('Back to Profile', 'প্রোফাইলে ফিরে যান') ?></span>
                 </a>
 
                 <button type="submit" name="save_step2" class="step2-btn step2-btn-primary">
-                    <span>Save &amp; Continue</span>
+                    <span><?= sm_text('Save &amp; Continue', 'সংরক্ষণ করে এগিয়ে যান') ?></span>
                     <i class="bi bi-arrow-right-circle"></i>
                 </button>
             </div>
@@ -508,6 +586,28 @@ $completion = sm_get_profile_completion($conn, $user_id);
     }
 
     syncWaliState();
+
+    function syncParentProfession(parent) {
+        const aliveChoice = document.querySelector('input[name="' + parent + '_alive"]:checked');
+        const professionField = document.getElementById(parent + '-profession-field');
+        const profession = document.getElementById(parent + '_profession');
+        const requiredMark = document.getElementById(parent + '-profession-required');
+        const isAlive = aliveChoice && aliveChoice.value === 'Yes';
+        if (professionField) professionField.classList.toggle('is-not-applicable', !!aliveChoice && !isAlive);
+        if (profession) {
+            profession.required = !!isAlive;
+            profession.disabled = !!aliveChoice && !isAlive;
+            if (aliveChoice && !isAlive) profession.value = '';
+        }
+        if (requiredMark) requiredMark.hidden = !isAlive;
+    }
+
+    ['father', 'mother'].forEach(parent => {
+        document.querySelectorAll('input[name="' + parent + '_alive"]').forEach(radio => {
+            radio.addEventListener('change', () => syncParentProfession(parent));
+        });
+        syncParentProfession(parent);
+    });
 
     // Keep sibling counters integer-only even when users type manually.
     document.querySelectorAll('input[type="number"]').forEach(input => {

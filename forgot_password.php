@@ -110,9 +110,9 @@ include 'includes/navbar.php';
             <div class="password-reset-card">
                 <div class="password-reset-icon"><i class="fa-solid fa-key"></i></div>
                 <div class="password-reset-heading">
-                    <span class="password-reset-eyebrow">ACCOUNT RECOVERY</span>
-                    <h1>Forgot Password?</h1>
-                    <p>Enter the email address linked to your Smart Matrimony account and we’ll send you a verification code.</p>
+                    <span class="password-reset-eyebrow"><?= sm_text('ACCOUNT RECOVERY', 'অ্যাকাউন্ট পুনরুদ্ধার'); ?></span>
+                    <h1><?= sm_text('Forgot Password?', 'পাসওয়ার্ড ভুলে গেছ?'); ?></h1>
+                    <p><?= sm_text('Enter the email address linked to your Smart Matrimony account and we’ll send you a verification code.', 'আপনার স্মার্ট ম্যাট্রিমনি অ্যাকাউন্টের সঙ্গে যুক্ত ইমেইল ঠিকানাটি লিখুন। আমরা সেখানে একটি যাচাইকরণ কোড পাঠাব।'); ?></p>
                 </div>
 
                 <?php if ($error): ?>
@@ -130,14 +130,14 @@ include 'includes/navbar.php';
                 <?php endif; ?>
 
                 <form method="POST" class="password-reset-form" novalidate>
-                    <label for="reset_email">Email Address</label>
+                    <label for="reset_email"><?= sm_text('Email Address', 'ইমেইল ঠিকানা'); ?></label>
                     <div class="reset-input-wrap">
                         <i class="fa-regular fa-envelope"></i>
                         <input
                             type="email"
                             id="reset_email"
                             name="email"
-                            placeholder="Enter your registered email"
+                            placeholder="<?= sm_text('Enter your registered email', 'নিবন্ধিত ইমেইল লিখো'); ?>"
                             autocomplete="email"
                             value="<?= htmlspecialchars($_POST['email'] ?? '') ?>"
                             required
@@ -146,13 +146,13 @@ include 'includes/navbar.php';
 
                     <button type="submit" class="reset-primary-btn">
                         <i class="fa-solid fa-paper-plane"></i>
-                        Send Verification Code
+                        <?= sm_text('Send Verification Code', 'যাচাইকরণ কোড পাঠান'); ?>
                     </button>
                 </form>
 
                 <a href="login.php" class="reset-back-link">
                     <i class="fa-solid fa-arrow-left"></i>
-                    Back to Login
+                    <?= sm_text('Back to Login', 'লগইনে ফিরে যান'); ?>
                 </a>
             </div>
         </div>

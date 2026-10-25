@@ -264,7 +264,7 @@ function service_review_get_provider_review_page(
     $sort = in_array($sort, ['newest', 'highest', 'lowest'], true) ? $sort : 'newest';
 
     $provider_stmt = mysqli_prepare($conn, "
-        SELECT sp.provider_id, sp.provider_name, sp.package_name, sp.service_id,
+        SELECT sp.provider_id, sp.package_code, sp.provider_name, sp.package_name, sp.service_id,
                s.service_name
         FROM service_providers sp
         INNER JOIN services s ON s.service_id = sp.service_id

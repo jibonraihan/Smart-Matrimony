@@ -99,6 +99,7 @@ $title_logo_url = $base_url . 'assets/images/logo/matrimony_title.png';
         <div class="icon" aria-hidden="true">⚙</div>
         <span class="eyebrow">MAINTENANCE MODE</span>
         <h1 id="maintenance-title">We’ll be back soon.</h1>
+        <h4>কাজ চলছে, আমরা শীঘ্রই ফিরে আসছি</h4>
 
         <?php if ($expires_at !== null): ?>
             <div class="countdown" id="maintenance-countdown" data-expires-at="<?= (int) $expires_at ?>" aria-label="Maintenance countdown">

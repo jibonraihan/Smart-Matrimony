@@ -432,3 +432,6 @@ body.service-modal-open{overflow:hidden}
   .support-message-detail{margin-top:16px !important;padding:15px !important;}
   .support-message-detail p{font-size:14px !important;line-height:1.7 !important;}
 }
+
+/* Package-code badge: compact admin operations list and modal. */
+.service-table .package-code-badge,.service-modal-card > .package-code-badge{display:flex;width:max-content;max-width:100%;min-height:23px;margin:3px 0;padding:3px 7px;box-sizing:border-box;border:1px solid #b9ddd5;border-left:3px solid #d4af37;border-radius:7px;background:#f0faf7;color:#164e4a;font:800 11px/1.1 "SFMono-Regular",Consolas,"Liberation Mono",monospace;letter-spacing:.05em;white-space:nowrap;box-shadow:0 1px 4px rgba(15,118,110,.07)}

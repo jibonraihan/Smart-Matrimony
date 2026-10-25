@@ -9,11 +9,11 @@ $footer_form_error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($footer_form_type, ['Contact', 'Feedback'], true)) {
     if ($footer_form_name === '' || mb_strlen($footer_form_name) > 100) {
-        $footer_form_error = 'Please enter a valid name.';
+        $footer_form_error = 'সঠিক নাম লিখুন।';
     } elseif (!filter_var($footer_form_email, FILTER_VALIDATE_EMAIL) || mb_strlen($footer_form_email) > 150) {
-        $footer_form_error = 'Please enter a valid email address.';
+        $footer_form_error = 'সঠিক ইমেইল ঠিকানা লিখুন।';
     } elseif ($footer_form_message === '' || mb_strlen($footer_form_message) > 2000) {
-        $footer_form_error = 'Please enter your message (maximum 2000 characters).';
+        $footer_form_error = 'আপনার বার্তা লিখুন (সর্বোচ্চ ২০০০ অক্ষর)।';
     } else {
         require_once __DIR__ . '/../config/db.php';
         $footer_user_id = isset($_SESSION['user_id']) ? (int) $_SESSION['user_id'] : null;
@@ -23,14 +23,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($footer_form_type, ['Conta
             if (mysqli_stmt_execute($stmt)) {
                 $footer_form_success = true;
             } else {
-                $footer_form_error = 'We could not submit your message right now. Please try again.';
+                $footer_form_error = 'এই মুহূর্তে বার্তা পাঠানো যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন।';
             }
             mysqli_stmt_close($stmt);
         } else {
-            $footer_form_error = 'We could not submit your message right now. Please try again.';
+            $footer_form_error = 'এই মুহূর্তে বার্তা পাঠানো যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন।';
         }
     }
 }
+?>
+
+<?php if ($footer_form_success): ?>
+    <div class="container" role="status"><div class="alert alert-success" lang="bn">আপনার বার্তা সফলভাবে পাঠানো হয়েছে।</div></div>
+<?php elseif ($footer_form_error !== ''): ?>
+    <div class="container" role="alert"><div class="alert alert-danger" lang="bn"><?= htmlspecialchars($footer_form_error, ENT_QUOTES, 'UTF-8'); ?></div></div>
+<?php endif; ?>
+
+<?php
+require_once __DIR__ . '/language.php';
+if ($current_language === 'en') { include __DIR__ . '/footer_en.php'; return; }
 ?>
 
 <!-- =========================
@@ -46,42 +57,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($footer_form_type, ['Conta
             <!-- BRAND -->
             <div class="footer-brand">
                 <a href="<?= BASE_URL; ?>" class="footer-brand-link">
-                    <img src="<?= BASE_URL; ?>assets/images/logo/logo.png" alt="Smart Matrimony Logo" class="footer-logo">
-                    <img src="<?= BASE_URL; ?>assets/images/logo/matrimony_title.png" alt="Smart Matrimony" class="footer-title-logo">
+                    <img src="<?= BASE_URL; ?>assets/images/logo/logo.png" alt="স্মার্ট ম্যাট্রিমনি লোগো" class="footer-logo">
+                    <img src="<?= BASE_URL; ?>assets/images/logo/matrimony_title.png" alt="স্মার্ট ম্যাট্রিমনি" class="footer-title-logo">
                 </a>
 
                 <p class="footer-description">
-                    A modern, privacy-focused matrimony platform designed to help individuals and families discover meaningful connections with trust, dignity and respect.
+                    বিশ্বাস, মর্যাদা ও সম্মানের সঙ্গে উপযুক্ত জীবনসঙ্গী খুঁজে পেতে ব্যক্তি ও পরিবারগুলোর জন্য তৈরি একটি আধুনিক ও গোপনীয়তাকেন্দ্রিক ম্যাট্রিমনি প্ল্যাটফর্ম।
                 </p>
 
                 <div class="footer-values">
-                    <span><i class="fa-solid fa-shield-heart"></i> Secure</span>
-                    <span><i class="fa-solid fa-lock"></i> Privacy Focused</span>
-                    <span><i class="fa-solid fa-heart"></i> Respectful</span>
-                    <span><i class="fa-solid fa-users"></i> Family-Friendly</span>
+                    <span><i class="fa-solid fa-shield-heart"></i> নিরাপদ</span>
+                    <span><i class="fa-solid fa-lock"></i> গোপনীয়তাকে গুরুত্ব দেয়</span>
+                    <span><i class="fa-solid fa-heart"></i> সম্মানজনক</span>
+                    <span><i class="fa-solid fa-users"></i> পরিবারবান্ধব</span>
                 </div>
             </div>
 
             <!-- QUICK LINKS -->
             <div class="footer-links">
-                <h3>Quick Links</h3>
-                <a href="<?= BASE_URL; ?>"><i class="fa-solid fa-house"></i> Home</a>
-                <a href="<?= BASE_URL; ?>login.php"><i class="fa-solid fa-right-to-bracket"></i> Login</a>
-                <a href="<?= BASE_URL; ?>register.php"><i class="fa-solid fa-user-plus"></i> Create Account</a>
+                <h3>দ্রুত লিংক</h3>
+                <a href="<?= BASE_URL; ?>"><i class="fa-solid fa-house"></i> হোম</a>
+                <a href="<?= BASE_URL; ?>login.php"><i class="fa-solid fa-right-to-bracket"></i> লগইন</a>
+                <a href="<?= BASE_URL; ?>register.php"><i class="fa-solid fa-user-plus"></i> অ্যাকাউন্ট তৈরি করুন</a>
             </div>
 
             <!-- IMPORTANT LINKS -->
             <div class="footer-links">
-                <h3>Important Links</h3>
-                <a href="<?= BASE_URL; ?>terms.php"><i class="fa-regular fa-file-lines"></i> Terms &amp; Conditions</a>
+                <h3>গুরুত্বপূর্ণ লিংক</h3>
+                <a href="<?= BASE_URL; ?>terms.php"><i class="fa-regular fa-file-lines"></i> শর্তাবলি</a>
                 <a href="<?= BASE_URL; ?>how_it_works.php">
-                    <i class="fa-regular fa-circle-question"></i> How It Works
+                    <i class="fa-regular fa-circle-question"></i> যেভাবে কাজ করে
                 </a>
             </div>
 
             <!-- SUPPORT -->
             <div class="footer-links footer-support-links">
-                <h3>Support</h3>
+                <h3>সহায়তা</h3>
                 <a href="mailto:support.smartmatrimony@gmail.com" class="footer-email-link">
                     <i class="fa-solid fa-envelope"></i>
                     <span>support.smartmatrimony@gmail.com</span>
@@ -93,15 +104,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($footer_form_type, ['Conta
                     <i class="fa-regular fa-message"></i> Send Feedback
                 </a>
                 <span class="footer-static-link footer-support-time">
-                    <i class="fa-regular fa-clock"></i> Support: 10 AM - 10 PM (BDT)
+                    <i class="fa-regular fa-clock"></i> সহায়তার সময়: সকাল ১০টা - রাত ১০টা (বাংলাদেশ সময়)
                 </span>
             </div>
 
             <!-- FOLLOW / NEWSLETTER -->
             <div class="footer-follow-column">
                 <div class="footer-follow">
-                    <h4>Follow Us</h4>
-                    <div class="footer-socials" aria-label="Social media">
+                    <h4>আমাদের অনুসরণ করুন</h4>
+                    <div class="footer-socials" aria-label="সামাজিক যোগাযোগমাধ্যম">
                         <span class="footer-social footer-social-facebook" title="Facebook"><i class="fa-brands fa-facebook-f"></i></span>
                         <span class="footer-social footer-social-instagram" title="Instagram"><i class="fa-brands fa-instagram"></i></span>
                         <span class="footer-social footer-social-youtube" title="YouTube"><i class="fa-brands fa-youtube"></i></span>
@@ -110,11 +121,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($footer_form_type, ['Conta
                 </div>
 
                 <div class="footer-newsletter">
-                    <h4>Stay Updated</h4>
-                    <p>Get important updates and tips.</p>
+                    <h4>আপডেট পেতে থাকুন</h4>
+                    <p>গুরুত্বপূর্ণ আপডেট ও পরামর্শ পান।</p>
                     <div class="footer-newsletter-form">
-                        <input type="email" aria-label="Your email address" placeholder="Your email address">
-                        <button type="button" aria-label="Subscribe">
+                        <input type="email" aria-label="আপনার ইমেইল ঠিকানা" placeholder="আপনার ইমেইল ঠিকানা">
+                        <button type="button" aria-label="সাবস্ক্রাইব করুন">
                             <i class="fa-solid fa-paper-plane"></i>
                         </button>
                     </div>
@@ -129,25 +140,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($footer_form_type, ['Conta
         <div class="footer-bottom-combined">
 
             <span class="footer-bottom-copy">
-                © <?= date('Y'); ?> Smart Matrimony. All rights reserved.
+                © <?= date('Y'); ?> Smart Matrimony. সর্বস্বত্ব সংরক্ষিত।
             </span>
 
             <div class="footer-bottom-trust">
                 <span class="footer-trust-item">
                     <i class="fa-solid fa-shield-halved"></i>
-                    <span>Designed with trust in mind</span>
+                    <span>বিশ্বাসকে গুরুত্ব দিয়ে তৈরি</span>
                 </span>
 
                 <span class="footer-trust-divider"></span>
 
                 <span class="footer-trust-item">
                     <i class="fa-solid fa-heart"></i>
-                    <span>Built around dignity and respect</span>
+                    <span>মর্যাদা ও সম্মানকে ভিত্তি করে তৈরি</span>
                 </span>
             </div>
 
             <span class="footer-bottom-tagline">
-                Built for meaningful connections.
+                অর্থবহ সম্পর্ক গড়ার জন্য তৈরি।
             </span>
 
         </div>
@@ -164,7 +175,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($footer_form_type, ['Conta
 <div class="footer-form-modal" id="footerFormModal" aria-hidden="true">
     <div class="footer-form-backdrop" data-footer-close></div>
     <div class="footer-form-dialog" role="dialog" aria-modal="true" aria-labelledby="footerFormTitle">
-        <button type="button" class="footer-form-close" data-footer-close aria-label="Close">
+        <button type="button" class="footer-form-close" data-footer-close aria-label="বন্ধ করুন">
             <i class="fa-solid fa-xmark"></i>
         </button>
 
@@ -172,15 +183,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($footer_form_type, ['Conta
             <i class="fa-solid fa-headset"></i>
         </div>
         <span class="footer-form-kicker">SMART MATRIMONY</span>
-        <h2 id="footerFormTitle">Contact Us</h2>
-        <p id="footerFormSubtitle">Have a question or need assistance? Send us a message.</p>
+        <h2 id="footerFormTitle">যোগাযোগ করুন</h2>
+        <p id="footerFormSubtitle">কোনো প্রশ্ন আছে বা সহায়তা প্রয়োজন? আমাদের বার্তা পাঠান।</p>
 
         <form method="post" class="footer-message-form" id="footerMessageForm">
             <input type="hidden" name="footer_form_type" id="footerFormType" value="Contact">
 
             <div class="footer-form-grid">
                 <div class="footer-field">
-                    <label for="footerName">Name</label>
+                    <label for="footerName">নাম</label>
                     <div class="footer-input-wrap">
                         <i class="fa-regular fa-user"></i>
                         <input type="text" id="footerName" name="footer_name" maxlength="100" required value="<?= htmlspecialchars($_POST['footer_name'] ?? '', ENT_QUOTES, 'UTF-8'); ?>">
@@ -188,7 +199,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($footer_form_type, ['Conta
                 </div>
 
                 <div class="footer-field">
-                    <label for="footerEmail">Email</label>
+                    <label for="footerEmail">ইমেইল</label>
                     <div class="footer-input-wrap">
                         <i class="fa-regular fa-envelope"></i>
                         <input type="email" id="footerEmail" name="footer_email" maxlength="150" required value="<?= htmlspecialchars($_POST['footer_email'] ?? '', ENT_QUOTES, 'UTF-8'); ?>">
@@ -197,14 +208,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($footer_form_type, ['Conta
             </div>
 
             <div class="footer-field">
-                <label for="footerMessage">Message</label>
-                <textarea id="footerMessage" name="footer_message" maxlength="2000" rows="5" required placeholder="Write your message here..."><?= htmlspecialchars($_POST['footer_message'] ?? '', ENT_QUOTES, 'UTF-8'); ?></textarea>
+                <label for="footerMessage">বার্তা</label>
+                <textarea id="footerMessage" name="footer_message" maxlength="2000" rows="5" required placeholder="এখানে আপনার বার্তা লিখুন..."><?= htmlspecialchars($_POST['footer_message'] ?? '', ENT_QUOTES, 'UTF-8'); ?></textarea>
                 <div class="footer-character-count"><span id="footerMessageCount">0</span>/2000</div>
             </div>
 
             <button type="submit" class="footer-submit-btn">
                 <i class="fa-solid fa-paper-plane"></i>
-                <span>Submit Message</span>
+                <span>বার্তা পাঠান</span>
             </button>
         </form>
     </div>
@@ -231,10 +242,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($footer_form_type, ['Conta
         if (!modal) return;
         const isFeedback = type === 'feedback';
         typeInput.value = isFeedback ? 'Feedback' : 'Contact';
-        title.textContent = isFeedback ? 'Share Your Feedback' : 'Contact Us';
+        title.textContent = isFeedback ? 'আপনার মতামত জানান' : 'যোগাযোগ করুন';
         subtitle.textContent = isFeedback
-            ? 'We value your thoughts. Tell us how we can improve Smart Matrimony.'
-            : 'Have a question or need assistance? Send us a message.';
+            ? 'আপনার মতামত আমাদের কাছে গুরুত্বপূর্ণ। স্মার্ট ম্যাট্রিমনিকে কীভাবে আরও উন্নত করা যায়, জানান।'
+            : 'কোনো প্রশ্ন আছে বা সহায়তা প্রয়োজন? আমাদের বার্তা পাঠান।';
         icon.innerHTML = isFeedback
             ? '<i class="fa-regular fa-message"></i>'
             : '<i class="fa-solid fa-headset"></i>';

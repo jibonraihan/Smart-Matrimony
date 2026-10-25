@@ -470,7 +470,7 @@ include 'includes/navbar.php';
 
         </div>
 
-        <h1>Verify Your Email</h1>
+        <h1><?= sm_text('Verify Your Email', 'তোমার ইমেইল যাচাই করো'); ?></h1>
 
         <p class="verify-description">
 
@@ -522,7 +522,7 @@ include 'includes/navbar.php';
                 for="verification_code"
                 class="form-label"
             >
-                Verification Code
+                <?= sm_text('Verification Code', 'যাচাইকরণ কোড'); ?>
             </label>
 
             <input
@@ -545,7 +545,7 @@ include 'includes/navbar.php';
 
                 <i class="fa-solid fa-shield-check"></i>
 
-                Verify Email
+                <?= sm_text('Verify Email', 'ইমেইল যাচাই করুন'); ?>
 
             </button>
 
@@ -572,7 +572,7 @@ include 'includes/navbar.php';
                     class="resend-button"
                     disabled
                 >
-                    Resend Code
+                    <?= sm_text('Resend Code', 'কোড আবার পাঠান'); ?>
                 </button>
 
             </form>
@@ -585,7 +585,7 @@ include 'includes/navbar.php';
             class="back-link"
         >
             <i class="fa-solid fa-arrow-left"></i>
-            Back to Registration
+            <?= sm_text('Back to Registration', 'নিবন্ধনে ফিরে যান'); ?>
         </a>
 
     </div>

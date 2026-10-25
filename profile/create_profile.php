@@ -4,6 +4,8 @@ error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
 require_once '../config/db.php';
+require_once '../includes/language.php';
+require_once '../includes/profile_completion.php';
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -16,7 +18,10 @@ if (!isset($_SESSION['user_id'])) {
 
 }
 
-$user_id = $_SESSION['user_id'];
+$user_id = (int) $_SESSION['user_id'];
+$completion = sm_get_profile_completion($conn, $user_id);
+$progress = max(0, min(100, (int)($completion['percentage'] ?? 0)));
+$completed_steps = $completion['steps'] ?? [];
 
 $page_css = 'assets/css/create-profile.css';
 
@@ -27,7 +32,7 @@ include '../includes/navbar.php';
 
     <div class="create-profile-back">
         <a href="view_profile.php?user_id=<?= (int) $user_id ?>" class="create-profile-back-link">
-            <i class="bi bi-arrow-left"></i> Back to My Profile
+            <i class="bi bi-arrow-left"></i> <?= sm_text('Back to My Profile', 'আমার প্রোফাইলে ফিরে যান') ?>
         </a>
     </div>
 
@@ -43,13 +48,13 @@ include '../includes/navbar.php';
 
                         <h2 class="fw-bold text-success create-profile-title">
 
-                            Complete Your Matrimony Profile
+                            <?= sm_text('Complete Your Matrimony Profile', 'আপনার বিবাহের প্রোফাইল সম্পূর্ণ করুন') ?>
 
                         </h2>
 
                         <p class="text-muted">
 
-                            Complete your profile to receive accurate halal marriage matches.
+                            <?= sm_text('Complete your profile to receive accurate halal marriage matches.', 'সঠিক ও উপযুক্ত হালাল জীবনসঙ্গী খুঁজে পেতে আপনার প্রোফাইল সম্পূর্ণ করুন।') ?>
 
                         </p>
 
@@ -63,21 +68,21 @@ include '../includes/navbar.php';
 
                             <span class="fw-semibold">
 
-                                Profile Completion
+                                <?= sm_text('Profile Completion', 'প্রোফাইল সম্পন্ন') ?>
 
                             </span>
 
                             <span class="text-success fw-bold">
 
-                                0%
+                                <?= $current_language === 'en' ? $progress . '% complete' : strtr((string)$progress, ['0'=>'০','1'=>'১','2'=>'২','3'=>'৩','4'=>'৪','5'=>'৫','6'=>'৬','7'=>'৭','8'=>'৮','9'=>'৯']) . '% সম্পন্ন' ?>
 
                             </span>
 
                         </div>
 
-                        <div class="create-profile-progress progress" role="progressbar" aria-label="Profile completion" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                        <div class="create-profile-progress progress" role="progressbar" aria-label="Profile completion" aria-valuenow="<?= $progress ?>" aria-valuemin="0" aria-valuemax="100">
 
-                            <div class="progress-bar bg-success" style="width:0%;"></div>
+                            <div class="progress-bar bg-success" style="width:<?= $progress ?>%;"></div>
 
                         </div>
 
@@ -88,7 +93,7 @@ include '../includes/navbar.php';
                     <div class="row g-4">
                         <div class="col-md-4">
 
-                            <a href="step1.php" class="create-step-card step-card-active" aria-label="Go to Step 1: Personal Information">
+                            <a href="step1.php" class="create-step-card step-card-active" aria-label="<?= sm_text('Go to Step 1: Personal Information', 'ধাপ ১: ব্যক্তিগত তথ্য খুলুন') ?>">
 
                                 <div class="create-step-card-body text-center">
 
@@ -96,13 +101,13 @@ include '../includes/navbar.php';
                                         <i class="bi bi-person-circle"></i>
                                     </span>
 
-                                    <span class="create-step-number">Step 1</span>
+                                    <span class="create-step-number"><?= sm_text('Step 1', 'ধাপ ১') ?></span>
 
-                                    <span class="create-step-title">Personal Information</span>
+                                    <span class="create-step-title"><?= sm_text('Personal Information', 'ব্যক্তিগত তথ্য') ?></span>
 
-                                    <span class="create-step-description">Basic personal details.</span>
+                                    <span class="create-step-description"><?= sm_text('Basic personal details.', 'ব্যক্তিগত তথ্যের প্রাথমিক বিবরণ।') ?></span>
 
-                                    <span class="create-step-link">Open Step <i class="bi bi-arrow-right"></i></span>
+                                    <span class="create-step-link"><?= sm_text('Open Step', 'ধাপটি খুলুন') ?> <i class="bi bi-arrow-right"></i></span>
 
                                 </div>
 
@@ -111,7 +116,7 @@ include '../includes/navbar.php';
                         </div>
                         <div class="col-md-4">
 
-                            <a href="step2.php" class="create-step-card " aria-label="Go to Step 2: Family Information">
+                            <a href="step2.php" class="create-step-card " aria-label="<?= sm_text('Go to Step 2: Family Information', 'ধাপ ২: পারিবারিক তথ্য খুলুন') ?>">
 
                                 <div class="create-step-card-body text-center">
 
@@ -119,13 +124,13 @@ include '../includes/navbar.php';
                                         <i class="bi bi-people"></i>
                                     </span>
 
-                                    <span class="create-step-number">Step 2</span>
+                                    <span class="create-step-number"><?= sm_text('Step 2', 'ধাপ ২') ?></span>
 
-                                    <span class="create-step-title">Family Information</span>
+                                    <span class="create-step-title"><?= sm_text('Family Information', 'পারিবারিক তথ্য') ?></span>
 
-                                    <span class="create-step-description">Parents & Guardian.</span>
+                                    <span class="create-step-description"><?= sm_text('Parents & Guardian.', 'বাবা-মা ও অভিভাবকের তথ্য।') ?></span>
 
-                                    <span class="create-step-link">Open Step <i class="bi bi-arrow-right"></i></span>
+                                    <span class="create-step-link"><?= sm_text('Open Step', 'ধাপটি খুলুন') ?> <i class="bi bi-arrow-right"></i></span>
 
                                 </div>
 
@@ -134,7 +139,7 @@ include '../includes/navbar.php';
                         </div>
                         <div class="col-md-4">
 
-                            <a href="step3.php" class="create-step-card " aria-label="Go to Step 3: Lifestyle">
+                            <a href="step3.php" class="create-step-card " aria-label="<?= sm_text('Go to Step 3: Lifestyle', 'ধাপ ৩: জীবনযাপন খুলুন') ?>">
 
                                 <div class="create-step-card-body text-center">
 
@@ -142,13 +147,13 @@ include '../includes/navbar.php';
                                         <i class="bi bi-heart"></i>
                                     </span>
 
-                                    <span class="create-step-number">Step 3</span>
+                                    <span class="create-step-number"><?= sm_text('Step 3', 'ধাপ ৩') ?></span>
 
-                                    <span class="create-step-title">Lifestyle</span>
+                                    <span class="create-step-title"><?= sm_text('Lifestyle', 'জীবনযাপন') ?></span>
 
-                                    <span class="create-step-description">Religious & Cultural lifestyle.</span>
+                                    <span class="create-step-description"><?= sm_text('Religious & Cultural lifestyle.', 'ধর্মীয় ও সাংস্কৃতিক জীবনযাপনের তথ্য।') ?></span>
 
-                                    <span class="create-step-link">Open Step <i class="bi bi-arrow-right"></i></span>
+                                    <span class="create-step-link"><?= sm_text('Open Step', 'ধাপটি খুলুন') ?> <i class="bi bi-arrow-right"></i></span>
 
                                 </div>
 
@@ -157,7 +162,7 @@ include '../includes/navbar.php';
                         </div>
                         <div class="col-md-4">
 
-                            <a href="step4.php" class="create-step-card " aria-label="Go to Step 4: Location">
+                            <a href="step4.php" class="create-step-card " aria-label="<?= sm_text('Go to Step 4: Location', 'ধাপ ৪: ঠিকানা খুলুন') ?>">
 
                                 <div class="create-step-card-body text-center">
 
@@ -165,13 +170,13 @@ include '../includes/navbar.php';
                                         <i class="bi bi-geo-alt"></i>
                                     </span>
 
-                                    <span class="create-step-number">Step 4</span>
+                                    <span class="create-step-number"><?= sm_text('Step 4', 'ধাপ ৪') ?></span>
 
-                                    <span class="create-step-title">Location</span>
+                                    <span class="create-step-title"><?= sm_text('Location', 'ঠিকানা') ?></span>
 
-                                    <span class="create-step-description">Address information.</span>
+                                    <span class="create-step-description"><?= sm_text('Address information.', 'বর্তমান ও স্থায়ী ঠিকানার তথ্য।') ?></span>
 
-                                    <span class="create-step-link">Open Step <i class="bi bi-arrow-right"></i></span>
+                                    <span class="create-step-link"><?= sm_text('Open Step', 'ধাপটি খুলুন') ?> <i class="bi bi-arrow-right"></i></span>
 
                                 </div>
 
@@ -180,7 +185,7 @@ include '../includes/navbar.php';
                         </div>
                         <div class="col-md-4">
 
-                            <a href="step5.php" class="create-step-card " aria-label="Go to Step 5: Privacy">
+                            <a href="step5.php" class="create-step-card " aria-label="<?= sm_text('Go to Step 5: Privacy', 'ধাপ ৫: গোপনীয়তা খুলুন') ?>">
 
                                 <div class="create-step-card-body text-center">
 
@@ -188,13 +193,13 @@ include '../includes/navbar.php';
                                         <i class="bi bi-shield-lock"></i>
                                     </span>
 
-                                    <span class="create-step-number">Step 5</span>
+                                    <span class="create-step-number"><?= sm_text('Step 5', 'ধাপ ৫') ?></span>
 
-                                    <span class="create-step-title">Privacy</span>
+                                    <span class="create-step-title"><?= sm_text('Privacy', 'গোপনীয়তা') ?></span>
 
-                                    <span class="create-step-description">Photo & Visibility.</span>
+                                    <span class="create-step-description"><?= sm_text('Photo & Visibility.', 'ছবি ও প্রোফাইলের দৃশ্যমানতা।') ?></span>
 
-                                    <span class="create-step-link">Open Step <i class="bi bi-arrow-right"></i></span>
+                                    <span class="create-step-link"><?= sm_text('Open Step', 'ধাপটি খুলুন') ?> <i class="bi bi-arrow-right"></i></span>
 
                                 </div>
 
@@ -203,7 +208,7 @@ include '../includes/navbar.php';
                         </div>
                         <div class="col-md-4">
 
-                            <a href="step6.php" class="create-step-card " aria-label="Go to Step 6: Questions">
+                            <a href="step6.php" class="create-step-card " aria-label="<?= sm_text('Go to Step 6: Questions', 'ধাপ ৬: প্রশ্নোত্তর খুলুন') ?>">
 
                                 <div class="create-step-card-body text-center">
 
@@ -211,13 +216,13 @@ include '../includes/navbar.php';
                                         <i class="bi bi-patch-question"></i>
                                     </span>
 
-                                    <span class="create-step-number">Step 6</span>
+                                    <span class="create-step-number"><?= sm_text('Step 6', 'ধাপ ৬') ?></span>
 
-                                    <span class="create-step-title">Questions</span>
+                                    <span class="create-step-title"><?= sm_text('Questions', 'প্রশ্নোত্তর') ?></span>
 
-                                    <span class="create-step-description">Partner preferences & QnA.</span>
+                                    <span class="create-step-description"><?= sm_text('Partner preferences & QnA.', 'জীবনসঙ্গীর পছন্দ ও প্রশ্নোত্তর।') ?></span>
 
-                                    <span class="create-step-link">Open Step <i class="bi bi-arrow-right"></i></span>
+                                    <span class="create-step-link"><?= sm_text('Open Step', 'ধাপটি খুলুন') ?> <i class="bi bi-arrow-right"></i></span>
 
                                 </div>
 
@@ -233,7 +238,7 @@ include '../includes/navbar.php';
                             href="step1.php"
                             class="btn btn-success btn-lg px-5">
 
-                            Start Profile
+                            <?= sm_text('Start Profile', 'প্রোফাইল শুরু করুন') ?>
 
                             <i class="bi bi-arrow-right-circle ms-2"></i>
 

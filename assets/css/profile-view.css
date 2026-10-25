@@ -357,6 +357,7 @@
 }
 .profile-part4-card .detail-list { gap: 9px; }
 .profile-part4-card .detail-list div { padding-bottom: 8px; }
+.profile-view-page .profile-part4-card .detail-list .location-admin-row > span { color: #334155 !important; }
 .profile-part4-card .detail-list span { font-size: 10px; }
 .profile-part4-card .detail-list strong { font-size: 10px; }
 .profile-lifestyle-card {
@@ -1181,4 +1182,47 @@ body.privacy-drawer-open { overflow: hidden; }
     .profile-view-brand-logo img { width: 34px; height: 34px; }
     .back-dashboard { min-height: 40px; padding: 0 11px; font-size: 11px; }
     .back-dashboard span { display: none; }
+}
+
+/* ===================== PROFILE CARD TEXT CONTRAST FIX ===================== */
+/* Color-only accessibility improvement: strengthen all text inside profile information cards. */
+.profile-view-page .profile-detail-card,
+.profile-view-page .profile-part3-card,
+.profile-view-page .profile-part4-card,
+.profile-view-page .profile-qa-card,
+.profile-view-page .profile-masonry-column .profile-qa-item {
+    color: #243746;
+}
+.profile-view-page .detail-list span,
+.profile-view-page .profile-part3-card .detail-list span,
+.profile-view-page .profile-part4-card .detail-list span,
+.profile-view-page .health-summary-grid span,
+.profile-view-page .preference-summary-grid span,
+.profile-view-page .preference-additional > span,
+.profile-view-page .preference-qa-item span,
+.profile-view-page .profile-quick-copy small,
+.profile-view-page .profile-part3-card .detail-card-heading small,
+.profile-view-page .profile-part4-card .detail-card-heading small {
+    color: #526779;
+}
+.profile-view-page .detail-list strong,
+.profile-view-page .profile-part3-card .detail-list strong,
+.profile-view-page .profile-part4-card .detail-list strong,
+.profile-view-page .health-summary-grid strong,
+.profile-view-page .preference-summary-grid strong,
+.profile-view-page .preference-qa-item strong,
+.profile-view-page .profile-quick-copy strong,
+.profile-view-page .health-condition-main strong,
+.profile-view-page .profile-qa-answer,
+.profile-view-page .profile-masonry-column .profile-qa-answer,
+.profile-view-page .profile-about-text,
+.profile-view-page .preference-additional p {
+    color: #243746;
+}
+.profile-view-page .profile-empty-state,
+.profile-view-page .health-condition-meta span,
+.profile-view-page .profile-privacy-note p,
+.profile-view-page .profile-media-copy,
+.profile-view-page .profile-bio {
+    color: #526779;
 }

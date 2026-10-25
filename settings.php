@@ -4,6 +4,7 @@ $page_css = 'assets/css/settings.css';
 require_once 'config/db.php';
 require_once 'includes/functions.php';
 require_once 'includes/dropdowns.php';
+require_once 'includes/language.php';
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -15,6 +16,24 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 $user_id = (int) $_SESSION['user_id'];
+
+// Create the media-visibility preference storage automatically when possible.
+// This avoids requiring a separate SQL migration to be run manually.
+$media_visibility_storage_ready = false;
+$media_visibility_table_sql = "
+    CREATE TABLE IF NOT EXISTS user_media_visibility_preferences (
+        user_id INT(11) NOT NULL,
+        voice_visibility ENUM('Everyone', 'Verified Users', 'Matched Users', 'Private') NOT NULL DEFAULT 'Verified Users',
+        video_visibility ENUM('Everyone', 'Verified Users', 'Matched Users', 'Private') NOT NULL DEFAULT 'Verified Users',
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        PRIMARY KEY (user_id),
+        CONSTRAINT fk_user_media_visibility_preferences_user
+            FOREIGN KEY (user_id) REFERENCES users (user_id) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci
+";
+if (mysqli_query($conn, $media_visibility_table_sql)) {
+    $media_visibility_storage_ready = true;
+}
 
 if (!function_exists('settings_public_id')) {
     function settings_public_id($id) {
@@ -80,6 +99,38 @@ mysqli_stmt_close($stmt);
 if (!$current_user) {
     session_destroy();
     header('Location: login.php');
+    exit;
+}
+
+
+// Localized location options for the settings page; keeps this feature self-contained.
+if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['settings_location_options'])) {
+    header('Content-Type: text/html; charset=utf-8');
+    $location_type = (string) $_GET['settings_location_options'];
+    $location_name_column = ($current_language === 'en') ? 'name_en' : 'name_bn';
+    if ($location_type === 'districts') {
+        $parent_id = (int) ($_GET['division_id'] ?? 0);
+        echo '<option value="">' . htmlspecialchars(sm_text('Any district', 'যেকোনো জেলা'), ENT_QUOTES, 'UTF-8') . '</option>';
+        $location_stmt = mysqli_prepare($conn, "SELECT id, name_bn, name_en FROM districts WHERE division_id = ? ORDER BY name_en");
+    } elseif ($location_type === 'upazilas') {
+        $parent_id = (int) ($_GET['district_id'] ?? 0);
+        echo '<option value="">' . htmlspecialchars(sm_text('Any upazila', 'যেকোনো উপজেলা'), ENT_QUOTES, 'UTF-8') . '</option>';
+        $location_stmt = mysqli_prepare($conn, "SELECT id, name_bn, name_en FROM upazilas WHERE district_id = ? ORDER BY name_en");
+    } else {
+        http_response_code(400);
+        exit;
+    }
+    if ($parent_id > 0 && $location_stmt) {
+        mysqli_stmt_bind_param($location_stmt, 'i', $parent_id);
+        mysqli_stmt_execute($location_stmt);
+        $location_result = mysqli_stmt_get_result($location_stmt);
+        while ($location_result && ($location_row = mysqli_fetch_assoc($location_result))) {
+            $location_name = (string) ($location_row[$location_name_column] ?? '');
+            if ($location_name === '') $location_name = (string) ($location_row['name_en'] ?? '');
+            echo '<option value="' . (int) $location_row['id'] . '">' . htmlspecialchars($location_name, ENT_QUOTES, 'UTF-8') . '</option>';
+        }
+        mysqli_stmt_close($location_stmt);
+    }
     exit;
 }
 
@@ -379,6 +430,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['settings_action'] ?? '') =
         $accept_disability = (string) ($_POST['accept_disability'] ?? '1');
         $accept_chronic_disease = (string) ($_POST['accept_chronic_disease'] ?? '1');
         $additional_preferences = trim((string) ($_POST['additional_preferences'] ?? ''));
+        $partner_description = trim((string) ($_POST['partner_description'] ?? ''));
 
         $toIntOrNull = static function ($value) { return $value === '' ? null : (int) $value; };
         $toFloatOrNull = static function ($value) { return $value === '' ? null : (float) $value; };
@@ -459,8 +511,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['settings_action'] ?? '') =
             $matching_error = 'Please select a valid blood group preference.';
         } elseif (!in_array($accept_smoker, ['0','1'], true) || !in_array($accept_alcohol, ['0','1'], true) || !in_array($accept_disability, ['0','1'], true) || !in_array($accept_chronic_disease, ['0','1'], true)) {
             $matching_error = 'Please select valid lifestyle and health preferences.';
-        } elseif (mb_strlen($additional_preferences) > 5000) {
-            $matching_error = 'Additional preferences must be 5000 characters or fewer.';
+        } elseif (mb_strlen($additional_preferences) > 5000 || mb_strlen($partner_description) > 5000) {
+            $matching_error = 'Additional preferences and partner description must be 5000 characters or fewer.';
         } else {
             if ($religion !== 'Islam') {
                 $madhhab = $prayer_status = $halal_lifestyle = $mahram_maintained = $islamic_knowledge = $hijab_status = $beard_status = '';
@@ -485,6 +537,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['settings_action'] ?? '') =
             $personality_v = $personality_type === '' ? null : $personality_type;
             $blood_v = $blood_group === '' ? null : $blood_group;
             $additional_v = $additional_preferences === '' ? null : $additional_preferences;
+            $partner_description_v = $partner_description === '' ? null : $partner_description;
             $accept_smoker_v = (int) $accept_smoker;
             $accept_alcohol_v = (int) $accept_alcohol;
             $accept_disability_v = (int) $accept_disability;
@@ -497,17 +550,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['settings_action'] ?? '') =
             mysqli_stmt_close($exists_stmt);
 
             if ($exists) {
-                $sql = 'UPDATE search_preferences SET preferred_gender=?, min_age=?, max_age=?, min_height_cm=?, max_height_cm=?, complexion=?, min_weight_kg=?, max_weight_kg=?, religion=?, marital_status=?, madhhab=?, prayer_status=?, halal_lifestyle=?, mahram_maintained=?, islamic_knowledge=?, hijab_status=?, beard_status=?, personality_type=?, education=?, profession=?, min_monthly_income=?, division_id=?, district_id=?, upazila_id=?, blood_group=?, accept_smoker=?, accept_alcohol=?, accept_disability=?, accept_chronic_disease=?, additional_preferences=? WHERE user_id=? LIMIT 1';
+                $sql = 'UPDATE search_preferences SET preferred_gender=?, min_age=?, max_age=?, min_height_cm=?, max_height_cm=?, complexion=?, min_weight_kg=?, max_weight_kg=?, religion=?, marital_status=?, madhhab=?, prayer_status=?, halal_lifestyle=?, mahram_maintained=?, islamic_knowledge=?, hijab_status=?, beard_status=?, personality_type=?, education=?, profession=?, min_monthly_income=?, division_id=?, district_id=?, upazila_id=?, blood_group=?, accept_smoker=?, accept_alcohol=?, accept_disability=?, accept_chronic_disease=?, additional_preferences=?, partner_description=? WHERE user_id=? LIMIT 1';
                 $save = mysqli_prepare($conn, $sql);
-                mysqli_stmt_bind_param($save, 'siiddsddsssssissssssdiiisiiiisi', $preferred_gender, $min_age_v, $max_age_v, $min_height_v, $max_height_v, $complexion_v, $min_weight_v, $max_weight_v, $religion_v, $marital_v, $madhhab_v, $prayer_v, $halal_v, $mahram_v, $knowledge_v, $hijab_v, $beard_v, $personality_v, $education_v, $profession_v, $min_income_v, $division_v, $district_v, $upazila_v, $blood_v, $accept_smoker_v, $accept_alcohol_v, $accept_disability_v, $accept_chronic_v, $additional_v, $user_id);
+                mysqli_stmt_bind_param($save, 'siiddsddsssssissssssdiiisiiiissi', $preferred_gender, $min_age_v, $max_age_v, $min_height_v, $max_height_v, $complexion_v, $min_weight_v, $max_weight_v, $religion_v, $marital_v, $madhhab_v, $prayer_v, $halal_v, $mahram_v, $knowledge_v, $hijab_v, $beard_v, $personality_v, $education_v, $profession_v, $min_income_v, $division_v, $district_v, $upazila_v, $blood_v, $accept_smoker_v, $accept_alcohol_v, $accept_disability_v, $accept_chronic_v, $additional_v, $partner_description_v, $user_id);
             } else {
-                $sql = 'INSERT INTO search_preferences (user_id, preferred_gender, min_age, max_age, min_height_cm, max_height_cm, complexion, min_weight_kg, max_weight_kg, religion, marital_status, madhhab, prayer_status, halal_lifestyle, mahram_maintained, islamic_knowledge, hijab_status, beard_status, personality_type, education, profession, min_monthly_income, division_id, district_id, upazila_id, blood_group, accept_smoker, accept_alcohol, accept_disability, accept_chronic_disease, additional_preferences) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)';
+                $sql = 'INSERT INTO search_preferences (user_id, preferred_gender, min_age, max_age, min_height_cm, max_height_cm, complexion, min_weight_kg, max_weight_kg, religion, marital_status, madhhab, prayer_status, halal_lifestyle, mahram_maintained, islamic_knowledge, hijab_status, beard_status, personality_type, education, profession, min_monthly_income, division_id, district_id, upazila_id, blood_group, accept_smoker, accept_alcohol, accept_disability, accept_chronic_disease, additional_preferences, partner_description) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)';
                 $save = mysqli_prepare($conn, $sql);
-                mysqli_stmt_bind_param($save, 'isiidsddsssssisisssssdiiisiiiis', $user_id, $preferred_gender, $min_age_v, $max_age_v, $min_height_v, $max_height_v, $complexion_v, $min_weight_v, $max_weight_v, $religion_v, $marital_v, $madhhab_v, $prayer_v, $halal_v, $mahram_v, $knowledge_v, $hijab_v, $beard_v, $personality_v, $education_v, $profession_v, $min_income_v, $division_v, $district_v, $upazila_v, $blood_v, $accept_smoker_v, $accept_alcohol_v, $accept_disability_v, $accept_chronic_v, $additional_v);
+                mysqli_stmt_bind_param($save, 'isiiddsddsssssissssssdiiisiiiiss', $user_id, $preferred_gender, $min_age_v, $max_age_v, $min_height_v, $max_height_v, $complexion_v, $min_weight_v, $max_weight_v, $religion_v, $marital_v, $madhhab_v, $prayer_v, $halal_v, $mahram_v, $knowledge_v, $hijab_v, $beard_v, $personality_v, $education_v, $profession_v, $min_income_v, $division_v, $district_v, $upazila_v, $blood_v, $accept_smoker_v, $accept_alcohol_v, $accept_disability_v, $accept_chronic_v, $additional_v, $partner_description_v);
             }
 
             if ($save && mysqli_stmt_execute($save)) {
                 if ($save) mysqli_stmt_close($save);
+
+                // Persist the four lifestyle/health controls explicitly so their values
+                // are reliably stored for both existing and newly created preference rows.
+                $lifestyle_save = mysqli_prepare($conn, 'UPDATE search_preferences SET accept_smoker=?, accept_alcohol=?, accept_disability=?, accept_chronic_disease=? WHERE user_id=? LIMIT 1');
+                if ($lifestyle_save) {
+                    mysqli_stmt_bind_param($lifestyle_save, 'iiiii', $accept_smoker_v, $accept_alcohol_v, $accept_disability_v, $accept_chronic_v, $user_id);
+                    $lifestyle_ok = mysqli_stmt_execute($lifestyle_save);
+                    mysqli_stmt_close($lifestyle_save);
+                } else {
+                    $lifestyle_ok = false;
+                }
+
                 $family_status_v = $family_status === '' ? null : $family_status;
                 $family_save = mysqli_prepare($conn, 'UPDATE search_preferences SET family_status=? WHERE user_id=? LIMIT 1');
                 if ($family_save) {
@@ -517,8 +582,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['settings_action'] ?? '') =
                 } else {
                     $family_ok = false;
                 }
-                if ($family_ok) {
+                if ($family_ok && $lifestyle_ok) {
                     $matching_message = 'Your matching preferences have been updated successfully.';
+                } elseif (!$lifestyle_ok) {
+                    $matching_error = 'Matching preferences were saved, but lifestyle and health preferences could not be updated.';
                 } else {
                     $matching_error = 'Matching preferences were saved, but family-status preference could not be updated.';
                 }
@@ -603,9 +670,9 @@ $matching_pref = [
     'personality_type' => '', 'education' => '', 'profession' => '', 'min_monthly_income' => '',
     'division_id' => '', 'district_id' => '', 'upazila_id' => '', 'blood_group' => '',
     'accept_smoker' => '1', 'accept_alcohol' => '1', 'accept_disability' => '1',
-    'accept_chronic_disease' => '1', 'additional_preferences' => ''
+    'accept_chronic_disease' => '1', 'additional_preferences' => '', 'partner_description' => ''
 ];
-$pref_stmt = mysqli_prepare($conn, 'SELECT preferred_gender, min_age, max_age, min_height_cm, max_height_cm, complexion, min_weight_kg, max_weight_kg, religion, marital_status, madhhab, prayer_status, halal_lifestyle, mahram_maintained, islamic_knowledge, hijab_status, beard_status, personality_type, education, profession, min_monthly_income, division_id, district_id, upazila_id, blood_group, accept_smoker, accept_alcohol, accept_disability, accept_chronic_disease, additional_preferences FROM search_preferences WHERE user_id = ? LIMIT 1');
+$pref_stmt = mysqli_prepare($conn, 'SELECT preferred_gender, min_age, max_age, min_height_cm, max_height_cm, complexion, min_weight_kg, max_weight_kg, religion, marital_status, madhhab, prayer_status, halal_lifestyle, mahram_maintained, islamic_knowledge, hijab_status, beard_status, personality_type, education, profession, min_monthly_income, division_id, district_id, upazila_id, blood_group, accept_smoker, accept_alcohol, accept_disability, accept_chronic_disease, additional_preferences, partner_description FROM search_preferences WHERE user_id = ? LIMIT 1');
 if ($pref_stmt) {
     mysqli_stmt_bind_param($pref_stmt, 'i', $user_id);
     mysqli_stmt_execute($pref_stmt);
@@ -668,30 +735,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['settings_action'] ?? '') =
             $video_db = $video_visibility === 'Hidden' ? 'Private' : $video_visibility;
             mysqli_begin_transaction($conn);
             try {
-                $voice_stmt = mysqli_prepare($conn, 'UPDATE profile_media SET visibility = ? WHERE user_id = ? AND media_type = "Voice Introduction" AND status = "Active"');
-                if (!$voice_stmt) {
-                    throw new RuntimeException('Unable to prepare voice visibility update.');
+                // Save the user's choices independently of uploaded media, so they persist before upload too.
+                if (!$media_visibility_storage_ready) {
+                    throw new RuntimeException('Could not prepare storage for media visibility preferences. Please check that the database user has permission to create tables.');
                 }
-                mysqli_stmt_bind_param($voice_stmt, 'si', $voice_db, $user_id);
-                if (!mysqli_stmt_execute($voice_stmt)) {
-                    mysqli_stmt_close($voice_stmt);
-                    throw new RuntimeException('Unable to update voice introduction visibility.');
+                $preference_stmt = mysqli_prepare($conn, '
+                    INSERT INTO user_media_visibility_preferences (user_id, voice_visibility, video_visibility)
+                    VALUES (?, ?, ?)
+                    ON DUPLICATE KEY UPDATE
+                        voice_visibility = VALUES(voice_visibility),
+                        video_visibility = VALUES(video_visibility),
+                        updated_at = CURRENT_TIMESTAMP
+                ');
+                if (!$preference_stmt) {
+                    throw new RuntimeException('Unable to prepare media visibility preferences.');
                 }
-                mysqli_stmt_close($voice_stmt);
+                mysqli_stmt_bind_param($preference_stmt, 'iss', $user_id, $voice_db, $video_db);
+                if (!mysqli_stmt_execute($preference_stmt)) {
+                    mysqli_stmt_close($preference_stmt);
+                    throw new RuntimeException('Unable to save media visibility preferences.');
+                }
+                mysqli_stmt_close($preference_stmt);
 
-                $video_stmt = mysqli_prepare($conn, 'UPDATE profile_media SET visibility = ? WHERE user_id = ? AND media_type = "Video Introduction" AND status = "Active"');
-                if (!$video_stmt) {
-                    throw new RuntimeException('Unable to prepare video visibility update.');
+                // If media already exists, keep its own visibility in sync with the saved preference.
+                foreach ([['Voice Introduction', $voice_db], ['Video Introduction', $video_db]] as [$media_type, $visibility_value]) {
+                    $media_stmt = mysqli_prepare($conn, 'UPDATE profile_media SET visibility = ? WHERE user_id = ? AND media_type = ? AND status = "Active"');
+                    if (!$media_stmt) {
+                        throw new RuntimeException('Unable to prepare media visibility update.');
+                    }
+                    mysqli_stmt_bind_param($media_stmt, 'sis', $visibility_value, $user_id, $media_type);
+                    if (!mysqli_stmt_execute($media_stmt)) {
+                        mysqli_stmt_close($media_stmt);
+                        throw new RuntimeException('Unable to update introduction media visibility.');
+                    }
+                    mysqli_stmt_close($media_stmt);
                 }
-                mysqli_stmt_bind_param($video_stmt, 'si', $video_db, $user_id);
-                if (!mysqli_stmt_execute($video_stmt)) {
-                    mysqli_stmt_close($video_stmt);
-                    throw new RuntimeException('Unable to update video introduction visibility.');
-                }
-                mysqli_stmt_close($video_stmt);
 
                 mysqli_commit($conn);
-                $profile_media_message = 'Your active introduction media visibility has been updated successfully.';
+                $profile_media_message = 'Media visibility preferences saved successfully. They will apply when you upload or replace your introductions.';
             } catch (Throwable $e) {
                 mysqli_rollback($conn);
                 $profile_media_error = $e->getMessage() ?: 'Unable to update media visibility right now. Please try again.';
@@ -826,12 +907,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['settings_action'] ?? '') =
                     LIMIT 1
                 ');
                 mysqli_stmt_bind_param($update, 'sssiii', $first_name, $last_name, $mobile, $next_name_count, $next_mobile_count, $user_id);
-                if (mysqli_stmt_execute($update) && mysqli_stmt_affected_rows($update) === 1) {
-                    $account_message = 'Account information updated successfully.';
+
+                // Keep account identity fields synchronized across the canonical account
+                // record and the profile record. Do both updates atomically so one table
+                // cannot be left with the new name while the other keeps the old name.
+                mysqli_begin_transaction($conn);
+                $account_updated = mysqli_stmt_execute($update) && mysqli_stmt_affected_rows($update) === 1;
+                mysqli_stmt_close($update);
+
+                if ($account_updated) {
+                    $profile_update = mysqli_prepare($conn, '
+                        UPDATE user_profiles
+                        SET first_name = ?, last_name = ?
+                        WHERE user_id = ?
+                        LIMIT 1
+                    ');
+
+                    if ($profile_update) {
+                        mysqli_stmt_bind_param($profile_update, 'ssi', $first_name, $last_name, $user_id);
+                        $profile_synced = mysqli_stmt_execute($profile_update);
+                        mysqli_stmt_close($profile_update);
+                    } else {
+                        $profile_synced = false;
+                    }
+
+                    if ($profile_synced) {
+                        mysqli_commit($conn);
+                        $account_message = 'Account information updated successfully.';
+                    } else {
+                        mysqli_rollback($conn);
+                        $account_error = 'Unable to synchronize your profile name. No account changes were saved. Please try again.';
+                    }
                 } else {
+                    mysqli_rollback($conn);
                     $account_error = 'Your change limit may have been reached. Please refresh the page and try again.';
                 }
-                mysqli_stmt_close($update);
             }
         } else {
             $account_message = 'No account information was changed.';
@@ -931,13 +1041,6 @@ $settings_sections = [
         'meta' => 'Safety controls'
     ],
     [
-        'id' => 'preferences',
-        'icon' => 'fa-sliders',
-        'title' => 'Preferences',
-        'description' => '',
-        'meta' => ''
-    ],
-    [
         'id' => 'account-control',
         'icon' => 'fa-user-lock',
         'title' => 'Account Control',
@@ -970,6 +1073,26 @@ if ($media_stmt) {
         }
     }
     mysqli_stmt_close($media_stmt);
+}
+
+// Saved visibility preferences are independent of whether a recording currently exists.
+$media_visibility_preferences = null;
+$visibility_pref_stmt = mysqli_prepare($conn, 'SELECT voice_visibility, video_visibility FROM user_media_visibility_preferences WHERE user_id = ? LIMIT 1');
+if ($visibility_pref_stmt) {
+    mysqli_stmt_bind_param($visibility_pref_stmt, 'i', $user_id);
+    mysqli_stmt_execute($visibility_pref_stmt);
+    $media_visibility_preferences = mysqli_fetch_assoc(mysqli_stmt_get_result($visibility_pref_stmt)) ?: null;
+    mysqli_stmt_close($visibility_pref_stmt);
+}
+if ($media_visibility_preferences) {
+    if (!empty($media_visibility_preferences['voice_visibility'])) {
+        $profile_media_records['Voice Introduction'] = $profile_media_records['Voice Introduction'] ?? [];
+        $profile_media_records['Voice Introduction']['visibility'] = $media_visibility_preferences['voice_visibility'];
+    }
+    if (!empty($media_visibility_preferences['video_visibility'])) {
+        $profile_media_records['Video Introduction'] = $profile_media_records['Video Introduction'] ?? [];
+        $profile_media_records['Video Introduction']['visibility'] = $media_visibility_preferences['video_visibility'];
+    }
 }
 
 $blocked_users = [];
@@ -1068,6 +1191,165 @@ include 'includes/header.php';
                 </div>
             </section>
 
+            <style>
+                .language-preference-panel {
+                    position: relative;
+                    overflow: hidden;
+                    margin: 0 0 24px;
+                    padding: 26px;
+                    border: 1px solid rgba(112, 93, 180, .18);
+                    border-radius: 20px;
+                    background: linear-gradient(125deg, rgba(247, 244, 255, .96), rgba(255, 255, 255, .98) 58%, rgba(239, 248, 255, .95));
+                    box-shadow: 0 12px 34px rgba(36, 28, 74, .07);
+                }
+                .language-preference-panel::after {
+                    content: "";
+                    position: absolute;
+                    width: 170px;
+                    height: 170px;
+                    right: -58px;
+                    top: -75px;
+                    border-radius: 50%;
+                    background: rgba(126, 101, 210, .08);
+                    pointer-events: none;
+                }
+                .language-preference-panel .language-panel-heading {
+                    position: relative;
+                    z-index: 1;
+                    display: flex;
+                    align-items: flex-start;
+                    gap: 15px;
+                    margin-bottom: 22px;
+                }
+                .language-preference-panel .language-panel-icon {
+                    display: grid;
+                    flex: 0 0 52px;
+                    width: 52px;
+                    height: 52px;
+                    place-items: center;
+                    border-radius: 16px;
+                    color: #fff;
+                    background: linear-gradient(145deg, #7560c8, #4c78c8);
+                    box-shadow: 0 8px 18px rgba(91, 91, 181, .22);
+                    font-size: 21px;
+                }
+                .language-preference-panel .language-panel-copy { min-width: 0; }
+                .language-preference-panel .language-panel-copy .settings-kicker { color: #6756a8; letter-spacing: .13em; }
+                .language-preference-panel .language-panel-copy h2 { margin: 3px 0 6px; font-size: clamp(1.2rem, 2vw, 1.55rem); }
+                .language-preference-panel .language-panel-copy p { margin: 0; max-width: 650px; line-height: 1.65; color: #656579; }
+                .language-preference-panel .language-panel-form {
+                    position: relative;
+                    z-index: 1;
+                    display: flex;
+                    align-items: stretch;
+                    gap: 16px;
+                    flex-wrap: wrap;
+                }
+                .language-preference-panel .language-choice-group {
+                    display: grid;
+                    grid-template-columns: repeat(2, minmax(150px, 1fr));
+                    gap: 12px;
+                    flex: 1 1 340px;
+                    min-width: 0;
+                }
+                .language-preference-panel .language-choice {
+                    position: relative;
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    min-height: 70px;
+                    padding: 13px 16px;
+                    border: 1px solid #e3e0ef;
+                    border-radius: 14px;
+                    background: rgba(255, 255, 255, .88);
+                    cursor: pointer;
+                    transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+                }
+                .language-preference-panel .language-choice:has(input:checked) {
+                    border-color: #8170cf;
+                    box-shadow: 0 0 0 3px rgba(129, 112, 207, .13);
+                    background: #fff;
+                }
+                .language-preference-panel .language-choice input { width: 17px; height: 17px; accent-color: #7060bd; margin: 0; }
+                .language-preference-panel .language-choice .language-name { display: block; color: #29283b; font-weight: 700; line-height: 1.25; }
+                .language-preference-panel .language-choice .language-native { display: block; margin-top: 4px; color: #77758b; font-size: .83rem; }
+                .language-preference-panel .language-apply-button {
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 10px;
+                    align-self: stretch;
+                    min-height: 70px;
+                    padding: 0 23px;
+                    border: 0;
+                    border-radius: 14px;
+                    color: #fff;
+                    background: linear-gradient(135deg, #6c5ab8, #4f72bd);
+                    box-shadow: 0 8px 18px rgba(86, 92, 177, .2);
+                    font-weight: 700;
+                    cursor: pointer;
+                    transition: transform .18s ease, box-shadow .18s ease;
+                }
+                .language-preference-panel .language-apply-button:hover { transform: translateY(-1px); box-shadow: 0 11px 22px rgba(86, 92, 177, .25); }
+                .language-preference-panel .language-apply-button:focus-visible,
+                .language-preference-panel .language-choice:focus-within { outline: 3px solid rgba(92, 112, 201, .28); outline-offset: 2px; }
+                /* Targeted compact language selector layout */
+                .language-preference-panel { padding: 16px 20px; margin-bottom: 16px; border-radius: 15px; }
+                .language-preference-panel .language-panel-heading { align-items: center; gap: 11px; margin-bottom: 12px; }
+                .language-preference-panel .language-panel-icon { flex-basis: 40px; width: 40px; height: 40px; border-radius: 12px; font-size: 17px; }
+                .language-preference-panel .language-panel-copy h2 { margin: 1px 0 3px; font-size: 1.2rem; }
+                .language-preference-panel .language-panel-copy p { line-height: 1.45; font-size: .9rem; }
+                .language-preference-panel .language-panel-form { gap: 10px; align-items: center; }
+                .language-preference-panel .language-choice-group { flex: 1 1 300px; gap: 9px; }
+                .language-preference-panel .language-choice { min-height: 48px; padding: 8px 12px; gap: 9px; border-radius: 11px; }
+                .language-preference-panel .language-choice .language-native { margin-top: 2px; font-size: .75rem; }
+                .language-preference-panel .language-apply-button { min-height: 48px; padding: 0 16px; border-radius: 11px; }
+                /* Consistent styling only for the two privacy dropdowns */
+                #privacy-panel .settings-field select {
+                    display: block; width: 100%; min-width: 0; min-height: 46px;
+                    padding: 10px 40px 10px 13px; border: 1px solid #cbd8df;
+                    border-radius: 10px; background-color: #fff; color: #182b3a;
+                    font: inherit; font-size: .96rem; line-height: 1.4;
+                    box-shadow: 0 1px 2px rgba(15, 35, 50, .04);
+                    appearance: auto; box-sizing: border-box;
+                }
+                #privacy-panel .settings-field select:focus {
+                    outline: none; border-color: #168b83;
+                    box-shadow: 0 0 0 3px rgba(22, 139, 131, .13);
+                }
+                @media (max-width: 600px) {
+                    .language-preference-panel { padding: 13px 14px; border-radius: 13px; }
+                    .language-preference-panel .language-panel-heading { gap: 11px; }
+                    .language-preference-panel .language-panel-icon { flex-basis: 44px; width: 44px; height: 44px; border-radius: 13px; }
+                    .language-preference-panel .language-choice-group { grid-template-columns: 1fr; flex-basis: 100%; }
+                    .language-preference-panel .language-apply-button { width: 100%; min-height: 54px; }
+                }
+            </style>
+            <section class="settings-detail-panel language-preference-panel" aria-labelledby="languagePreferenceTitle">
+                <div class="language-panel-heading">
+                    <div class="language-panel-icon" aria-hidden="true"><i class="fa-solid fa-language"></i></div>
+                    <div class="language-panel-copy">
+                        <span class="settings-kicker"><?= sm_text('LANGUAGE', 'ভাষা'); ?></span>
+                        <h2 id="languagePreferenceTitle"><?= sm_text('System Language', 'সিস্টেমের ভাষা'); ?></h2>
+                        <p><?= sm_text('Choose the language used across Smart Matrimony. Your choice will be remembered on this browser.', 'স্মার্ট ম্যাট্রিমনি সিস্টেমে কোন ভাষা ব্যবহার হবে তা বেছে নাও। এই ব্রাউজারে তোমার পছন্দ সংরক্ষিত থাকবে।'); ?></p>
+                    </div>
+                </div>
+                <form action="<?= BASE_URL; ?>set_language.php" method="post" class="language-panel-form">
+                    <input type="hidden" name="redirect" value="settings.php">
+                    <div class="language-choice-group" role="radiogroup" aria-label="<?= htmlspecialchars(sm_text('Choose language', 'ভাষা বেছে নাও')); ?>">
+                        <label class="language-choice" for="siteLanguageBn">
+                            <input type="radio" name="language" id="siteLanguageBn" value="bn" <?= $current_language === 'bn' ? 'checked' : ''; ?> required>
+                            <span><span class="language-name">বাংলা</span><span class="language-native">Bangla</span></span>
+                        </label>
+                        <label class="language-choice" for="siteLanguageEn">
+                            <input type="radio" name="language" id="siteLanguageEn" value="en" <?= $current_language === 'en' ? 'checked' : ''; ?> required>
+                            <span><span class="language-name">English</span><span class="language-native">English (US)</span></span>
+                        </label>
+                    </div>
+                    <button type="submit" class="language-apply-button"><i class="fa-solid fa-check"></i><span><?= sm_text('Apply Language', 'ভাষা প্রয়োগ করো'); ?></span></button>
+                </form>
+            </section>
+
             <section class="settings-summary" aria-label="Account summary">
                 <div class="settings-summary-item">
                     <span class="settings-summary-label">Account Status</span>
@@ -1101,7 +1383,7 @@ include 'includes/header.php';
                                 <h3><?= htmlspecialchars($section['title']); ?></h3>
                             </div>
                         </div>
-                        <?php if (in_array($section['id'], ['account', 'security', 'privacy', 'notifications', 'matching', 'matching-weights', 'profile-media', 'blocking', 'preferences', 'account-control'], true)): ?>
+                        <?php if (in_array($section['id'], ['account', 'security', 'privacy', 'notifications', 'matching', 'matching-weights', 'profile-media', 'blocking', 'account-control'], true)): ?>
                             <button type="button" class="settings-card-button settings-card-button-primary" data-settings-toggle="<?= htmlspecialchars($section['id'] === 'profile-media' ? 'profile-media-panel' : ($section['id'] === 'account' ? 'account-panel' : $section['id'] . '-panel')); ?>" aria-expanded="false" aria-controls="<?= htmlspecialchars($section['id'] === 'profile-media' ? 'profile-media-panel' : ($section['id'] === 'account' ? 'account-panel' : $section['id'] . '-panel')); ?>">
                                 <span>Manage</span>
                                 <i class="fa-solid fa-arrow-right"></i>
@@ -1339,7 +1621,7 @@ include 'includes/header.php';
                     <div class="settings-match-section">
                         <div class="settings-match-heading"><span><i class="fa-solid fa-sliders"></i></span><div><strong>Basic criteria</strong><small>Choose the broad range you prefer. Empty fields mean no specific limit.</small></div></div>
                         <div class="settings-form-grid settings-matching-grid">
-                            <label class="settings-field"><span>Preferred gender</span><select name="preferred_gender" disabled><option value="Male" <?= ($matching_pref['preferred_gender'] ?? '') === 'Male' ? 'selected' : ''; ?>>Male</option><option value="Female" <?= ($matching_pref['preferred_gender'] ?? '') === 'Female' ? 'selected' : ''; ?>>Female</option></select><small>Automatically follows your account gender.</small></label>
+                            <label class="settings-field"><span>Expected life partner</span><select name="preferred_gender" disabled><option value="Male" <?= ($matching_pref['preferred_gender'] ?? '') === 'Male' ? 'selected' : ''; ?>>Male</option><option value="Female" <?= ($matching_pref['preferred_gender'] ?? '') === 'Female' ? 'selected' : ''; ?>>Female</option></select><small>Automatically follows your account gender.</small></label>
                             <div></div>
                             <label class="settings-field"><span>Minimum age</span><input type="number" name="min_age" min="15" max="80" value="<?= htmlspecialchars((string)($matching_pref['min_age'] ?? '')); ?>" placeholder="Any"></label>
                             <label class="settings-field"><span>Maximum age</span><input type="number" name="max_age" min="15" max="80" value="<?= htmlspecialchars((string)($matching_pref['max_age'] ?? '')); ?>" placeholder="Any"></label>
@@ -1380,7 +1662,7 @@ include 'includes/header.php';
                     <div class="settings-match-section">
                         <div class="settings-match-heading"><span><i class="fa-solid fa-location-dot"></i></span><div><strong>Preferred location</strong><small>Leave a location level empty to keep it open.</small></div></div>
                         <div class="settings-form-grid settings-matching-grid">
-                            <label class="settings-field"><span>Division</span><select id="settings_matching_division" name="division_id" data-selected="<?= htmlspecialchars((string)($matching_pref['division_id'] ?? '')); ?>"><option value="">Any division</option><?php foreach ($divisions as $division): ?><option value="<?= (int)$division['id']; ?>" <?= (string)($matching_pref['division_id'] ?? '') === (string)$division['id'] ? 'selected' : ''; ?>><?= htmlspecialchars($division['name_en']); ?></option><?php endforeach; ?></select></label>
+                            <label class="settings-field"><span>Division</span><select id="settings_matching_division" name="division_id" data-selected="<?= htmlspecialchars((string)($matching_pref['division_id'] ?? '')); ?>"><option value="">Any division</option><?php foreach ($divisions as $division): ?><option value="<?= (int)$division['id']; ?>" <?= (string)($matching_pref['division_id'] ?? '') === (string)$division['id'] ? 'selected' : ''; ?>><?= htmlspecialchars((string) (($current_language === 'en' ? ($division['name_en'] ?? '') : ($division['name_bn'] ?? '')) ?: ($division['name_en'] ?? ''))); ?></option><?php endforeach; ?></select></label>
                             <label class="settings-field"><span>District</span><select id="settings_matching_district" name="district_id" data-selected="<?= htmlspecialchars((string)($matching_pref['district_id'] ?? '')); ?>" <?= empty($matching_pref['division_id']) ? 'disabled' : ''; ?>><option value="">Any district</option></select></label>
                             <label class="settings-field"><span>Upazila</span><select id="settings_matching_upazila" name="upazila_id" data-selected="<?= htmlspecialchars((string)($matching_pref['upazila_id'] ?? '')); ?>" <?= empty($matching_pref['district_id']) ? 'disabled' : ''; ?>><option value="">Any upazila</option></select></label>
                         </div>
@@ -1389,13 +1671,14 @@ include 'includes/header.php';
                     <div class="settings-match-section">
                         <div class="settings-match-heading"><span><i class="fa-solid fa-heart-pulse"></i></span><div><strong>Lifestyle & health</strong><small>These controls are intentionally preference-based; “No preference” keeps the criterion open.</small></div></div>
                         <div class="settings-form-grid settings-matching-grid">
-                            <label class="settings-field"><span>Smoking</span><select name="accept_smoker"><option value="1" <?= ($matching_pref['accept_smoker'] ?? '1') === '1' ? 'selected' : ''; ?>>No preference</option><option value="0" <?= ($matching_pref['accept_smoker'] ?? '1') === '0' ? 'selected' : ''; ?>>Prefer non-smoker</option></select></label>
-                            <label class="settings-field"><span>Alcohol</span><select name="accept_alcohol"><option value="1" <?= ($matching_pref['accept_alcohol'] ?? '1') === '1' ? 'selected' : ''; ?>>No preference</option><option value="0" <?= ($matching_pref['accept_alcohol'] ?? '1') === '0' ? 'selected' : ''; ?>>Prefer non-drinker</option></select></label>
-                            <label class="settings-field"><span>Disability</span><select name="accept_disability"><option value="1" <?= ($matching_pref['accept_disability'] ?? '1') === '1' ? 'selected' : ''; ?>>No preference</option><option value="0" <?= ($matching_pref['accept_disability'] ?? '1') === '0' ? 'selected' : ''; ?>>Prefer without disability</option></select></label>
-                            <label class="settings-field"><span>Chronic disease</span><select name="accept_chronic_disease"><option value="1" <?= ($matching_pref['accept_chronic_disease'] ?? '1') === '1' ? 'selected' : ''; ?>>No preference</option><option value="0" <?= ($matching_pref['accept_chronic_disease'] ?? '1') === '0' ? 'selected' : ''; ?>>Prefer without chronic disease</option></select></label>
+                            <label class="settings-field"><span>Smoking</span><select name="accept_smoker"><option value="1" <?= (string)($matching_pref['accept_smoker'] ?? '1') === '1' ? 'selected' : ''; ?>>No preference</option><option value="0" <?= (string)($matching_pref['accept_smoker'] ?? '1') === '0' ? 'selected' : ''; ?>>Prefer non-smoker</option></select></label>
+                            <label class="settings-field"><span>Alcohol</span><select name="accept_alcohol"><option value="1" <?= (string)($matching_pref['accept_alcohol'] ?? '1') === '1' ? 'selected' : ''; ?>>No preference</option><option value="0" <?= (string)($matching_pref['accept_alcohol'] ?? '1') === '0' ? 'selected' : ''; ?>>Prefer non-drinker</option></select></label>
+                            <label class="settings-field"><span>Disability</span><select name="accept_disability"><option value="1" <?= (string)($matching_pref['accept_disability'] ?? '1') === '1' ? 'selected' : ''; ?>>No preference</option><option value="0" <?= (string)($matching_pref['accept_disability'] ?? '1') === '0' ? 'selected' : ''; ?>>Prefer without disability</option></select></label>
+                            <label class="settings-field"><span>Chronic disease</span><select name="accept_chronic_disease"><option value="1" <?= (string)($matching_pref['accept_chronic_disease'] ?? '1') === '1' ? 'selected' : ''; ?>>No preference</option><option value="0" <?= (string)($matching_pref['accept_chronic_disease'] ?? '1') === '0' ? 'selected' : ''; ?>>Prefer without chronic disease</option></select></label>
                             <label class="settings-field"><span>Blood group</span><select name="blood_group"><option value="">Any blood group</option><?php foreach (['A+','A-','B+','B-','AB+','AB-','O+','O-'] as $item): ?><option value="<?= $item; ?>" <?= ($matching_pref['blood_group'] ?? '') === $item ? 'selected' : ''; ?>><?= $item; ?></option><?php endforeach; ?></select></label>
                         </div>
-                        <label class="settings-field settings-field-full"><span>Additional preferences</span><textarea name="additional_preferences" maxlength="5000" rows="4" placeholder="Add any extra partner preferences you want to remember."><?= htmlspecialchars((string)($matching_pref['additional_preferences'] ?? '')); ?></textarea></label>
+                        <input type="hidden" name="additional_preferences" value="<?= htmlspecialchars((string)($matching_pref['additional_preferences'] ?? '')); ?>">
+                        <label class="settings-field settings-field-full"><span>Detailed description of your ideal partner (optional)</span><textarea name="partner_description" maxlength="5000" rows="4" placeholder="Describe the qualities, values, lifestyle and other details you are looking for."><?= htmlspecialchars((string)($matching_pref['partner_description'] ?? '')); ?></textarea></label>
                     </div>
 
                     <div class="settings-form-footer">
@@ -1497,8 +1780,8 @@ include 'includes/header.php';
                                 <div class="settings-media-status-icon"><i class="fa-solid <?= $icon; ?>"></i></div>
                                 <div class="settings-media-status-copy">
                                     <strong><?= htmlspecialchars($media_type); ?></strong>
-                                    <span class="settings-media-status-pill <?= $media && $media['status'] === 'Active' ? 'is-active' : ''; ?>">
-                                        <?= $media ? htmlspecialchars((string) $media['status']) : 'Not uploaded'; ?>
+                                    <span class="settings-media-status-pill <?= !empty($media['status']) && $media['status'] === 'Active' ? 'is-active' : ''; ?>">
+                                        <?= !empty($media['status']) ? htmlspecialchars((string) $media['status']) : 'Not uploaded'; ?>
                                     </span>
                                     <?php if ($media && !empty($media['duration_seconds'])): ?><small><?= (int) $media['duration_seconds']; ?> sec</small><?php endif; ?>
                                 </div>
@@ -1673,100 +1956,6 @@ include 'includes/header.php';
                 </div>
             </section>
 
-            <section class="settings-detail-panel settings-preferences-panel" id="preferences-panel" hidden aria-labelledby="preferences-panel-title">
-                <div class="settings-detail-header">
-                    <div>
-                        <span class="settings-kicker">PREFERENCES</span>
-                        <h2 id="preferences-panel-title">Partner Preferences</h2>
-                        <p>Manage the same partner preferences you set in Profile Step 6. Questions are kept out of this Settings section.</p>
-                    </div>
-                    <button type="button" class="settings-detail-close" data-settings-toggle="preferences-panel" aria-label="Close preferences">
-                        <i class="fa-solid fa-xmark"></i>
-                    </button>
-                </div>
-
-                <?php if ($preferences_message !== ''): ?>
-                    <div class="settings-alert settings-alert-success" role="status"><i class="fa-solid fa-circle-check"></i><span><?= htmlspecialchars($preferences_message); ?></span></div>
-                <?php endif; ?>
-                <?php if ($preferences_error !== ''): ?>
-                    <div class="settings-alert settings-alert-error" role="alert"><i class="fa-solid fa-circle-exclamation"></i><span><?= htmlspecialchars($preferences_error); ?></span></div>
-                <?php endif; ?>
-
-                <form method="post" class="settings-form" action="<?= htmlspecialchars($_SERVER['PHP_SELF']); ?>#preferences-panel">
-                    <input type="hidden" name="settings_action" value="update_matching">
-                    <input type="hidden" name="settings_return_section" value="preferences">
-                    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($settings_csrf); ?>">
-                    <input type="hidden" name="preferred_gender" value="<?= htmlspecialchars((string)($matching_pref['preferred_gender'] ?? '')); ?>">
-
-                    <div class="settings-match-section">
-                        <div class="settings-match-heading"><span><i class="fa-solid fa-sliders"></i></span><div><strong>Basic Partner Preferences</strong><small>Choose the broad range you prefer. Empty fields mean no specific limit.</small></div></div>
-                        <div class="settings-form-grid settings-matching-grid">
-                            <label class="settings-field"><span>Preferred gender</span><select disabled><option value="Male" <?= ($matching_pref['preferred_gender'] ?? '') === 'Male' ? 'selected' : ''; ?>>Male</option><option value="Female" <?= ($matching_pref['preferred_gender'] ?? '') === 'Female' ? 'selected' : ''; ?>>Female</option></select><small>Automatically follows your account gender.</small></label>
-                            <div></div>
-                            <label class="settings-field"><span>Minimum age</span><input type="number" name="min_age" min="15" max="80" value="<?= htmlspecialchars((string)($matching_pref['min_age'] ?? '')); ?>" placeholder="Any"></label>
-                            <label class="settings-field"><span>Maximum age</span><input type="number" name="max_age" min="15" max="80" value="<?= htmlspecialchars((string)($matching_pref['max_age'] ?? '')); ?>" placeholder="Any"></label>
-                            <label class="settings-field"><span>Minimum height</span><div class="settings-height-selects"><select name="min_height_ft" aria-label="Minimum height feet"><option value="">Any</option><?php for ($ft = 4; $ft <= 8; $ft++): ?><option value="<?= $ft; ?>" <?= (string)$matching_min_height_ft === (string)$ft ? 'selected' : ''; ?>><?= $ft; ?> ft</option><?php endfor; ?></select><select name="min_height_in" aria-label="Minimum height inches"><option value="">Any</option><?php for ($inch = 0; $inch <= 11; $inch++): ?><option value="<?= $inch; ?>" <?= (string)$matching_min_height_in === (string)$inch ? 'selected' : ''; ?>><?= $inch; ?> in</option><?php endfor; ?></select></div></label>
-                            <label class="settings-field"><span>Maximum height</span><div class="settings-height-selects"><select name="max_height_ft" aria-label="Maximum height feet"><option value="">Any</option><?php for ($ft = 4; $ft <= 8; $ft++): ?><option value="<?= $ft; ?>" <?= (string)$matching_max_height_ft === (string)$ft ? 'selected' : ''; ?>><?= $ft; ?> ft</option><?php endfor; ?></select><select name="max_height_in" aria-label="Maximum height inches"><option value="">Any</option><?php for ($inch = 0; $inch <= 11; $inch++): ?><option value="<?= $inch; ?>" <?= (string)$matching_max_height_in === (string)$inch ? 'selected' : ''; ?>><?= $inch; ?> in</option><?php endfor; ?></select></div></label>
-                            <label class="settings-field"><span>Minimum weight (kg)</span><input type="number" name="min_weight_kg" min="1" max="500" step="0.1" value="<?= htmlspecialchars((string)($matching_pref['min_weight_kg'] ?? '')); ?>" placeholder="Any"></label>
-                            <label class="settings-field"><span>Maximum weight (kg)</span><input type="number" name="max_weight_kg" min="1" max="500" step="0.1" value="<?= htmlspecialchars((string)($matching_pref['max_weight_kg'] ?? '')); ?>" placeholder="Any"></label>
-                            <label class="settings-field"><span>Skin colour</span><select name="complexion"><option value="">Any skin colour</option><?php foreach ($complexions as $item): ?><option value="<?= htmlspecialchars($item); ?>" <?= ($matching_pref['complexion'] ?? '') === $item ? 'selected' : ''; ?>><?= htmlspecialchars($item); ?></option><?php endforeach; ?></select></label>
-                            <label class="settings-field"><span>Marital status</span><select name="marital_status"><option value="">Any marital status</option><?php foreach ($marital_statuses as $item): ?><option value="<?= htmlspecialchars($item); ?>" <?= ($matching_pref['marital_status'] ?? '') === $item ? 'selected' : ''; ?>><?= htmlspecialchars($item); ?></option><?php endforeach; ?></select></label>
-                            <label class="settings-field"><span>Family status</span><select name="family_status"><option value="">Any family status</option><?php foreach ($family_statuses as $item): ?><option value="<?= htmlspecialchars($item); ?>" <?= ($matching_pref['family_status'] ?? '') === $item ? 'selected' : ''; ?>><?= htmlspecialchars($item); ?></option><?php endforeach; ?></select></label>
-                        </div>
-                    </div>
-
-                    <div class="settings-match-section">
-                        <div class="settings-match-heading"><span><i class="fa-solid fa-book-open"></i></span><div><strong>Religion &amp; values</strong><small>Islamic-specific fields become relevant when Islam is selected.</small></div></div>
-                        <div class="settings-form-grid settings-matching-grid">
-                            <label class="settings-field"><span>Religion</span><select name="religion" id="settingsPreferencesReligion"><option value="">Any religion</option><?php foreach ($religions as $item): ?><option value="<?= htmlspecialchars($item); ?>" <?= ($matching_pref['religion'] ?? '') === $item ? 'selected' : ''; ?>><?= htmlspecialchars($item); ?></option><?php endforeach; ?></select></label>
-                            <label class="settings-field settings-preferences-islamic-field"><span>Madhhab</span><select name="madhhab"><option value="">Any madhhab</option><?php foreach ($madhhabs as $item): ?><option value="<?= htmlspecialchars($item); ?>" <?= ($matching_pref['madhhab'] ?? '') === $item ? 'selected' : ''; ?>><?= htmlspecialchars($item); ?></option><?php endforeach; ?></select></label>
-                            <label class="settings-field settings-preferences-islamic-field"><span>Prayer status</span><select name="prayer_status"><option value="">Any prayer practice</option><?php foreach ($prayer_statuses as $item): ?><option value="<?= htmlspecialchars($item); ?>" <?= ($matching_pref['prayer_status'] ?? '') === $item ? 'selected' : ''; ?>><?= htmlspecialchars($item); ?></option><?php endforeach; ?></select></label>
-                            <label class="settings-field settings-preferences-islamic-field"><span>Halal lifestyle</span><select name="halal_lifestyle"><option value="">Any</option><?php foreach ($halal_lifestyle_options as $item): ?><option value="<?= htmlspecialchars($item); ?>" <?= ($matching_pref['halal_lifestyle'] ?? '') === $item ? 'selected' : ''; ?>><?= htmlspecialchars($item); ?></option><?php endforeach; ?></select></label>
-                            <label class="settings-field settings-preferences-islamic-field"><span>Maḥram maintained</span><select name="mahram_maintained"><option value="">No preference</option><option value="1" <?= (string)($matching_pref['mahram_maintained'] ?? '') === '1' ? 'selected' : ''; ?>>Yes</option><option value="0" <?= (string)($matching_pref['mahram_maintained'] ?? '') === '0' ? 'selected' : ''; ?>>No</option></select></label>
-                            <label class="settings-field settings-preferences-islamic-field"><span>Islamic knowledge</span><select name="islamic_knowledge"><option value="">Any level</option><?php foreach ($islamic_knowledge_levels as $item): ?><option value="<?= htmlspecialchars($item); ?>" <?= ($matching_pref['islamic_knowledge'] ?? '') === $item ? 'selected' : ''; ?>><?= htmlspecialchars($item); ?></option><?php endforeach; ?></select></label>
-                            <label class="settings-field settings-preferences-islamic-field"><span>Hijab status</span><select name="hijab_status"><option value="">Any</option><?php foreach ($hijab_statuses as $item): ?><option value="<?= htmlspecialchars($item); ?>" <?= ($matching_pref['hijab_status'] ?? '') === $item ? 'selected' : ''; ?>><?= htmlspecialchars($item); ?></option><?php endforeach; ?></select></label>
-                            <label class="settings-field settings-preferences-islamic-field"><span>Beard status</span><select name="beard_status"><option value="">Any</option><?php foreach ($beard_statuses as $item): ?><option value="<?= htmlspecialchars($item); ?>" <?= ($matching_pref['beard_status'] ?? '') === $item ? 'selected' : ''; ?>><?= htmlspecialchars($item); ?></option><?php endforeach; ?></select></label>
-                        </div>
-                    </div>
-
-                    <div class="settings-match-section">
-                        <div class="settings-match-heading"><span><i class="fa-solid fa-graduation-cap"></i></span><div><strong>Education, career &amp; personality</strong><small>Optional criteria for education, profession and personal style.</small></div></div>
-                        <div class="settings-form-grid settings-matching-grid">
-                            <label class="settings-field"><span>Education</span><select name="education"><option value="">Any education level</option><?php foreach ($education_levels as $item): ?><option value="<?= htmlspecialchars($item); ?>" <?= ($matching_pref['education'] ?? '') === $item ? 'selected' : ''; ?>><?= htmlspecialchars($item); ?></option><?php endforeach; ?></select></label>
-                            <label class="settings-field"><span>Profession</span><select name="profession"><option value="">Any profession</option><?php foreach ($user_professions as $item): ?><option value="<?= htmlspecialchars($item); ?>" <?= ($matching_pref['profession'] ?? '') === $item ? 'selected' : ''; ?>><?= htmlspecialchars($item); ?></option><?php endforeach; ?></select></label>
-                            <label class="settings-field"><span>Minimum monthly income (BDT)</span><input type="number" name="min_monthly_income" min="0" max="99999999.99" step="1000" value="<?= htmlspecialchars((string)($matching_pref['min_monthly_income'] ?? '')); ?>" placeholder="No minimum"></label>
-                            <label class="settings-field"><span>Personality type</span><select name="personality_type"><option value="">Any personality</option><?php foreach ($personality_types as $item): ?><option value="<?= htmlspecialchars($item); ?>" <?= ($matching_pref['personality_type'] ?? '') === $item ? 'selected' : ''; ?>><?= htmlspecialchars($item); ?></option><?php endforeach; ?></select></label>
-                        </div>
-                    </div>
-
-                    <div class="settings-match-section">
-                        <div class="settings-match-heading"><span><i class="fa-solid fa-location-dot"></i></span><div><strong>Preferred location</strong><small>Leave a location level empty to keep it open.</small></div></div>
-                        <div class="settings-form-grid settings-matching-grid">
-                            <label class="settings-field"><span>Division</span><select id="settings_preferences_division" name="division_id" data-selected="<?= htmlspecialchars((string)($matching_pref['division_id'] ?? '')); ?>"><option value="">Any division</option><?php foreach ($divisions as $division): ?><option value="<?= (int)$division['id']; ?>" <?= (string)($matching_pref['division_id'] ?? '') === (string)$division['id'] ? 'selected' : ''; ?>><?= htmlspecialchars($division['name_en']); ?></option><?php endforeach; ?></select></label>
-                            <label class="settings-field"><span>District</span><select id="settings_preferences_district" name="district_id" data-selected="<?= htmlspecialchars((string)($matching_pref['district_id'] ?? '')); ?>" <?= empty($matching_pref['division_id']) ? 'disabled' : ''; ?>><option value="">Any district</option></select></label>
-                            <label class="settings-field"><span>Upazila</span><select id="settings_preferences_upazila" name="upazila_id" data-selected="<?= htmlspecialchars((string)($matching_pref['upazila_id'] ?? '')); ?>" <?= empty($matching_pref['district_id']) ? 'disabled' : ''; ?>><option value="">Any upazila</option></select></label>
-                        </div>
-                    </div>
-
-                    <div class="settings-match-section">
-                        <div class="settings-match-heading"><span><i class="fa-solid fa-heart-pulse"></i></span><div><strong>Lifestyle &amp; health</strong><small>“No preference” keeps the criterion open.</small></div></div>
-                        <div class="settings-form-grid settings-matching-grid">
-                            <label class="settings-field"><span>Smoking</span><select name="accept_smoker"><option value="1" <?= ($matching_pref['accept_smoker'] ?? '1') === '1' ? 'selected' : ''; ?>>No preference</option><option value="0" <?= ($matching_pref['accept_smoker'] ?? '1') === '0' ? 'selected' : ''; ?>>Prefer non-smoker</option></select></label>
-                            <label class="settings-field"><span>Alcohol</span><select name="accept_alcohol"><option value="1" <?= ($matching_pref['accept_alcohol'] ?? '1') === '1' ? 'selected' : ''; ?>>No preference</option><option value="0" <?= ($matching_pref['accept_alcohol'] ?? '1') === '0' ? 'selected' : ''; ?>>Prefer non-drinker</option></select></label>
-                            <label class="settings-field"><span>Disability</span><select name="accept_disability"><option value="1" <?= ($matching_pref['accept_disability'] ?? '1') === '1' ? 'selected' : ''; ?>>No preference</option><option value="0" <?= ($matching_pref['accept_disability'] ?? '1') === '0' ? 'selected' : ''; ?>>Prefer without disability</option></select></label>
-                            <label class="settings-field"><span>Chronic disease</span><select name="accept_chronic_disease"><option value="1" <?= ($matching_pref['accept_chronic_disease'] ?? '1') === '1' ? 'selected' : ''; ?>>No preference</option><option value="0" <?= ($matching_pref['accept_chronic_disease'] ?? '1') === '0' ? 'selected' : ''; ?>>Prefer without chronic disease</option></select></label>
-                            <label class="settings-field"><span>Blood group</span><select name="blood_group"><option value="">Any blood group</option><?php foreach (['A+','A-','B+','B-','AB+','AB-','O+','O-'] as $item): ?><option value="<?= $item; ?>" <?= ($matching_pref['blood_group'] ?? '') === $item ? 'selected' : ''; ?>><?= $item; ?></option><?php endforeach; ?></select></label>
-                        </div>
-                        <label class="settings-field settings-field-full"><span>Additional preferences</span><textarea name="additional_preferences" maxlength="5000" rows="4" placeholder="Add any extra partner preferences you want to remember."><?= htmlspecialchars((string)($matching_pref['additional_preferences'] ?? '')); ?></textarea></label>
-                    </div>
-
-                    <div class="settings-form-footer">
-                        <span><i class="fa-solid fa-lock"></i> These are the same partner preferences used by Profile Step 6.</span>
-                        <button type="submit" class="settings-save-button"><i class="fa-solid fa-floppy-disk"></i><span>Save Preferences</span></button>
-                    </div>
-                </form>
-            </section>
-
             <section class="settings-detail-panel settings-account-control-panel" id="account-control-panel" hidden aria-labelledby="account-control-panel-title">
                 <div class="settings-detail-header">
                     <div>
@@ -1896,6 +2085,64 @@ include 'includes/header.php';
         </div>
     </main>
 </div>
+
+
+<script>
+(function () {
+    const language = <?= json_encode($current_language ?? 'bn'); ?>;
+    const dictionary = {"Family Status":"পারিবারিক অবস্থা", "These percentages control the importance of the existing matching factors. Your age, height, location and other partner preferences remain separate and are still used by the existing matching logic.":"এই শতাংশগুলো বিদ্যমান ম্যাচিংয়ের বিষয়গুলোর গুরুত্ব নির্ধারণ করে। বয়স, উচ্চতা, অবস্থান এবং সঙ্গী-সংক্রান্ত অন্যান্য পছন্দ আলাদা থাকবে এবং আগের ম্যাচিং পদ্ধতিতেই ব্যবহৃত হবে।", "Back to Dashboard": "ড্যাশবোর্ডে ফিরে যাও", "ACCOUNT CONTROL CENTER": "অ্যাকাউন্ট নিয়ন্ত্রণ কেন্দ্র", "Settings": "সেটিংস", "Manage your Smart Matrimony account, privacy, security and personal experience from one place.": "এক জায়গা থেকে তোমার স্মার্ট ম্যাট্রিমনি অ্যাকাউন্ট, গোপনীয়তা, নিরাপত্তা ও ব্যক্তিগত অভিজ্ঞতা পরিচালনা করো।", "Smart Matrimony Logo": "স্মার্ট ম্যাট্রিমনি লোগো", "Smart Matrimony": "স্মার্ট ম্যাট্রিমনি", "Profile photo": "প্রোফাইল ছবি", "Your profile photo": "তোমার প্রোফাইল ছবি", "Account Status": "অ্যাকাউন্টের অবস্থা", "Verification": "যাচাইকরণ", "Profile Visibility": "প্রোফাইল দৃশ্যমানতা", "SETTINGS": "সেটিংস", "Manage your account": "তোমার অ্যাকাউন্ট পরিচালনা করো", "Manage": "পরিচালনা", "ACCOUNT": "অ্যাকাউন্ট", "Basic account information": "অ্যাকাউন্টের প্রাথমিক তথ্য", "Update the basic information stored with your Smart Matrimony account.": "তোমার স্মার্ট ম্যাট্রিমনি অ্যাকাউন্টে সংরক্ষিত প্রাথমিক তথ্য আপডেট করো।", "Close account settings": "অ্যাকাউন্ট সেটিংস বন্ধ করো", "Limited changes": "পরিবর্তনের সীমা", "Name can be changed": "নাম পরিবর্তন করা যাবে", "more": "আরও", "time": "বার", "times": "বার", "and mobile number can be changed": "এবং মোবাইল নম্বর পরিবর্তন করা যাবে", "First name": "নামের প্রথম অংশ", "Last name": "নামের শেষ অংশ", "Mobile number": "মোবাইল নম্বর", "Email address": "ইমেইল ঠিকানা", "Email changes are kept outside this basic account form.": "ইমেইল পরিবর্তন এই প্রাথমিক অ্যাকাউন্ট ফর্মের বাইরে রাখা হয়েছে।", "Account status and verification are managed separately.": "অ্যাকাউন্টের অবস্থা ও যাচাইকরণ আলাদাভাবে পরিচালিত হয়।", "Save Changes": "পরিবর্তন সংরক্ষণ করো", "SECURITY": "নিরাপত্তা", "Password & sign-in security": "পাসওয়ার্ড ও সাইন-ইন নিরাপত্তা", "Change your Smart Matrimony account password securely. Your current password is required before a new password can be saved.": "তোমার স্মার্ট ম্যাট্রিমনি অ্যাকাউন্টের পাসওয়ার্ড নিরাপদে পরিবর্তন করো। নতুন পাসওয়ার্ড সংরক্ষণের আগে বর্তমান পাসওয়ার্ড দিতে হবে।", "Close security settings": "নিরাপত্তা সেটিংস বন্ধ করো", "Password conditions": "পাসওয়ার্ডের শর্ত", "Your new password must meet all four conditions below. The checks update as you type.": "নতুন পাসওয়ার্ডে নিচের চারটি শর্তই পূরণ হতে হবে। টাইপ করার সঙ্গে সঙ্গে যাচাই আপডেট হবে।", "At least 8 characters": "কমপক্ষে ৮টি অক্ষর", "At least 1 uppercase letter (A-Z)": "কমপক্ষে ১টি বড় হাতের অক্ষর (A-Z)", "At least 1 lowercase letter (a-z)": "কমপক্ষে ১টি ছোট হাতের অক্ষর (a-z)", "At least 1 number (0-9)": "কমপক্ষে ১টি সংখ্যা (0-9)", "Current password": "বর্তমান পাসওয়ার্ড", "New password": "নতুন পাসওয়ার্ড", "Confirm new password": "নতুন পাসওয়ার্ড নিশ্চিত করো", "Password changes are protected by CSRF validation.": "পাসওয়ার্ড পরিবর্তন CSRF যাচাই দ্বারা সুরক্ষিত।", "Change Password": "পাসওয়ার্ড পরিবর্তন করো", "NOTIFICATIONS": "নোটিফিকেশন", "Notification Control": "নোটিফিকেশন নিয়ন্ত্রণ", "Use the slider below to turn the Smart Matrimony notification system on or off for everyone.": "নিচের সুইচ ব্যবহার করে সবার জন্য স্মার্ট ম্যাট্রিমনির নোটিফিকেশন ব্যবস্থা চালু বা বন্ধ করো।", "Close notification settings": "নোটিফিকেশন সেটিংস বন্ধ করো", "Notifications": "নোটিফিকেশন", "ON — notifications are enabled for everyone.": "চালু — সবার জন্য নোটিফিকেশন সক্রিয়।", "OFF — notifications are disabled for everyone.": "বন্ধ — সবার জন্য নোটিফিকেশন নিষ্ক্রিয়।", "Global control": "সবার জন্য নিয়ন্ত্রণ", "This is one shared system control. Changing it affects notification availability for all users; it is not a per-user preference.": "এটি পুরো সিস্টেমের একটি যৌথ নিয়ন্ত্রণ। এটি বদলালে সব ব্যবহারকারীর নোটিফিকেশন প্রভাবিত হবে; এটি ব্যক্তিগত পছন্দ নয়।", "This setting is protected by CSRF validation.": "এই সেটিং CSRF যাচাই দ্বারা সুরক্ষিত।", "Save Notification Setting": "নোটিফিকেশন সেটিং সংরক্ষণ করো", "MATCHING PREFERENCES": "ম্যাচিং পছন্দ", "Partner discovery preferences": "সঙ্গী খোঁজার পছন্দ", "Set the partner criteria you want Smart Matrimony to use when shaping your discovery and matching experience.": "সঙ্গী খোঁজা ও ম্যাচিংয়ের জন্য স্মার্ট ম্যাট্রিমনি যে মানদণ্ড ব্যবহার করবে তা নির্ধারণ করো।", "Close matching preferences": "ম্যাচিং পছন্দ বন্ধ করো", "Basic criteria": "প্রাথমিক মানদণ্ড", "Choose the broad range you prefer. Empty fields mean no specific limit.": "তোমার পছন্দের সাধারণ সীমা বেছে নাও। ফাঁকা রাখলে নির্দিষ্ট সীমা থাকবে না।", "Preferred gender": "প্রত্যাশিত জীবনসঙ্গী", "Expected life partner": "প্রত্যাশিত জীবনসঙ্গী", "Detailed description of your ideal partner (optional)": "প্রত্যাশিত জীবনসঙ্গীর বিস্তারিত বর্ণনা (ঐচ্ছিক)", "Describe the qualities, values, lifestyle and other details you are looking for.": "আপনি যে গুণাবলি, মূল্যবোধ, জীবনযাপন ও অন্যান্য বিষয় প্রত্যাশা করেন তা লিখুন।", "Male": "পুরুষ", "Female": "নারী", "Automatically follows your account gender.": "তোমার অ্যাকাউন্টের লিঙ্গ অনুসরণ করে স্বয়ংক্রিয়ভাবে নির্ধারিত।", "Minimum age": "সর্বনিম্ন বয়স", "Maximum age": "সর্বোচ্চ বয়স", "Minimum height": "সর্বনিম্ন উচ্চতা", "Maximum height": "সর্বোচ্চ উচ্চতা", "Any": "যেকোনো", "ft": "ফুট", "in": "ইঞ্চি", "Minimum weight (kg)": "সর্বনিম্ন ওজন (কেজি)", "Maximum weight (kg)": "সর্বোচ্চ ওজন (কেজি)", "Skin colour": "গায়ের রং", "Any skin colour": "যেকোনো গায়ের রং", "Marital status": "বৈবাহিক অবস্থা", "Any marital status": "যেকোনো বৈবাহিক অবস্থা", "Family status": "পারিবারিক অবস্থা", "Any family status": "যেকোনো পারিবারিক অবস্থা", "Religion & values": "ধর্ম ও মূল্যবোধ", "Islamic-specific fields become relevant when Islam is selected.": "ইসলাম নির্বাচন করলে ইসলামী-সম্পর্কিত ক্ষেত্রগুলো প্রযোজ্য হবে।", "Religion": "ধর্ম", "Any religion": "যেকোনো ধর্ম", "Madhhab": "মাযহাব", "Any madhhab": "যেকোনো মাযহাব", "Prayer status": "নামাজের অবস্থা", "Any prayer practice": "যেকোনো নামাজের অভ্যাস", "Halal lifestyle": "হালাল জীবনযাপন", "Maḥram maintained": "মাহরাম মেনে চলা", "No preference": "কোনো নির্দিষ্ট পছন্দ নেই", "Yes": "হ্যাঁ", "No": "না", "Islamic knowledge": "ইসলামী জ্ঞান", "Any level": "যেকোনো স্তর", "Hijab status": "হিজাবের অবস্থা", "Beard status": "দাড়ির অবস্থা", "Education, career & personality": "শিক্ষা, পেশা ও ব্যক্তিত্ব", "Optional criteria for education, profession and personal style.": "শিক্ষা, পেশা ও ব্যক্তিত্বের ঐচ্ছিক মানদণ্ড।", "Education": "শিক্ষা", "Any education level": "যেকোনো শিক্ষাগত স্তর", "Profession": "পেশা", "Any profession": "যেকোনো পেশা", "Minimum monthly income (BDT)": "সর্বনিম্ন মাসিক আয় (টাকা)", "Personality type": "ব্যক্তিত্বের ধরন", "Any personality": "যেকোনো ব্যক্তিত্বের ধরন", "Preferred location": "পছন্দের অবস্থান", "Leave a location level empty to keep it open.": "নির্দিষ্ট সীমা না রাখতে অবস্থানের স্তরটি ফাঁকা রাখো।", "Division": "বিভাগ", "Any division": "যেকোনো বিভাগ", "District": "জেলা", "Any district": "যেকোনো জেলা", "Select District": "জেলা নির্বাচন করো", "Upazila": "উপজেলা", "Any upazila": "যেকোনো উপজেলা", "Select Upazila": "উপজেলা নির্বাচন করো", "Lifestyle & health": "জীবনযাপন ও স্বাস্থ্য", "These controls are intentionally preference-based; “No preference” keeps the criterion open.": "এই নিয়ন্ত্রণগুলো পছন্দভিত্তিক; “কোনো নির্দিষ্ট পছন্দ নেই” বেছে নিলে মানদণ্ডটি উন্মুক্ত থাকবে।", "“No preference” keeps the criterion open.": "“কোনো নির্দিষ্ট পছন্দ নেই” বেছে নিলে মানদণ্ডটি উন্মুক্ত থাকবে।", "Smoking": "ধূমপান", "Prefer non-smoker": "ধূমপান করেন না এমন সঙ্গী পছন্দ", "Alcohol": "মদ্যপান", "Prefer non-drinker": "মদ্যপান করেন না এমন সঙ্গী পছন্দ", "Disability": "প্রতিবন্ধিতা", "Prefer without disability": "প্রতিবন্ধিতা নেই এমন সঙ্গী পছন্দ", "Chronic disease": "দীর্ঘমেয়াদি রোগ", "Prefer without chronic disease": "দীর্ঘমেয়াদি রোগ নেই এমন সঙ্গী পছন্দ", "Blood group": "রক্তের গ্রুপ", "Any blood group": "যেকোনো রক্তের গ্রুপ", "Additional preferences": "অতিরিক্ত পছন্দ", "Add any extra partner preferences you want to remember.": "মনে রাখতে চাও এমন অতিরিক্ত সঙ্গী-সংক্রান্ত পছন্দ লিখো।", "Matching preferences are protected by CSRF validation and saved to your existing preference record.": "ম্যাচিং পছন্দ CSRF যাচাই দ্বারা সুরক্ষিত এবং তোমার বিদ্যমান পছন্দের রেকর্ডে সংরক্ষিত হয়।", "Save Matching Preferences": "ম্যাচিং পছন্দ সংরক্ষণ করো", "MATCHING WEIGHTS": "ম্যাচিংয়ের গুরুত্ব", "Set your match priorities": "ম্যাচিংয়ের অগ্রাধিকার নির্ধারণ করো", "Move each slider independently. Every factor can be set from 0% to 100%. The total must be exactly 100% before saving.": "প্রতিটি স্লাইডার আলাদাভাবে সরাও। প্রতিটি বিষয় ০% থেকে ১০০% পর্যন্ত নির্ধারণ করা যাবে। সংরক্ষণের আগে মোট অবশ্যই ১০০% হতে হবে।", "Current total": "বর্তমান মোট", "Ready to save": "সংরক্ষণের জন্য প্রস্তুত", "The server validates the total again before saving.": "সংরক্ষণের আগে সার্ভার মোট মান আবার যাচাই করে।", "Save Matching Weights": "ম্যাচিংয়ের গুরুত্ব সংরক্ষণ করো", "PROFILE & MEDIA": "প্রোফাইল ও মিডিয়া", "Profile presentation & introductions": "প্রোফাইল উপস্থাপনা ও পরিচিতি", "Review your profile photo and manage access to your active voice and video introductions.": "প্রোফাইল ছবি দেখো এবং সক্রিয় অডিও ও ভিডিও পরিচিতির অ্যাক্সেস পরিচালনা করো।", "Close profile and media settings": "প্রোফাইল ও মিডিয়া সেটিংস বন্ধ করো", "Visibility:": "দৃশ্যমানতা:", "Photo uploaded": "ছবি আপলোড করা হয়েছে", "No profile photo uploaded": "কোনো প্রোফাইল ছবি আপলোড করা হয়নি", "Manage photo & recordings": "ছবি ও রেকর্ডিং পরিচালনা করো", "Voice Introduction": "অডিও পরিচিতি", "Video Introduction": "ভিডিও পরিচিতি", "Not uploaded": "আপলোড করা হয়নি", "sec": "সেকেন্ড", "Introduction media visibility": "পরিচিতি মিডিয়ার দৃশ্যমানতা", "These controls apply to the currently active voice/video introductions. Upload or replace media from Profile Step 5.": "এই নিয়ন্ত্রণগুলো বর্তমানে সক্রিয় অডিও/ভিডিও পরিচিতির ক্ষেত্রে প্রযোজ্য। Profile Step 5 থেকে মিডিয়া আপলোড বা প্রতিস্থাপন করো।", "Voice introduction visibility": "অডিও পরিচিতির দৃশ্যমানতা", "No active voice introduction yet.": "এখনো কোনো সক্রিয় অডিও পরিচিতি নেই।", "Video introduction visibility": "ভিডিও পরিচিতির দৃশ্যমানতা", "No active video introduction yet.": "এখনো কোনো সক্রিয় ভিডিও পরিচিতি নেই।", "Media management stays in Profile Step 5": "মিডিয়া ব্যবস্থাপনা Profile Step 5-এই থাকবে", "This Settings section does not duplicate the recording/upload workflow. Use the existing Profile Step 5 page to record, replace or remove your voice/video introductions.": "এই Settings অংশে রেকর্ডিং/আপলোডের কাজ পুনরাবৃত্তি করা হয়নি। অডিও/ভিডিও পরিচিতি রেকর্ড, প্রতিস্থাপন বা সরাতে বিদ্যমান Profile Step 5 পেজ ব্যবহার করো।", "Media visibility changes are protected by CSRF validation.": "মিডিয়ার দৃশ্যমানতা পরিবর্তন CSRF যাচাই দ্বারা সুরক্ষিত।", "Save Media Visibility": "মিডিয়ার দৃশ্যমানতা সংরক্ষণ করো", "SAFETY": "নিরাপত্তা", "Blocking & Reports": "ব্লক ও রিপোর্ট", "Close blocking and reports settings": "ব্লক ও রিপোর্ট সেটিংস বন্ধ করো", "Search user": "ব্যবহারকারী খুঁজুন", "Block": "ব্লক করো", "Reason": "কারণ", "Select": "নির্বাচন", "Details": "বিস্তারিত", "Report": "রিপোর্ট", "Blocked users": "ব্লক করা ব্যবহারকারী", "Unblock": "আনব্লক করো", "No blocked users.": "কোনো ব্লক করা ব্যবহারকারী নেই।", "Reports": "রিপোর্টসমূহ", "No reports.": "কোনো রিপোর্ট নেই।", "Previous": "আগের", "Next": "পরের", "Select a valid report reason.": "সঠিক রিপোর্টের কারণ নির্বাচন করো.", "PREFERENCES": "পছন্দসমূহ", "Partner Preferences": "সঙ্গী-সংক্রান্ত পছন্দ", "Manage the same partner preferences you set in Profile Step 6. Questions are kept out of this Settings section.": "Profile Step 6-এ নির্ধারিত একই সঙ্গী-সংক্রান্ত পছন্দ পরিচালনা করো। প্রশ্নগুলো এই Settings অংশে রাখা হয়নি।", "Close preferences": "পছন্দসমূহ বন্ধ করো", "Basic Partner Preferences": "সঙ্গী-সংক্রান্ত প্রাথমিক পছন্দ", "These are the same partner preferences used by Profile Step 6.": "এগুলো Profile Step 6-এ ব্যবহৃত একই সঙ্গী-সংক্রান্ত পছন্দ।", "Save Preferences": "পছন্দ সংরক্ষণ করো", "Account Control": "অ্যাকাউন্ট নিয়ন্ত্রণ", "Close account control": "অ্যাকাউন্ট নিয়ন্ত্রণ বন্ধ করো", "Deactivate account": "অ্যাকাউন্ট নিষ্ক্রিয় করো", "Current status:": "বর্তমান অবস্থা:", "Deactivate": "নিষ্ক্রিয় করো", "Delete account": "অ্যাকাউন্ট মুছে ফেলো", "Permanent": "স্থায়ী", "I want to permanently delete my account": "আমি স্থায়ীভাবে আমার অ্যাকাউন্ট মুছে ফেলতে চাই", "PRIVACY": "গোপনীয়তা", "Profile visibility & photo privacy": "প্রোফাইলের দৃশ্যমানতা ও ছবির গোপনীয়তা", "Control whether your profile appears to other users and who can see your profile photo.": "অন্য ব্যবহারকারীরা তোমার প্রোফাইল দেখতে পারবে কি না এবং কারা প্রোফাইল ছবি দেখতে পারবে তা নিয়ন্ত্রণ করো।", "Close privacy settings": "গোপনীয়তা সেটিংস বন্ধ করো", "Profile visibility": "প্রোফাইলের দৃশ্যমানতা", "Public — visible in profile discovery": "সবার জন্য — প্রোফাইল খোঁজায় দেখা যাবে", "Hidden — hide profile from discovery": "লুকানো — প্রোফাইল খোঁজা থেকে আড়াল থাকবে", "Profile photo visibility": "প্রোফাইল ছবির দৃশ্যমানতা", "Everyone": "সবাই", "Verified Users": "যাচাইকৃত ব্যবহারকারী", "Matched Users": "ম্যাচ হওয়া ব্যবহারকারী", "Hidden": "লুকানো", "Privacy controls": "গোপনীয়তা নিয়ন্ত্রণ", "These settings only control the visibility fields available in your current profile database. They do not change your account status or verification status.": "এই সেটিংস তোমার বর্তমান প্রোফাইল ডেটাবেসে থাকা দৃশ্যমানতার ক্ষেত্রগুলোই নিয়ন্ত্রণ করে। এগুলো অ্যাকাউন্টের অবস্থা বা যাচাইকরণের অবস্থা পরিবর্তন করে না।", "Privacy changes are protected by CSRF validation.": "গোপনীয়তা পরিবর্তন CSRF যাচাই দ্বারা সুরক্ষিত।", "Save Privacy Settings": "গোপনীয়তা সেটিংস সংরক্ষণ করো", "User not found.": "ব্যবহারকারী পাওয়া যায়নি।", "Unable to search right now.": "এই মুহূর্তে খোঁজা যাচ্ছে না।", "The security token is invalid. Please refresh the page and try again.": "নিরাপত্তা টোকেনটি সঠিক নয়। পেজ রিফ্রেশ করে আবার চেষ্টা করো।", "Account control is available only for user accounts.": "অ্যাকাউন্ট নিয়ন্ত্রণ শুধু ব্যবহারকারী অ্যাকাউন্টের জন্য উপলভ্য।", "Enter your current password.": "তোমার বর্তমান পাসওয়ার্ড দাও।", "Confirm that you want to permanently delete your account.": "তুমি যে স্থায়ীভাবে অ্যাকাউন্ট মুছতে চাও তা নিশ্চিত করো।", "Unable to deactivate your account right now. Please try again.": "এই মুহূর্তে অ্যাকাউন্ট নিষ্ক্রিয় করা যাচ্ছে না। আবার চেষ্টা করো।", "Unable to delete your account right now. Please try again.": "এই মুহূর্তে অ্যাকাউন্ট মুছে ফেলা যাচ্ছে না। আবার চেষ্টা করো।", "Notifications are now ON for everyone.": "এখন সবার জন্য নোটিফিকেশন চালু।", "Notifications are now OFF for everyone.": "এখন সবার জন্য নোটিফিকেশন বন্ধ।", "Unable to update the notification setting right now. Please try again.": "এই মুহূর্তে নোটিফিকেশন সেটিং আপডেট করা যাচ্ছে না। আবার চেষ্টা করো।", "Unable to prepare the notification setting update. Please try again.": "নোটিফিকেশন সেটিং আপডেট প্রস্তুত করা যাচ্ছে না। আবার চেষ্টা করো।", "Enter a valid User ID.": "সঠিক User ID দাও।", "You cannot block or report your own account.": "নিজের অ্যাকাউন্ট ব্লক বা রিপোর্ট করা যাবে না।", "Unable to block this user right now.": "এই মুহূর্তে ব্যবহারকারীকে ব্লক করা যাচ্ছে না।", "Unable to process the block request right now.": "এই মুহূর্তে ব্লক অনুরোধটি প্রক্রিয়া করা যাচ্ছে না।", "Unable to unblock this user right now.": "এই মুহূর্তে ব্যবহারকারীকে আনব্লক করা যাচ্ছে না।", "Unable to process the unblock request right now.": "এই মুহূর্তে আনব্লক অনুরোধটি প্রক্রিয়া করা যাচ্ছে না।", "Report details must be 1000 characters or fewer.": "রিপোর্টের বিবরণ সর্বোচ্চ ১০০০ অক্ষরের হতে পারবে।", "Report submitted.": "রিপোর্ট জমা হয়েছে।", "Unable to submit the report right now.": "এই মুহূর্তে রিপোর্ট জমা দেওয়া যাচ্ছে না।", "Unable to process the report right now.": "এই মুহূর্তে রিপোর্ট প্রক্রিয়া করা যাচ্ছে না।", "A valid account gender is required before saving matching preferences.": "ম্যাচিং পছন্দ সংরক্ষণের আগে অ্যাকাউন্টে সঠিক লিঙ্গ থাকা আবশ্যক।", "Please enter a valid age range between 15 and 80.": "১৫ থেকে ৮০ বছরের মধ্যে সঠিক বয়সসীমা দাও।", "Please select both feet and inches for each height range.": "প্রতিটি উচ্চতার সীমার জন্য ফুট ও ইঞ্চি—দুটিই নির্বাচন করো।", "Please select a valid height range between 4 ft 0 in and 8 ft 2 in.": "৪ ফুট ০ ইঞ্চি থেকে ৮ ফুট ২ ইঞ্চির মধ্যে সঠিক উচ্চতার সীমা নির্বাচন করো।", "Please enter a valid weight range between 1 and 500 kg.": "১ থেকে ৫০০ কেজির মধ্যে সঠিক ওজনসীমা দাও।", "Please select a valid skin colour preference.": "সঠিক গায়ের রঙের পছন্দ নির্বাচন করো।", "Please select a valid religion preference.": "সঠিক ধর্মের পছন্দ নির্বাচন করো।", "Please select a valid marital status preference.": "সঠিক বৈবাহিক অবস্থার পছন্দ নির্বাচন করো।", "Please select a valid family status preference.": "সঠিক পারিবারিক অবস্থার পছন্দ নির্বাচন করো।", "Please select a valid madhhab preference.": "সঠিক মাযহাবের পছন্দ নির্বাচন করো।", "Please select a valid prayer status preference.": "সঠিক নামাজের অবস্থার পছন্দ নির্বাচন করো।", "Please select a valid halal lifestyle preference.": "সঠিক হালাল জীবনযাপনের পছন্দ নির্বাচন করো।", "Please select a valid mahram preference.": "সঠিক মাহরাম-সংক্রান্ত পছন্দ নির্বাচন করো।", "Please select a valid Islamic knowledge preference.": "সঠিক ইসলামী জ্ঞানের পছন্দ নির্বাচন করো।", "Please select a valid hijab preference.": "সঠিক হিজাবের পছন্দ নির্বাচন করো।", "Please select a valid beard preference.": "সঠিক দাড়ির পছন্দ নির্বাচন করো।", "Please select a valid personality preference.": "সঠিক ব্যক্তিত্বের পছন্দ নির্বাচন করো।", "Please select a valid education preference.": "সঠিক শিক্ষাগত পছন্দ নির্বাচন করো।", "Please select a valid profession preference.": "সঠিক পেশার পছন্দ নির্বাচন করো।", "Please select a valid blood group preference.": "সঠিক রক্তের গ্রুপ নির্বাচন করো।", "Please select valid lifestyle and health preferences.": "জীবনযাপন ও স্বাস্থ্য-সংক্রান্ত সঠিক পছন্দ নির্বাচন করো।", "Additional preferences must be 5000 characters or fewer.": "অতিরিক্ত পছন্দ সর্বোচ্চ ৫০০০ অক্ষরের হতে পারবে।", "Your matching preferences have been updated successfully.": "তোমার ম্যাচিং পছন্দ সফলভাবে আপডেট হয়েছে।", "Matching preferences were saved, but family-status preference could not be updated.": "ম্যাচিং পছন্দ সংরক্ষিত হয়েছে, কিন্তু পারিবারিক অবস্থার পছন্দ আপডেট করা যায়নি।", "Unable to save matching preferences right now. Please try again.": "এই মুহূর্তে ম্যাচিং পছন্দ সংরক্ষণ করা যাচ্ছে না। আবার চেষ্টা করো।", "Each matching weight must be a whole number from 0 to 100.": "প্রতিটি ম্যাচিং গুরুত্ব ০ থেকে ১০০-এর মধ্যে পূর্ণসংখ্যা হতে হবে।", "Matching weights must total exactly 100% before saving.": "সংরক্ষণের আগে ম্যাচিংয়ের মোট গুরুত্ব ঠিক ১০০% হতে হবে।", "Your matching weights have been updated successfully.": "ম্যাচিংয়ের গুরুত্ব সফলভাবে আপডেট হয়েছে।", "Unable to save matching weights right now. Please try again.": "এই মুহূর্তে ম্যাচিংয়ের গুরুত্ব সংরক্ষণ করা যাচ্ছে না। আবার চেষ্টা করো।", "Please select valid media visibility options.": "মিডিয়ার দৃশ্যমানতার সঠিক বিকল্প নির্বাচন করো।", "Unable to prepare voice visibility update.": "অডিও পরিচিতির দৃশ্যমানতা আপডেট প্রস্তুত করা যায়নি।", "Unable to update voice introduction visibility.": "অডিও পরিচিতির দৃশ্যমানতা আপডেট করা যায়নি।", "Unable to prepare video visibility update.": "ভিডিও পরিচিতির দৃশ্যমানতা আপডেট প্রস্তুত করা যায়নি।", "Unable to update video introduction visibility.": "ভিডিও পরিচিতির দৃশ্যমানতা আপডেট করা যায়নি।", "Your active introduction media visibility has been updated successfully.": "সক্রিয় পরিচিতি মিডিয়ার দৃশ্যমানতা সফলভাবে আপডেট হয়েছে।", "Unable to update media visibility right now. Please try again.": "এই মুহূর্তে মিডিয়ার দৃশ্যমানতা আপডেট করা যাচ্ছে না। আবার চেষ্টা করো।", "Please complete all password fields.": "পাসওয়ার্ডের সব ঘর পূরণ করো।", "Your current password is incorrect.": "তোমার বর্তমান পাসওয়ার্ড সঠিক নয়।", "New password must be at least 8 characters long.": "নতুন পাসওয়ার্ড কমপক্ষে ৮ অক্ষরের হতে হবে।", "New password must contain at least one uppercase letter.": "নতুন পাসওয়ার্ডে কমপক্ষে একটি বড় হাতের অক্ষর থাকতে হবে।", "New password must contain at least one lowercase letter.": "নতুন পাসওয়ার্ডে কমপক্ষে একটি ছোট হাতের অক্ষর থাকতে হবে।", "New password must contain at least one number.": "নতুন পাসওয়ার্ডে কমপক্ষে একটি সংখ্যা থাকতে হবে।", "New password and confirm password do not match.": "নতুন পাসওয়ার্ড ও নিশ্চিতকরণ পাসওয়ার্ড মিলছে না।", "New password must be different from your current password.": "নতুন পাসওয়ার্ড বর্তমান পাসওয়ার্ড থেকে আলাদা হতে হবে।", "Your password has been changed successfully.": "তোমার পাসওয়ার্ড সফলভাবে পরিবর্তন হয়েছে।", "Unable to change your password right now. Please try again.": "এই মুহূর্তে পাসওয়ার্ড পরিবর্তন করা যাচ্ছে না। আবার চেষ্টা করো।", "Please select a valid profile visibility option.": "প্রোফাইলের দৃশ্যমানতার সঠিক বিকল্প নির্বাচন করো।", "Please select a valid photo visibility option.": "ছবির দৃশ্যমানতার সঠিক বিকল্প নির্বাচন করো।", "Your privacy settings have been updated successfully.": "তোমার গোপনীয়তা সেটিংস সফলভাবে আপডেট হয়েছে।", "Unable to update your privacy settings right now. Please try again.": "এই মুহূর্তে গোপনীয়তা সেটিংস আপডেট করা যাচ্ছে না। আবার চেষ্টা করো।", "Unable to prepare the privacy update. Please try again.": "গোপনীয়তা আপডেট প্রস্তুত করা যায়নি। আবার চেষ্টা করো।", "First name is required and must be 50 characters or fewer.": "নামের প্রথম অংশ আবশ্যক এবং সর্বোচ্চ ৫০ অক্ষরের হতে হবে।", "Last name is required and must be 50 characters or fewer.": "নামের শেষ অংশ আবশ্যক এবং সর্বোচ্চ ৫০ অক্ষরের হতে হবে।", "Enter a valid mobile number using 10 to 15 digits.": "১০ থেকে ১৫ সংখ্যার একটি সঠিক মোবাইল নম্বর দাও।", "Your name change limit has been reached. You cannot change your name again.": "নাম পরিবর্তনের সীমা শেষ। তুমি আর নাম পরিবর্তন করতে পারবে না।", "Your mobile number change limit has been reached. You cannot change your mobile number again.": "মোবাইল নম্বর পরিবর্তনের সীমা শেষ। তুমি আর মোবাইল নম্বর পরিবর্তন করতে পারবে না।", "That mobile number is already associated with another account.": "এই মোবাইল নম্বরটি অন্য একটি অ্যাকাউন্টে যুক্ত আছে।", "Account information updated successfully.": "অ্যাকাউন্টের তথ্য সফলভাবে আপডেট হয়েছে।", "Your change limit may have been reached. Please refresh the page and try again.": "তোমার পরিবর্তনের সীমা শেষ হয়ে থাকতে পারে। পেজ রিফ্রেশ করে আবার চেষ্টা করো।", "No account information was changed.": "অ্যাকাউন্টের কোনো তথ্য পরিবর্তন করা হয়নি।", "Passwords match.": "পাসওয়ার্ড মিলেছে।", "Passwords do not match.": "পাসওয়ার্ড মিলছে না।", "Enter a User ID.": "একটি User ID দাও।", "Searching…": "খোঁজা হচ্ছে…", "Unnamed user": "নামহীন ব্যবহারকারী", "Unselect": "নির্বাচন বাতিল", "unselected.": "নির্বাচন বাতিল করা হয়েছে।", "selected.": "নির্বাচিত হয়েছে।", "Search and select a user first.": "আগে একজন ব্যবহারকারী খুঁজে নির্বাচন করো।", "Search and select a user, then select a reason.": "একজন ব্যবহারকারী খুঁজে নির্বাচন করো, তারপর কারণ নির্বাচন করো।", "Add ": "আরও যোগ করো ", " more": "% যোগ করো", "Remove ": "বাদ দাও ", "Deactivate your account?": "তোমার অ্যাকাউন্ট নিষ্ক্রিয় করবে?", "Delete your account permanently? This cannot be undone.": "স্থায়ীভাবে অ্যাকাউন্ট মুছে ফেলবে? এটি আর ফিরিয়ে আনা যাবে না।", "Fake profile": "ভুয়া প্রোফাইল", "Harassment": "হয়রানি", "Inappropriate content": "অনুপযুক্ত বিষয়বস্তু", "Scam or fraud": "প্রতারণা বা জালিয়াতি", "Impersonation": "অন্যের পরিচয় ধারণ", "Other": "অন্যান্য", "Islam": "ইসলাম", "Hinduism": "হিন্দুধর্ম", "Christianity": "খ্রিস্টধর্ম", "Buddhism": "বৌদ্ধধর্ম", "Very Fair": "অত্যন্ত ফর্সা", "Fair": "ফর্সা", "Wheatish": "শ্যামলা-ফর্সা", "Medium": "মাঝারি", "Dark": "গাঢ় শ্যামলা", "Single": "অবিবাহিত", "Never Married": "কখনো বিয়ে হয়নি", "Married": "বিবাহিত", "Divorced": "তালাকপ্রাপ্ত", "Widowed": "বিধবা/বিপত্নীক", "Separated": "আলাদা থাকেন", "Middle Class": "মধ্যবিত্ত", "Upper Middle Class": "উচ্চ-মধ্যবিত্ত", "Upper Class": "উচ্চবিত্ত", "Lower Middle Class": "নিম্ন-মধ্যবিত্ত", "Joint Family": "যৌথ পরিবার", "Nuclear Family": "একক পরিবার", "Hanafi": "হানাফি", "Shafi'i": "শাফেয়ি", "Maliki": "মালিকি", "Hanbali": "হাম্বলি", "Salafi": "সালাফি", "Regularly": "নিয়মিত", "Sometimes": "মাঝে মাঝে", "Rarely": "কদাচিৎ", "Never": "কখনো না", "Five times daily": "দিনে পাঁচ ওয়াক্ত", "Daily": "প্রতিদিন", "Often": "প্রায়ই", "Learning": "শিখছেন", "Beginner": "প্রাথমিক", "Intermediate": "মধ্যম", "Advanced": "উন্নত", "Strictly halal": "কঠোরভাবে হালাল মেনে চলেন", "Mostly halal": "বেশিরভাগ ক্ষেত্রে হালাল", "Trying to improve": "উন্নতির চেষ্টা করছেন", "Yes, always": "হ্যাঁ, সবসময়", "No, not always": "না, সবসময় নয়", "Practicing": "ধর্মচর্চা করেন", "Properly Practicing": "যথাযথভাবে ধর্মচর্চা করেন", "Normal": "স্বাভাবিক", "Not Practicing": "ধর্মচর্চা করেন না", "Moderate": "মধ্যপন্থী", "Introvert": "অন্তর্মুখী", "Extrovert": "বহির্মুখী", "Ambivert": "উভয়মুখী", "SSC": "এসএসসি", "HSC": "এইচএসসি", "Diploma": "ডিপ্লোমা", "Bachelor's": "স্নাতক", "Master's": "স্নাতকোত্তর", "PhD": "পিএইচডি", "BSc Engineering": "বিএসসি ইঞ্জিনিয়ারিং", "MBBS": "এমবিবিএস", "BDS": "বিডিএস", "DVM": "ডিভিএম", "LLB": "এলএলবি", "BBA": "বিবিএ", "Kamil (Master)": "কামিল (মাস্টার্স)", "MSc Engineering": "এমএসসি ইঞ্জিনিয়ারিং", "MBA": "এমবিএ", "LLM": "এলএলএম", "MPhil": "এমফিল", "Hifz": "হিফজ", "Qari": "কারী", "Mufti": "মুফতি", "Student": "শিক্ষার্থী", "Agriculture (Farmer)": "কৃষি (কৃষক)", "Business": "ব্যবসা", "Government Service": "সরকারি চাকরি", "Private Service": "বেসরকারি চাকরি", "Teacher": "শিক্ষক", "Lecturer": "প্রভাষক", "Professor": "অধ্যাপক", "Engineer": "প্রকৌশলী", "Software Engineer": "সফটওয়্যার প্রকৌশলী", "IT Professional": "আইটি পেশাজীবী", "Doctor": "চিকিৎসক", "Dentist": "দন্ত চিকিৎসক", "Pharmacist": "ফার্মাসিস্ট", "Nurse": "নার্স", "Lawyer": "আইনজীবী", "Accountant": "হিসাবরক্ষক", "Banker": "ব্যাংকার", "Architect": "স্থপতি", "Police": "পুলিশ", "Army": "সেনাবাহিনী", "Navy": "নৌবাহিনী", "Air Force": "বিমানবাহিনী", "BGB": "বিজিবি", "Ansar": "আনসার", "Fire Service": "ফায়ার সার্ভিস", "Imam": "ইমাম", "Muazzin": "মুয়াজ্জিন", "Islamic Scholar": "ইসলামী পণ্ডিত", "Journalist": "সাংবাদিক", "Driver": "চালক", "Shopkeeper": "দোকানদার", "Electrician": "ইলেকট্রিশিয়ান", "Plumber": "প্লাম্বার", "Mechanic": "মেকানিক", "Tailor": "দর্জি", "Freelancer": "ফ্রিল্যান্সার", "Entrepreneur": "উদ্যোক্তা", "Overseas Worker": "প্রবাসী কর্মী", "Retired": "অবসরপ্রাপ্ত", "Unemployed": "বেকার", "Public": "সবার জন্য উন্মুক্ত", "Private": "ব্যক্তিগত", "Active": "সক্রিয়", "Inactive": "নিষ্ক্রিয়", "Pending": "অপেক্ষমাণ", "Rejected": "প্রত্যাখ্যাত", "Member": "সদস্য", "Age": "বয়স", "Age preference match": "বয়সের পছন্দের মিল", "Height": "উচ্চতা", "Height preference match": "উচ্চতার পছন্দের মিল", "Religion preference match": "ধর্মের পছন্দের মিল", "Islamic Practice": "ইসলামী অনুশীলন", "Madhhab, prayer and related Islamic preferences": "মাযহাব, নামাজ ও সংশ্লিষ্ট ইসলামী পছন্দ", "Marital Status": "বৈবাহিক অবস্থা", "Marital-status preference match": "বৈবাহিক অবস্থার পছন্দের মিল", "Education preference match": "শিক্ষার পছন্দের মিল", "Profession preference match": "পেশার পছন্দের মিল", "Location": "অবস্থান", "Location preference match": "অবস্থানের পছন্দের মিল", "Lifestyle": "জীবনযাপন", "Personality and lifestyle preference match": "ব্যক্তিত্ব ও জীবনযাপনের পছন্দের মিল", "Q&A": "প্রশ্নোত্তর", "Trait-question compatibility": "বৈশিষ্ট্য-প্রশ্নের সামঞ্জস্য", "Skin Colour": "গায়ের রং", "Skin-colour preference match": "গায়ের রঙের পছন্দের মিল", "Weight": "ওজন", "Weight-range preference match": "ওজনসীমার পছন্দের মিল", "Family-status preference match": "পারিবারিক অবস্থার পছন্দের মিল", "Password, sign-in protection and other controls related to account security.": "পাসওয়ার্ড, সাইন-ইন সুরক্ষা ও অ্যাকাউন্ট নিরাপত্তার অন্যান্য নিয়ন্ত্রণ।", "Personal account controls": "ব্যক্তিগত অ্যাকাউন্ট নিয়ন্ত্রণ", "Visibility & privacy": "দৃশ্যমানতা ও গোপনীয়তা", "Choose how you want to receive important updates and activity notifications.": "গুরুত্বপূর্ণ আপডেট ও কার্যকলাপের নোটিফিকেশন কীভাবে পেতে চাও তা বেছে নাও।", "Alerts & updates": "সতর্কতা ও আপডেট", "Set preferences that help shape your partner discovery experience.": "সঙ্গী খোঁজার অভিজ্ঞতা গড়ে তুলতে সহায়ক পছন্দ নির্ধারণ করো।", "Partner discovery": "সঙ্গী খোঁজা", "Decide how strongly each matching factor should influence your compatibility score.": "সামঞ্জস্যের স্কোরে প্রতিটি ম্যাচিং বিষয় কতটা প্রভাব ফেলবে তা নির্ধারণ করো।", "Compatibility priorities": "সামঞ্জস্যের অগ্রাধিকার", "Manage profile presentation, photos and supported introduction media.": "প্রোফাইল উপস্থাপনা, ছবি ও পরিচিতির মিডিয়া পরিচালনা করো।", "Profile presentation": "প্রোফাইল উপস্থাপনা", "Review blocked users and access controls related to reporting and safety.": "ব্লক করা ব্যবহারকারী এবং রিপোর্ট ও নিরাপত্তা-সংক্রান্ত নিয়ন্ত্রণ দেখো।", "Safety controls": "নিরাপত্তা নিয়ন্ত্রণ", "Account lifecycle": "অ্যাকাউন্টের জীবনচক্র", "Account": "অ্যাকাউন্ট", "Security": "নিরাপত্তা", "Privacy": "গোপনীয়তা", "Matching Preferences": "ম্যাচিং পছন্দ", "Matching Weights": "ম্যাচিংয়ের গুরুত্ব", "Profile & Media": "প্রোফাইল ও মিডিয়া", "Preferences": "পছন্দসমূহ", "Back to Smart Matrimony Dashboard": "স্মার্ট ম্যাট্রিমনি ড্যাশবোর্ডে ফিরে যাও", "SM-000027 or User ID": "SM-000027 অথবা User ID", "Medium-Deep": "মাঝারি-গাঢ়", "Unmarried": "অবিবাহিত", "Five Times Daily": "দিনে পাঁচ ওয়াক্ত", "Usually Five Times": "সাধারণত পাঁচ ওয়াক্ত", "Shafi": "শাফেয়ি", "Ahle Hadith": "আহলে হাদিস", "Full Beard": "পূর্ণ দাড়ি", "Short Beard": "ছোট দাড়ি", "No Beard": "দাড়ি নেই", "Not Yet Grown": "এখনো গজায়নি", "Orna": "ওড়না", "Hijab (Face Open)": "হিজাব (মুখ খোলা)", "Hijab (Face Covered)": "হিজাব (মুখ ঢাকা)", "Hijab (Hand, Foot, Face Covered)": "হিজাব (হাত, পা ও মুখ ঢাকা)", "Hijab + Niqab (Fully Covered)": "হিজাব + নিকাব (সম্পূর্ণ ঢাকা)", "Not Maintained": "মেনে চলেন না", "No Formal Education": "প্রাতিষ্ঠানিক শিক্ষা নেই", "Primary": "প্রাথমিক", "Ebtedayi": "ইবতেদায়ি", "JDC / JSC": "জেডিসি / জেএসসি", "Dakhil (SSC)": "দাখিল (এসএসসি)", "SSC (General)": "এসএসসি (সাধারণ)", "Vocational SSC": "ভোকেশনাল এসএসসি", "Alim (HSC)": "আলিম (এইচএসসি)", "HSC (General)": "এইচএসসি (সাধারণ)", "Fazil (Bachelor)": "ফাজিল (স্নাতক)", "Prefer not to say": "বলতে অনিচ্ছুক", "Basic": "প্রাথমিক", "Good": "ভালো", "Strict": "কঠোরভাবে", "Mostly": "বেশিরভাগ ক্ষেত্রে", "Fully Islamic": "সম্পূর্ণ ইসলামী", "Mixed": "মিশ্র", "Modern": "আধুনিক", "Affluent": "সচ্ছল", "Father": "বাবা", "Mother": "মা", "Brother": "ভাই", "Sister": "বোন", "Uncle": "চাচা/মামা", "Grandfather": "দাদা/নানা", "Regular": "নিয়মিত", "Occasionally": "মাঝে মাঝে", "Quit": "ছেড়ে দিয়েছেন", "Moderately Practicing": "মাঝারি মাত্রায় ধর্মচর্চা করেন", "Account control": "অ্যাকাউন্ট নিয়ন্ত্রণ", "An error occurred.": "একটি ত্রুটি হয়েছে.", "Loading…": "লোড হচ্ছে…", "Saving…": "সংরক্ষণ হচ্ছে…", "Don't Know": "জানা নেই", ", and mobile number can be changed": "এবং মোবাইল নম্বর পরিবর্তন করা যাবে", "Verified": "যাচাইকৃত", "English": "English"};
+    const escapeRegExp = value => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    function translate(value) {
+        if (language !== 'bn' || typeof value !== 'string' || value === '') return value;
+        if (Object.prototype.hasOwnProperty.call(dictionary, value)) return dictionary[value];
+        let result = value;
+        Object.keys(dictionary).sort((a, b) => b.length - a.length).forEach(function (source) {
+            if (!source || source.length < 2) return;
+            const pattern = escapeRegExp(source);
+            const hasWordChars = /[A-Za-z0-9]/.test(source);
+            const regex = new RegExp((hasWordChars ? '\\b' : '') + pattern + (hasWordChars ? '\\b' : ''), 'g');
+            result = result.replace(regex, dictionary[source]);
+        });
+        return result;
+    }
+    window.settingsTranslate = translate;
+    window.settingsCurrentLanguage = language;
+    if (language !== 'bn') return;
+    function translateNode(node) {
+        if (!node || node.nodeType !== Node.TEXT_NODE) return;
+        const parent = node.parentElement;
+        if (!parent || parent.closest('script,style,noscript,code,pre')) return;
+        const oldValue = node.nodeValue;
+        const newValue = translate(oldValue);
+        if (newValue !== oldValue) node.nodeValue = newValue;
+    }
+    function translateElement(element) {
+        if (!element || element.nodeType !== Node.ELEMENT_NODE || element.matches('script,style,noscript,code,pre')) return;
+        if (element.childNodes) element.childNodes.forEach(function (child) {
+            if (child.nodeType === Node.TEXT_NODE) translateNode(child);
+            else if (child.nodeType === Node.ELEMENT_NODE) translateElement(child);
+        });
+        ['placeholder', 'aria-label', 'title', 'alt'].forEach(function (attribute) {
+            if (element.hasAttribute(attribute)) {
+                const oldValue = element.getAttribute(attribute);
+                const newValue = translate(oldValue);
+                if (newValue !== oldValue) element.setAttribute(attribute, newValue);
+            }
+        });
+    }
+    translateElement(document.body);
+    const observer = new MutationObserver(function (records) {
+        records.forEach(function (record) {
+            if (record.type === 'characterData') translateNode(record.target);
+            record.addedNodes && record.addedNodes.forEach(function (node) {
+                if (node.nodeType === Node.TEXT_NODE) translateNode(node);
+                else if (node.nodeType === Node.ELEMENT_NODE) translateElement(node);
+            });
+        });
+    });
+    observer.observe(document.body, { subtree: true, childList: true, characterData: true });
+})();
+</script>
 
 <script>
 (function () {
@@ -2275,7 +2522,7 @@ include 'includes/header.php';
         matchingUpazila.disabled = true;
         if (!divisionId) return;
         try {
-            const response = await fetch(matchingAjaxBase + 'get_districts.php?division_id=' + encodeURIComponent(divisionId), { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+            const response = await fetch('settings.php?settings_location_options=districts&division_id=' + encodeURIComponent(divisionId), { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
             const html = await response.text();
             const parsed = document.createElement('select');
             parsed.innerHTML = html;
@@ -2297,7 +2544,7 @@ include 'includes/header.php';
         matchingUpazila.disabled = !districtId;
         if (!districtId) return;
         try {
-            const response = await fetch(matchingAjaxBase + 'get_upazilas.php?district_id=' + encodeURIComponent(districtId), { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+            const response = await fetch('settings.php?settings_location_options=upazilas&district_id=' + encodeURIComponent(districtId), { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
             const html = await response.text();
             const parsed = document.createElement('select');
             parsed.innerHTML = html;
@@ -2346,7 +2593,7 @@ include 'includes/header.php';
         preferencesUpazila.disabled = true;
         if (!divisionId) return;
         try {
-            const response = await fetch('ajax/get_districts.php?division_id=' + encodeURIComponent(divisionId), { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+            const response = await fetch('settings.php?settings_location_options=districts&division_id=' + encodeURIComponent(divisionId), { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
             const html = await response.text();
             const parsed = document.createElement('select');
             parsed.innerHTML = html;
@@ -2368,7 +2615,7 @@ include 'includes/header.php';
         preferencesUpazila.disabled = !districtId;
         if (!districtId) return;
         try {
-            const response = await fetch('ajax/get_upazilas.php?district_id=' + encodeURIComponent(districtId), { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+            const response = await fetch('settings.php?settings_location_options=upazilas&district_id=' + encodeURIComponent(districtId), { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
             const html = await response.text();
             const parsed = document.createElement('select');
             parsed.innerHTML = html;
@@ -2411,7 +2658,11 @@ include 'includes/header.php';
             if (totalBox) totalBox.dataset.total = String(total);
             const ready = total === 100;
             if (status) {
-                status.textContent = ready ? 'Ready to save' : (total < 100 ? 'Add ' + (100-total) + '% more' : 'Remove ' + (total-100) + '%');
+                status.textContent = ready
+                    ? window.settingsTranslate('Ready to save')
+                    : (total < 100
+                        ? (window.settingsCurrentLanguage === 'en' ? 'Add ' + (100-total) + '% more' : 'আরও ' + (100-total) + '% যোগ করতে হবে')
+                        : (window.settingsCurrentLanguage === 'en' ? 'Remove ' + (total-100) + '%' : (total-100) + '% কমাতে হবে'));
                 status.classList.toggle('is-ready', ready);
                 status.classList.toggle('is-over', total > 100);
             }
@@ -2429,10 +2680,10 @@ include 'includes/header.php';
         form.addEventListener('submit', function (event) {
             const action = form.dataset.accountAction || '';
             if (action === 'deactivate') {
-                if (!window.confirm('Deactivate your account?')) event.preventDefault();
+                if (!window.confirm(window.settingsTranslate('Deactivate your account?'))) event.preventDefault();
             } else if (action === 'delete') {
                 const confirmBox = form.querySelector('input[name="confirm_delete"]');
-                if (!confirmBox || !confirmBox.checked || !window.confirm('Delete your account permanently? This cannot be undone.')) {
+                if (!confirmBox || !confirmBox.checked || !window.confirm(window.settingsTranslate('Delete your account permanently? This cannot be undone.'))) {
                     event.preventDefault();
                 }
             }
@@ -2440,7 +2691,7 @@ include 'includes/header.php';
     });
 
     const hash = window.location.hash;
-    if (hash === '#account-panel' || hash === '#security-panel' || hash === '#privacy-panel' || hash === '#notifications-panel' || hash === '#matching-panel' || hash === '#profile-media-panel' || hash === '#blocking-panel' || hash === '#preferences-panel' || hash === '#account-control-panel' || document.querySelector('.settings-alert')) {
+    if (hash === '#account-panel' || hash === '#security-panel' || hash === '#privacy-panel' || hash === '#notifications-panel' || hash === '#matching-panel' || hash === '#profile-media-panel' || hash === '#blocking-panel' || hash === '#account-control-panel' || document.querySelector('.settings-alert')) {
         let panel = hash ? document.querySelector(hash) : null;
         if (!panel) {
             const alert = document.querySelector('.settings-alert');

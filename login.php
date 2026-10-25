@@ -236,16 +236,16 @@ include 'includes/navbar.php';
                     </div>
 
                     <div class="login-modern-eyebrow">
-                        <i class="fa-solid fa-heart"></i> Meaningful connections, thoughtfully made
+                        <i class="fa-solid fa-heart"></i> <?= sm_text('Meaningful connections, thoughtfully made', 'ভাবনাপূর্ণ সুন্দর সম্পর্কের খোঁজ'); ?>
                     </div>
 
                     <h1 class="login-modern-heading">
-                        Find Your<br>
-                        <span>Meaningful Connection.</span>
+                        <?= sm_text('Find Your', 'খুঁজে নাও তোমার'); ?><br>
+                        <span><?= sm_text('Meaningful Connection.', 'জীবনের সঙ্গী।'); ?></span>
                     </h1>
 
                     <p class="login-modern-description">
-                        A secure, respectful and family-friendly matrimony platform built around trust, privacy and Islamic values.
+                        <?= sm_text('A secure, respectful and family-friendly matrimony platform built around trust, privacy and Islamic values.', 'বিশ্বাস, গোপনীয়তা ও ইসলামী মূল্যবোধকে গুরুত্ব দিয়ে তৈরি নিরাপদ ও পরিবারবান্ধব ম্যাট্রিমনি প্ল্যাটফর্ম।'); ?>
                     </p>
 
                     <div class="login-visual-stage" aria-hidden="true">
@@ -326,11 +326,11 @@ include 'includes/navbar.php';
                         <div class="login-card-header text-center">
 
                             <h2>
-                                Login
+                                <?= sm_text('Login', 'লগইন'); ?>
                             </h2>
 
                             <p>
-                                Access your Smart Matrimony account
+                                <?= sm_text('Access your Smart Matrimony account', 'তোমার স্মার্ট ম্যাট্রিমনি অ্যাকাউন্টে প্রবেশ করো'); ?>
                             </p>
 
                         </div>
@@ -378,7 +378,7 @@ include 'includes/navbar.php';
                                     class="form-label"
                                     for="email_mobile">
 
-                                    Email or Mobile
+                                    <?= sm_text('Email or Mobile', 'ইমেইল বা মোবাইল নম্বর'); ?>
 
                                 </label>
 
@@ -395,7 +395,7 @@ include 'includes/navbar.php';
                                         id="email_mobile"
                                         name="email_mobile"
                                         class="form-control"
-                                        placeholder="Enter your email or mobile number"
+                                        placeholder="<?= sm_text('Enter your email or mobile number', 'ইমেইল বা মোবাইল নম্বর লিখো'); ?>"
                                         value="<?= htmlspecialchars($login_value) ?>"
                                         autocomplete="username"
                                         required>
@@ -412,7 +412,7 @@ include 'includes/navbar.php';
                                     class="form-label"
                                     for="password">
 
-                                    Password
+                                    <?= sm_text('Password', 'পাসওয়ার্ড'); ?>
 
                                 </label>
 
@@ -429,7 +429,7 @@ include 'includes/navbar.php';
                                         id="password"
                                         name="password"
                                         class="form-control"
-                                        placeholder="Enter your password"
+                                        placeholder="<?= sm_text('Enter your password', 'পাসওয়ার্ড লিখো'); ?>"
                                         value="<?= htmlspecialchars($password_value) ?>"
                                         autocomplete="current-password"
                                         required>
@@ -452,8 +452,8 @@ include 'includes/navbar.php';
                             <?php if ($activation_available && is_array($activation_user)): ?>
                                 <div class="activation-panel" role="status">
                                     <div class="activation-copy">
-                                        <strong>Account deactivated</strong>
-                                        <span>Password verified. Activate first, then login normally.</span>
+                                        <strong><?= sm_text('Account deactivated', 'অ্যাকাউন্ট নিষ্ক্রিয়'); ?></strong>
+                                        <span><?= sm_text('Password verified. Activate first, then login normally.', 'পাসওয়ার্ড যাচাই হয়েছে। আগে অ্যাকাউন্ট সক্রিয় করুন, তারপর লগইন করুন।'); ?></span>
                                     </div>
                                     <button
                                         type="submit"
@@ -477,7 +477,7 @@ include 'includes/navbar.php';
                                 </i>
 
                                 <span>
-                                    Login
+                                    <?= sm_text('Login', 'লগইন'); ?>
                                 </span>
 
                             </button>
@@ -486,7 +486,7 @@ include 'includes/navbar.php';
 
                         <div class="forgot-password-wrap">
                             <a href="forgot_password.php" class="forgot-password-link">
-                                Forgot Password?
+                                <?= sm_text('Forgot Password?', 'পাসওয়ার্ড ভুলে গেছেন?'); ?>
                             </a>
                         </div>
 
@@ -497,7 +497,7 @@ include 'includes/navbar.php';
                         <div class="login-divider">
 
                             <span>
-                                OR CONTINUE WITH
+                                <?= sm_text('OR CONTINUE WITH', 'অথবা এর মাধ্যমে চালিয়ে যান'); ?>
                             </span>
 
                         </div>
@@ -543,13 +543,13 @@ include 'includes/navbar.php';
 
                         <div class="register-prompt">
 
-                            Don't have an account?
+                            <?= sm_text('Don\'t have an account?', 'অ্যাকাউন্ট নেই?'); ?>
 
                             <a
                                 href="register.php"
                                 class="register-link">
 
-                                Create Account
+                                <?= sm_text('Create Account', 'অ্যাকাউন্ট তৈরি করুন'); ?>
 
                             </a>
 
@@ -678,7 +678,7 @@ document.addEventListener(
 
                     loginBtn.innerHTML =
                         '<i class="fa-solid fa-right-to-bracket me-2"></i>' +
-                        '<span>Login</span>';
+                        '<span><?= sm_text('Login', 'লগইন'); ?></span>';
 
                 }
             );

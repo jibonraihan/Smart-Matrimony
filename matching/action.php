@@ -140,7 +140,7 @@ if (!$token_valid && !$origin_valid) {
 
 /* Match-management actions operate on match_id, not a target profile id. */
 $match_id = (int) ($_POST['match_id'] ?? 0);
-$is_match_action = in_array($action, ['accept', 'reject', 'cancel', 'unmatch'], true);
+$is_match_action = in_array($action, ['accept', 'reject', 'cancel', 'unmatch', 'delete_history'], true);
 $match_tab = $_POST['match_tab'] ?? 'all';
 $allowed_match_tabs = ['all','received','sent','matches','history'];
 if (!in_array($match_tab, $allowed_match_tabs, true)) $match_tab = 'all';
@@ -149,6 +149,28 @@ function back_to_matches(int $match_id, string $tab, string $msg, string $type =
     $tab = in_array($tab, ['all','received','sent','matches','history'], true) ? $tab : 'all';
     $url = '../matching/my_matches.php?tab=' . urlencode($tab) . '#match-card-' . $match_id;
     back($url, $msg, $type);
+}
+
+/* Delete from the current user's history only; never delete the shared match row. */
+if ($action === 'delete_history') {
+    if ($match_id <= 0) back_to_matches(0, 'history', 'Invalid history item.');
+    $check = mysqli_prepare($conn, "SELECT match_id FROM matches WHERE match_id=? AND relationship_active=0 AND (sender_user_id=? OR receiver_user_id=?) LIMIT 1");
+    if (!$check) back_to_matches($match_id, 'history', 'Could not remove this history item.');
+    mysqli_stmt_bind_param($check, 'iii', $match_id, $user_id, $user_id);
+    mysqli_stmt_execute($check);
+    $owned = mysqli_fetch_assoc(mysqli_stmt_get_result($check));
+    mysqli_stmt_close($check);
+    if (!$owned) back_to_matches($match_id, 'history', 'History item was not found.', 'info');
+    // Set only the current participant's flag; never alter the other participant's history.
+    $hide = mysqli_prepare($conn, "UPDATE matches SET " .
+        "sender_history_hidden = CASE WHEN sender_user_id = ? THEN 1 ELSE sender_history_hidden END, " .
+        "receiver_history_hidden = CASE WHEN receiver_user_id = ? THEN 1 ELSE receiver_history_hidden END " .
+        "WHERE match_id = ? AND relationship_active = 0 AND (sender_user_id = ? OR receiver_user_id = ?)");
+    if (!$hide) back_to_matches($match_id, 'history', 'Could not remove this history item.');
+    mysqli_stmt_bind_param($hide, 'iiiii', $user_id, $user_id, $match_id, $user_id, $user_id);
+    $ok = mysqli_stmt_execute($hide) && mysqli_stmt_affected_rows($hide) >= 0;
+    mysqli_stmt_close($hide);
+    back_to_matches($match_id, 'history', $ok ? 'History item deleted.' : 'Could not remove this history item.', $ok ? 'success' : 'error');
 }
 
 /* Confirm the current session belongs to an active normal User account. */

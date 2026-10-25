@@ -132,18 +132,26 @@ function sm_fmt_age($age): string { return $age === null ? 'Not provided' : ((in
 
 function sm_fmt_location(array $data, bool $preference = false): string
 {
+    $isEnglish = (($GLOBALS['current_language'] ?? 'bn') === 'en');
+    $pick = static function (array $row, string $base) use ($isEnglish): string {
+        $localized = $isEnglish ? ($row[$base . '_name'] ?? '') : ($row[$base . '_name_bn'] ?? '');
+        $fallback = $row[$base . '_name'] ?? $row[$base] ?? '';
+        return trim((string) (($localized !== '') ? $localized : $fallback));
+    };
+
     if ($preference) {
-        $up = trim((string) ($data['upazila_name'] ?? ''));
-        $district = trim((string) ($data['district_name'] ?? ''));
-        $division = trim((string) ($data['division_name'] ?? ''));
+        $up = $pick($data, 'upazila');
+        $district = $pick($data, 'district');
+        $division = $pick($data, 'division');
         if ($up !== '') return $up . ($district !== '' ? ', ' . $district : '');
         if ($district !== '') return $district . ($division !== '' ? ', ' . $division : '');
         if ($division !== '') return $division;
         return 'No preference';
     }
-    $up = trim((string) ($data['upazila_name'] ?? $data['upazila'] ?? ''));
-    $district = trim((string) ($data['district_name'] ?? $data['district'] ?? ''));
-    $division = trim((string) ($data['division_name'] ?? $data['division'] ?? ''));
+
+    $up = $pick($data, 'upazila');
+    $district = $pick($data, 'district');
+    $division = $pick($data, 'division');
     if ($up !== '') return $up . ($district !== '' ? ', ' . $district : '');
     if ($district !== '') return $district . ($division !== '' ? ', ' . $division : '');
     if ($division !== '') return $division;

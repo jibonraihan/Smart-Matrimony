@@ -153,3 +153,14 @@
     .service-review-form-meta{align-items:flex-start;flex-direction:column;gap:3px}
     .service-review-submit{width:100%}
 }
+
+
+
+/* Package-code badge only: booking detail rows. */
+.detail-item-copy > .package-code-badge {
+    display: inline-flex;
+    min-height: 23px;
+    margin: 2px 0 3px;
+    padding: 3px 7px;
+    font-size: 11px;
+}

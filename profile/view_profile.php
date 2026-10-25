@@ -4,6 +4,8 @@ $page_css = 'assets/css/profile-view.css';
 
 require_once '../config/db.php';
 require_once '../includes/profile_completion.php';
+require_once '../includes/language.php';
+require_once '../includes/profile_value_translator.php';
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -47,8 +49,8 @@ $stmt = mysqli_prepare($conn, "
         u.email,
         u.mobile,
         up.profile_id,
-        up.first_name,
-        up.last_name,
+        u.first_name,
+        u.last_name,
         up.gender,
         up.date_of_birth,
         up.nid_number,
@@ -56,11 +58,25 @@ $stmt = mysqli_prepare($conn, "
         up.madhhab,
         up.marital_status,
         up.bio,
+        up.biodata_created_by,
+        up.guardian_consent,
         up.photo,
         up.height_cm,
         up.weight_kg,
         up.complexion,
         up.country,
+        up.division_id,
+        up.district_id,
+        up.upazila_id,
+        up.permanent_country,
+        up.permanent_division_id,
+        up.permanent_district_id,
+        up.permanent_upazila_id,
+        up.permanent_area,
+        up.permanent_area_type,
+        up.permanent_residence_type,
+        up.permanent_post_office,
+        up.permanent_postal_code,
         up.area,
         up.highest_education,
         up.profession,
@@ -68,8 +84,15 @@ $stmt = mysqli_prepare($conn, "
         up.monthly_income,
         up.father_name,
         up.father_profession,
+        up.father_alive,
         up.mother_name,
         up.mother_profession,
+        up.mother_alive,
+        up.parents_details,
+        up.brothers_details,
+        up.sisters_details,
+        up.paternal_uncles_details,
+        up.paternal_aunts_details,
         up.guardian_name,
         up.guardian_relation,
         up.guardian_contact,
@@ -100,6 +123,10 @@ $stmt = mysqli_prepare($conn, "
         up.islamic_knowledge,
         up.halal_lifestyle,
         up.islamic_activities,
+        up.favorite_scholars,
+        up.favorite_books,
+        up.religious_knowledge_sources,
+        up.bidah_shrine_stance,
         up.tea_coffee,
         up.diet_preference,
         up.sleep_pattern,
@@ -115,13 +142,25 @@ $stmt = mysqli_prepare($conn, "
         up.profile_visibility,
         up.photo_visibility,
         d.name_en AS district_name,
+        d.name_bn AS district_name_bn,
         dv.name_en AS division_name,
-        uz.name_en AS upazila_name
+        dv.name_bn AS division_name_bn,
+        uz.name_en AS upazila_name,
+        uz.name_bn AS upazila_name_bn,
+        pd.name_en AS permanent_district_name,
+        pd.name_bn AS permanent_district_name_bn,
+        pdv.name_en AS permanent_division_name,
+        pdv.name_bn AS permanent_division_name_bn,
+        puz.name_en AS permanent_upazila_name,
+        puz.name_bn AS permanent_upazila_name_bn
     FROM users u
     INNER JOIN user_profiles up ON up.user_id = u.user_id
     LEFT JOIN divisions dv ON dv.id = up.division_id
     LEFT JOIN districts d ON d.id = up.district_id
     LEFT JOIN upazilas uz ON uz.id = up.upazila_id
+    LEFT JOIN divisions pdv ON pdv.id = up.permanent_division_id
+    LEFT JOIN districts pd ON pd.id = up.permanent_district_id
+    LEFT JOIN upazilas puz ON puz.id = up.permanent_upazila_id
     WHERE u.user_id = ?
       AND u.account_status = 'Active'
       AND (up.profile_visibility = 'Public' OR u.user_id = ?)
@@ -209,8 +248,11 @@ $partner_pref_stmt = mysqli_prepare($conn, "
     SELECT
         sp.*,
         dv.name_en AS preferred_division_name,
+        dv.name_bn AS preferred_division_name_bn,
         d.name_en AS preferred_district_name,
-        uz.name_en AS preferred_upazila_name
+        d.name_bn AS preferred_district_name_bn,
+        uz.name_en AS preferred_upazila_name,
+        uz.name_bn AS preferred_upazila_name_bn
     FROM search_preferences sp
     LEFT JOIN divisions dv ON dv.id = sp.division_id
     LEFT JOIN districts d ON d.id = sp.district_id
@@ -385,6 +427,12 @@ $profile_location_parts = array_values(array_filter([
     $profile['division_name'] ?? ''
 ], static fn($value) => trim((string) $value) !== ''));
 $profile_location = $profile_location_parts ? implode(', ', $profile_location_parts) : '';
+$profile_location_bn_parts = array_values(array_filter([
+    $profile['upazila_name_bn'] ?? '',
+    $profile['district_name_bn'] ?? '',
+    $profile['division_name_bn'] ?? ''
+], static fn($value) => trim((string) $value) !== ''));
+$profile_location_bn = $profile_location_bn_parts ? implode(', ', $profile_location_bn_parts) : $profile_location;
 $quick_info = [];
 if (!empty($profile['gender'])) $quick_info[] = ['icon' => 'fa-venus-mars', 'label' => 'Gender', 'value' => $profile['gender']];
 if (!empty($profile['religion'])) $quick_info[] = ['icon' => 'fa-mosque', 'label' => 'Religion', 'value' => $profile['religion']];
@@ -430,7 +478,7 @@ include '../includes/header.php';
                 </div>
                 <span class="profile-photo-badge <?= htmlspecialchars($verification_badge['class']); ?>">
                     <i class="fa-solid <?= htmlspecialchars($verification_badge['icon']); ?>"></i>
-                    <?= htmlspecialchars($verification_badge['label']); ?> Profile
+                    <span class="profile-photo-badge-label"><?= htmlspecialchars($verification_badge['label']); ?></span><span class="profile-photo-badge-suffix">Profile</span>
                 </span>
             </div>
 
@@ -473,7 +521,7 @@ include '../includes/header.php';
                                 <span class="profile-quick-icon"><i class="fa-solid <?= htmlspecialchars($item['icon']); ?>"></i></span>
                                 <span class="profile-quick-copy">
                                     <small><?= htmlspecialchars($item['label']); ?></small>
-                                    <strong><?= htmlspecialchars($item['value']); ?></strong>
+                                    <strong<?= $item['label'] === 'Location' ? ' data-location-en="' . htmlspecialchars($profile_location, ENT_QUOTES) . '" data-location-bn="' . htmlspecialchars($profile_location_bn, ENT_QUOTES) . '"' : ''; ?>><?= htmlspecialchars($item['value']); ?></strong>
                                 </span>
                             </div>
                         <?php endforeach; ?>
@@ -481,6 +529,9 @@ include '../includes/header.php';
                 <?php endif; ?>
 
                 <div class="profile-view-actions">
+                    <a class="profile-action secondary" href="<?= BASE_URL; ?>profile/download_biodata.php?user_id=<?= $profile_user_id; ?>">
+                        <i class="fa-solid fa-file-pdf"></i> Download Biodata PDF
+                    </a>
                     <?php if ($is_own_profile): ?>
                         <a class="profile-action primary" href="<?= BASE_URL; ?>profile/create_profile.php">
                             <i class="fa-solid fa-user-pen"></i> Edit My Profile
@@ -615,6 +666,11 @@ include '../includes/header.php';
                     <div><span>Education</span><strong><?= htmlspecialchars($profile['highest_education'] ?? 'Not provided'); ?></strong></div>
                     <div><span>Profession</span><strong><?= htmlspecialchars($profile['profession'] ?? 'Not provided'); ?></strong></div>
                     <div><span>Occupation Details</span><strong><?= htmlspecialchars($profile['occupation_details'] ?? 'Not provided'); ?></strong></div>
+                    <div><span>Monthly Income</span><strong><?= trim((string)($profile['monthly_income'] ?? '')) !== '' && is_numeric($profile['monthly_income']) ? htmlspecialchars(number_format((float)$profile['monthly_income'], 0) . ' / month') : 'Not provided'; ?></strong></div>
+                    <div><span>Biodata Created By</span><strong><?= htmlspecialchars(trim((string)($profile['biodata_created_by'] ?? '')) !== '' ? $profile['biodata_created_by'] : 'Not provided'); ?></strong></div>
+                    <?php if (($profile['biodata_created_by'] ?? '') === 'Self'): ?>
+                        <div><span>Guardian Consent for Biodata Creation</span><strong><?= array_key_exists('guardian_consent', $profile) && $profile['guardian_consent'] !== null ? ((int)$profile['guardian_consent'] === 1 ? 'Yes' : 'No') : 'Not provided'; ?></strong></div>
+                    <?php endif; ?>
                 </div>
             </section>
 
@@ -688,22 +744,62 @@ include '../includes/header.php';
                     <?php else: ?>
                         <div><span>Hijab</span><strong><?= htmlspecialchars($profile['hijab_status'] ?? 'Not provided'); ?></strong></div>
                     <?php endif; ?>
+                    <?php if (trim((string)($profile['favorite_scholars'] ?? '')) !== ''): ?>
+                        <div class="detail-wide"><span>Favorite Islamic Scholars</span><strong><?= nl2br(htmlspecialchars($profile['favorite_scholars'])); ?></strong></div>
+                    <?php endif; ?>
+                    <?php if (trim((string)($profile['favorite_books'] ?? '')) !== ''): ?>
+                        <div class="detail-wide"><span>Favorite Islamic Books</span><strong><?= nl2br(htmlspecialchars($profile['favorite_books'])); ?></strong></div>
+                    <?php endif; ?>
+                    <?php if (trim((string)($profile['religious_knowledge_sources'] ?? '')) !== ''): ?>
+                        <div class="detail-wide"><span>Religious Learning &amp; Practice Sources</span><strong><?= nl2br(htmlspecialchars($profile['religious_knowledge_sources'])); ?></strong></div>
+                    <?php endif; ?>
+                    <?php if (trim((string)($profile['bidah_shrine_stance'] ?? '')) !== ''): ?>
+                        <div class="detail-wide"><span>Views on Bid'ah &amp; Shrine Worship</span><strong><?= nl2br(htmlspecialchars($profile['bidah_shrine_stance'])); ?></strong></div>
+                    <?php endif; ?>
                 </div>
             </section>
 
+            <?php
+                $currentAddressKeys = ['country','division_id','district_id','upazila_id','area','area_type','residence_type','post_office','postal_code'];
+                $permanentAddressKeys = ['permanent_country','permanent_division_id','permanent_district_id','permanent_upazila_id','permanent_area','permanent_area_type','permanent_residence_type','permanent_post_office','permanent_postal_code'];
+                $hasPermanentAddress = false;
+                foreach ($permanentAddressKeys as $addressKey) { if (trim((string)($profile[$addressKey] ?? '')) !== '') { $hasPermanentAddress = true; break; } }
+                $sameAsCurrent = !$hasPermanentAddress;
+                if ($hasPermanentAddress) {
+                    $sameAsCurrent = true;
+                    foreach (array_combine($currentAddressKeys, $permanentAddressKeys) as $currentKey => $permanentKey) {
+                        if (trim((string)($profile[$currentKey] ?? '')) !== trim((string)($profile[$permanentKey] ?? ''))) { $sameAsCurrent = false; break; }
+                    }
+                }
+            ?>
             <section class="profile-detail-card profile-part4-card">
-                <div class="detail-card-heading"><i class="fa-solid fa-location-dot"></i><div><h2>Location</h2><small>Current residence &amp; hometown details</small></div></div>
+                <div class="detail-card-heading"><i class="fa-solid fa-location-dot"></i><div><h2>Location</h2><small>Current and permanent address details</small></div></div>
                 <div class="detail-list">
+                    <div class="detail-wide"><strong>Current Address</strong></div>
                     <div><span>Country</span><strong><?= htmlspecialchars($profile['country'] ?? 'Not provided'); ?></strong></div>
-                    <div><span>Division</span><strong><?= htmlspecialchars($profile['division_name'] ?? 'Not provided'); ?></strong></div>
-                    <div><span>District</span><strong><?= htmlspecialchars($profile['district_name'] ?? 'Not provided'); ?></strong></div>
-                    <div><span>Upazila</span><strong><?= htmlspecialchars($profile['upazila_name'] ?? 'Not provided'); ?></strong></div>
+                    <div class="location-admin-row"><span>Division</span><strong><span data-location-en="<?= htmlspecialchars($profile['division_name'] ?? 'Not provided', ENT_QUOTES); ?>" data-location-bn="<?= htmlspecialchars($profile['division_name_bn'] ?? 'উল্লেখ করা হয়নি', ENT_QUOTES); ?>"><?= htmlspecialchars($profile['division_name'] ?? 'Not provided'); ?></span></strong></div>
+                    <div class="location-admin-row"><span>District</span><strong><span data-location-en="<?= htmlspecialchars($profile['district_name'] ?? 'Not provided', ENT_QUOTES); ?>" data-location-bn="<?= htmlspecialchars($profile['district_name_bn'] ?? 'উল্লেখ করা হয়নি', ENT_QUOTES); ?>"><?= htmlspecialchars($profile['district_name'] ?? 'Not provided'); ?></span></strong></div>
+                    <div class="location-admin-row"><span>Upazila</span><strong><span data-location-en="<?= htmlspecialchars($profile['upazila_name'] ?? 'Not provided', ENT_QUOTES); ?>" data-location-bn="<?= htmlspecialchars($profile['upazila_name_bn'] ?? 'উল্লেখ করা হয়নি', ENT_QUOTES); ?>"><?= htmlspecialchars($profile['upazila_name'] ?? 'Not provided'); ?></span></strong></div>
                     <div><span>Area</span><strong><?= htmlspecialchars($profile['area'] ?? 'Not provided'); ?></strong></div>
                     <div><span>Area Type</span><strong><?= htmlspecialchars($profile['area_type'] ?? 'Not provided'); ?></strong></div>
-                    <div><span>Residence Type</span><strong><?= htmlspecialchars($profile['residence_type'] ?? 'Not provided'); ?></strong></div>
+                    <div><span>Residential Details</span><strong><?= htmlspecialchars($profile['residence_type'] ?? 'Not provided'); ?></strong></div>
                     <div><span>Post Office</span><strong><?= htmlspecialchars($profile['post_office'] ?? 'Not provided'); ?></strong></div>
                     <div><span>Postal Code</span><strong><?= htmlspecialchars($profile['postal_code'] ?? 'Not provided'); ?></strong></div>
-                    <div><span>Permanent Hometown</span><strong><?= htmlspecialchars($profile['permanent_hometown'] ?? 'Not provided'); ?></strong></div>
+                    <div class="detail-wide"><strong>Permanent Address</strong></div>
+                    <?php if ($sameAsCurrent): ?>
+                        <div class="detail-wide"><span>Permanent Address</span><strong>Same as current location</strong></div>
+                    <?php else: ?>
+                        <div><span>Country</span><strong><?= htmlspecialchars($profile['permanent_country'] ?? 'Not provided'); ?></strong></div>
+                        <div class="location-admin-row"><span>Division</span><strong><span data-location-en="<?= htmlspecialchars($profile['permanent_division_name'] ?? 'Not provided', ENT_QUOTES); ?>" data-location-bn="<?= htmlspecialchars($profile['permanent_division_name_bn'] ?? 'উল্লেখ করা হয়নি', ENT_QUOTES); ?>"><?= htmlspecialchars($profile['permanent_division_name'] ?? 'Not provided'); ?></span></strong></div>
+                        <div class="location-admin-row"><span>District</span><strong><span data-location-en="<?= htmlspecialchars($profile['permanent_district_name'] ?? 'Not provided', ENT_QUOTES); ?>" data-location-bn="<?= htmlspecialchars($profile['permanent_district_name_bn'] ?? 'উল্লেখ করা হয়নি', ENT_QUOTES); ?>"><?= htmlspecialchars($profile['permanent_district_name'] ?? 'Not provided'); ?></span></strong></div>
+                        <div class="location-admin-row"><span>Upazila</span><strong><span data-location-en="<?= htmlspecialchars($profile['permanent_upazila_name'] ?? 'Not provided', ENT_QUOTES); ?>" data-location-bn="<?= htmlspecialchars($profile['permanent_upazila_name_bn'] ?? 'উল্লেখ করা হয়নি', ENT_QUOTES); ?>"><?= htmlspecialchars($profile['permanent_upazila_name'] ?? 'Not provided'); ?></span></strong></div>
+                        <div><span>Area</span><strong><?= htmlspecialchars($profile['permanent_area'] ?? 'Not provided'); ?></strong></div>
+                        <div><span>Area Type</span><strong><?= htmlspecialchars($profile['permanent_area_type'] ?? 'Not provided'); ?></strong></div>
+                        <div><span>Residential Details</span><strong><?= htmlspecialchars($profile['permanent_residence_type'] ?? 'Not provided'); ?></strong></div>
+                        <div><span>Post Office</span><strong><?= htmlspecialchars($profile['permanent_post_office'] ?? 'Not provided'); ?></strong></div>
+                        <div><span>Postal Code</span><strong><?= htmlspecialchars($profile['permanent_postal_code'] ?? 'Not provided'); ?></strong></div>
+                    <?php endif; ?>
+                    <div><span>Permanent Home / Hometown</span><strong><?= htmlspecialchars($profile['permanent_hometown'] ?? 'Not provided'); ?></strong></div>
                     <div><span>Address Details</span><strong><?= htmlspecialchars($profile['address_details'] ?? 'Not provided'); ?></strong></div>
                 </div>
             </section>
@@ -714,13 +810,20 @@ include '../includes/header.php';
                     <div><span>Family Type</span><strong><?= htmlspecialchars($profile['family_type'] ?? 'Not provided'); ?></strong></div>
                     <div><span>Family Status</span><strong><?= htmlspecialchars($profile['family_status'] ?? 'Not provided'); ?></strong></div>
                     <div><span>Father</span><strong><?= htmlspecialchars($profile['father_name'] ?? 'Not provided'); ?></strong></div>
-                    <div><span>Father's Profession</span><strong><?= htmlspecialchars($profile['father_profession'] ?? 'Not provided'); ?></strong></div>
+                    <?php if (!empty($profile['father_alive'])): ?><div><span>Father Alive?</span><strong><?= htmlspecialchars($profile['father_alive']); ?></strong></div><?php endif; ?>
+                    <?php if (!empty($profile['father_profession'])): ?><div><span>Father's Profession</span><strong><?= htmlspecialchars($profile['father_profession']); ?></strong></div><?php endif; ?>
                     <div><span>Mother</span><strong><?= htmlspecialchars($profile['mother_name'] ?? 'Not provided'); ?></strong></div>
-                    <div><span>Mother's Profession</span><strong><?= htmlspecialchars($profile['mother_profession'] ?? 'Not provided'); ?></strong></div>
+                    <?php if (!empty($profile['mother_alive'])): ?><div><span>Mother Alive?</span><strong><?= htmlspecialchars($profile['mother_alive']); ?></strong></div><?php endif; ?>
+                    <?php if (!empty($profile['mother_profession'])): ?><div><span>Mother's Profession</span><strong><?= htmlspecialchars($profile['mother_profession']); ?></strong></div><?php endif; ?>
+                    <?php if (!empty($profile['parents_details'])): ?><div><span>Additional Details About Parents</span><strong><?= nl2br(htmlspecialchars($profile['parents_details'])); ?></strong></div><?php endif; ?>
                     <div><span>Brothers</span><strong><?= $profile['brothers_count'] !== null ? (int)$profile['brothers_count'] : 'Not provided'; ?></strong></div>
                     <div><span>Sisters</span><strong><?= $profile['sisters_count'] !== null ? (int)$profile['sisters_count'] : 'Not provided'; ?></strong></div>
                     <div><span>Paternal Uncles</span><strong><?= $profile['paternal_uncles_count'] !== null ? (int)$profile['paternal_uncles_count'] : 'Not provided'; ?></strong></div>
                     <div><span>Paternal Aunts</span><strong><?= $profile['paternal_aunts_count'] !== null ? (int)$profile['paternal_aunts_count'] : 'Not provided'; ?></strong></div>
+                    <?php if (!empty($profile['brothers_details'])): ?><div><span>Brothers' Details</span><strong><?= nl2br(htmlspecialchars($profile['brothers_details'])); ?></strong></div><?php endif; ?>
+                    <?php if (!empty($profile['sisters_details'])): ?><div><span>Sisters' Details</span><strong><?= nl2br(htmlspecialchars($profile['sisters_details'])); ?></strong></div><?php endif; ?>
+                    <?php if (!empty($profile['paternal_uncles_details'])): ?><div><span>Father's Brothers' Details</span><strong><?= nl2br(htmlspecialchars($profile['paternal_uncles_details'])); ?></strong></div><?php endif; ?>
+                    <?php if (!empty($profile['paternal_aunts_details'])): ?><div><span>Father's Sisters' Details</span><strong><?= nl2br(htmlspecialchars($profile['paternal_aunts_details'])); ?></strong></div><?php endif; ?>
                     <div><span>Paternal Siblings Married</span><strong><?= htmlspecialchars($profile['paternal_siblings_married'] ?? 'Not provided'); ?></strong></div>
                     <div><span>Family Purdah Environment</span><strong><?= htmlspecialchars($profile['family_purdah_environment'] ?? 'Not provided'); ?></strong></div>
                     <div><span>Family Religious Lifestyle</span><strong><?= htmlspecialchars($profile['family_religious_lifestyle'] ?? 'Not provided'); ?></strong></div>
@@ -849,9 +952,9 @@ include '../includes/header.php';
                         <div class="preference-block">
                             <div class="preference-block-title"><i class="fa-solid fa-location-dot"></i> Preferred Location</div>
                             <div class="preference-tags">
-                                <?php if (!empty($partner_preferences['preferred_division_name'])): ?><span><?= htmlspecialchars($partner_preferences['preferred_division_name']); ?></span><?php endif; ?>
-                                <?php if (!empty($partner_preferences['preferred_district_name'])): ?><span><?= htmlspecialchars($partner_preferences['preferred_district_name']); ?></span><?php endif; ?>
-                                <?php if (!empty($partner_preferences['preferred_upazila_name'])): ?><span><?= htmlspecialchars($partner_preferences['preferred_upazila_name']); ?></span><?php endif; ?>
+                                <?php if (!empty($partner_preferences['preferred_division_name'])): ?><span data-location-en="<?= htmlspecialchars($partner_preferences['preferred_division_name'], ENT_QUOTES, 'UTF-8'); ?>" data-location-bn="<?= htmlspecialchars($partner_preferences['preferred_division_name_bn'] ?? $partner_preferences['preferred_division_name'], ENT_QUOTES, 'UTF-8'); ?>"><?= htmlspecialchars($partner_preferences['preferred_division_name']); ?></span><?php endif; ?>
+                                <?php if (!empty($partner_preferences['preferred_district_name'])): ?><span data-location-en="<?= htmlspecialchars($partner_preferences['preferred_district_name'], ENT_QUOTES, 'UTF-8'); ?>" data-location-bn="<?= htmlspecialchars($partner_preferences['preferred_district_name_bn'] ?? $partner_preferences['preferred_district_name'], ENT_QUOTES, 'UTF-8'); ?>"><?= htmlspecialchars($partner_preferences['preferred_district_name']); ?></span><?php endif; ?>
+                                <?php if (!empty($partner_preferences['preferred_upazila_name'])): ?><span data-location-en="<?= htmlspecialchars($partner_preferences['preferred_upazila_name'], ENT_QUOTES, 'UTF-8'); ?>" data-location-bn="<?= htmlspecialchars($partner_preferences['preferred_upazila_name_bn'] ?? $partner_preferences['preferred_upazila_name'], ENT_QUOTES, 'UTF-8'); ?>"><?= htmlspecialchars($partner_preferences['preferred_upazila_name']); ?></span><?php endif; ?>
                             </div>
                         </div>
                     <?php endif; ?>
@@ -883,6 +986,13 @@ include '../includes/header.php';
                         <div class="preference-additional">
                             <span>Additional Preferences</span>
                             <p><?= nl2br(htmlspecialchars($partner_preferences['additional_preferences'])); ?></p>
+                        </div>
+                    <?php endif; ?>
+
+                    <?php if (!empty($partner_preferences['partner_description'])): ?>
+                        <div class="preference-additional">
+                            <span>Detailed Description of Your Ideal Partner</span>
+                            <p><?= nl2br(htmlspecialchars($partner_preferences['partner_description'])); ?></p>
                         </div>
                     <?php endif; ?>
 
@@ -1168,5 +1278,299 @@ include '../includes/header.php';
 
     </main>
 </div>
+
+
+<script>
+(function () {
+    'use strict';
+    const bn = {
+        'Photo private':'ছবি ব্যক্তিগত', 'Profile':'প্রোফাইল', 'MATRIMONY PROFILE':'বিয়ের জন্য প্রোফাইল',
+        'Download Biodata PDF':'বায়োডাটা PDF ডাউনলোড', 'Edit My Profile':'আমার প্রোফাইল সম্পাদনা', 'Privacy Control Center':'গোপনীয়তা ব্যবস্থাপনা কেন্দ্র',
+        'Bookmarked':'বুকমার্ক করা হয়েছে', 'Bookmark':'বুকমার্ক', 'Respond':'জবাব দিন',
+        'Personal Information':'ব্যক্তিগত তথ্য', 'Gender':'লিঙ্গ', 'Age':'বয়স',
+        'NID / Birth Certificate No':'জাতীয় পরিচয়পত্র / জন্মনিবন্ধন নম্বর', 'Marital Status':'বৈবাহিক অবস্থা', 'Education':'শিক্ষা',
+        'Profession':'পেশা', 'Occupation Details':'পেশার বিবরণ', 'Biodata Created By':'বায়োডাটা তৈরি করেছেন',
+        'Guardian Consent for Biodata Creation':'বায়োডাটা তৈরিতে অভিভাবকের সম্মতি', 'Physical & Health Information':'শারীরিক ও স্বাস্থ্যসংক্রান্ত তথ্য', 'Height':'উচ্চতা',
+        'Weight':'ওজন', 'Complexion':'গায়ের রং', 'Smoking':'ধূমপান',
+        'Blood Group':'রক্তের গ্রুপ', 'Disability':'প্রতিবন্ধিতা', 'Allergies':'অ্যালার্জি',
+        'Current Medications':'বর্তমান ওষুধ', 'Medical Notes':'চিকিৎসাসংক্রান্ত নোট', 'Health Conditions':'স্বাস্থ্যগত অবস্থা',
+        'Religion & Practice':'ধর্ম ও ধর্মীয় অনুশীলন', 'Religion':'ধর্ম', 'Madhhab':'মাযহাব',
+        'Prayer':'নামাজ', 'Mahram':'মাহরাম', 'Hijab':'হিজাব',
+        'Favorite Islamic Scholars':'প্রিয় ইসলামি আলেম', 'Favorite Islamic Books':'প্রিয় ইসলামি বই', 'Religious Learning & Practice Sources':'ধর্মীয় শিক্ষা ও অনুশীলনের উৎস',
+        'ah & Shrine Worship':'বিদআত ও মাজার-সংক্রান্ত দৃষ্টিভঙ্গি', 'Country':'দেশ', 'Division':'বিভাগ',
+        'District':'জেলা', 'Upazila':'উপজেলা', 'Area':'এলাকা',
+        'Area Type':'এলাকার ধরন', 'Post Office':'ডাকঘর', 'Postal Code':'পোস্ট কোড',
+        'Family Information':'পারিবারিক তথ্য', 's Profession':'মায়ের পেশা', 'Brothers':'ভাই',
+        'Sisters':'বোন', 'Paternal Uncles':'চাচা', 'Paternal Aunts':'ফুফু',
+        ' Details':'ফুফুদের বিবরণ', 'Lifestyle':'জীবনযাপন', 'Halal Lifestyle':'হালাল জীবনযাপন',
+        'Diet':'খাদ্যাভ্যাস', 'Personality':'ব্যক্তিত্ব', 'Travel':'ভ্রমণ',
+        'Pets':'পোষা প্রাণী', 'About Me':'আমার সম্পর্কে', 'Personal Q&A':'ব্যক্তিগত প্রশ্নোত্তর',
+        "What I'm Looking For":'আমি যেমন জীবনসঙ্গী চাই',
+        'm Looking For':'আমি যেমন জীবনসঙ্গী চাই', 'Personality:':'ব্যক্তিত্ব:', 'Media Gallery':'মিডিয়া গ্যালারি',
+        'Contact details and sensitive identity information are intentionally not displayed on public profile views.':'সবার জন্য উন্মুক্ত প্রোফাইলে যোগাযোগের তথ্য ও পরিচয়সংক্রান্ত সংবেদনশীল তথ্য দেখানো হয় না।', 'Back to Dashboard':'ড্যাশবোর্ডে ফিরে যান', 'Age not provided':'বয়স উল্লেখ করা হয়নি',
+        'Residential Details':'বসবাসের বিবরণ', 'Family Type':'পরিবারের ধরন', 'Family Status':'পারিবারিক অবস্থা',
+        'Father Alive?':'বাবা জীবিত কি না', 'Mother Alive?':'মা জীবিত কি না', 'Voice Introduction':'কণ্ঠ পরিচিতি',
+        'Video Introduction':'ভিডিও পরিচিতি', 'Audio introduction':'অডিও পরিচিতি', 'Manage how your profile and introductions are shared.':'আপনার প্রোফাইল ও পরিচিতি কারা দেখতে বা শুনতে পারবেন, তা নির্ধারণ করুন।',
+        'Interest Unavailable':'আগ্রহ জানানো যাচ্ছে না', 'Interest Sent':'আগ্রহ পাঠানো হয়েছে', 'Send Interest':'আগ্রহ জানান',
+        'Privacy settings saved.':'গোপনীয়তার সেটিংস সংরক্ষণ করা হয়েছে।', 'Unable to save privacy settings.':'গোপনীয়তার সেটিংস সংরক্ষণ করা যায়নি।', 'Basic identity & background':'মৌলিক পরিচয় ও পটভূমি',
+        'of profile steps completed':'টি প্রোফাইলের ধাপ সম্পন্ন হয়েছে', 'Appearance & personal details':'শারীরিক গঠন ও ব্যক্তিগত বিবরণ', 'Faith & religious lifestyle':'ধর্মবিশ্বাস ও ধর্মীয় জীবনযাপন',
+        'Current and permanent address details':'বর্তমান ও স্থায়ী ঠিকানার বিবরণ', 'Family background, relatives & household':'পারিবারিক পটভূমি, আত্মীয়স্বজন ও গৃহস্থালি', 'Daily habits & personal nature':'দৈনন্দিন অভ্যাস ও ব্যক্তিগত স্বভাব',
+        'A little about this person':'এই ব্যক্তির সম্পর্কে কিছু কথা', 'Partner preferences shared by the member':'সদস্যের জানানো জীবনসঙ্গী-সংক্রান্ত পছন্দ', 'Photos, voice & video introductions':'ছবি, কণ্ঠ ও ভিডিও পরিচিতি',
+        'Whether your profile can appear to other members.':'অন্য সদস্যরা আপনার প্রোফাইল দেখতে পাবেন কি না।', 'Choose who can view your profile photo.':'কারা আপনার প্রোফাইলের ছবি দেখতে পারবেন তা বেছে নিন।', 'Control who can play your voice introduction.':'কারা আপনার কণ্ঠ পরিচিতি শুনতে পারবেন তা নিয়ন্ত্রণ করুন।',
+        'Control who can watch your video introduction.':'কারা আপনার ভিডিও পরিচিতি দেখতে পারবেন তা নিয়ন্ত্রণ করুন।', 'Your browser does not support audio playback.':'আপনার ব্রাউজারে অডিও চালানোর সুবিধা নেই।', 'Your browser does not support video playback.':'আপনার ব্রাউজারে ভিডিও চালানোর সুবিধা নেই।',
+        'No introduction has been added yet.':'এখনো কোনো পরিচিতিমূলক লেখা যোগ করা হয়নি।', 'No questions have been answered yet.':'এখনো কোনো প্রশ্নের উত্তর দেওয়া হয়নি।', 'No partner preferences have been added yet.':'এখনো জীবনসঙ্গী-সংক্রান্ত কোনো পছন্দ যোগ করা হয়নি।',
+        'No media has been shared with you yet.':'এখনো আপনার সঙ্গে কোনো মিডিয়া শেয়ার করা হয়নি।', 'Privacy protected':'গোপনীয়তা সুরক্ষিত', 'Privacy settings saved successfully.':'গোপনীয়তার সেটিংস সফলভাবে সংরক্ষিত হয়েছে।',
+        'Could not save privacy settings.':'গোপনীয়তার সেটিংস সংরক্ষণ করা যায়নি।', 'Privacy settings could not be saved.':'গোপনীয়তার সেটিংস সংরক্ষণ করা যায়নি।', 'Close privacy control center':'গোপনীয়তা ব্যবস্থাপনা কেন্দ্র বন্ধ করুন',
+        'Account Privacy':'অ্যাকাউন্টের গোপনীয়তা', 'Profile Visibility':'প্রোফাইলের দৃশ্যমানতা', 'Profile Photo Visibility':'প্রোফাইলের ছবির দৃশ্যমানতা',
+        'Voice Introduction Visibility':'কণ্ঠ পরিচিতির দৃশ্যমানতা', 'Video Introduction Visibility':'ভিডিও পরিচিতির দৃশ্যমানতা', 'Save Changes':'পরিবর্তন সংরক্ষণ করুন',
+        'years':'বছর', '/ month':'/ মাস', 'Minimum Income':'সর্বনিম্ন আয়', 'Monthly Income':'মাসিক আয়',
+        'Age Range':'বয়সের সীমা', 'Height Range':'উচ্চতার সীমা', 'Weight Range':'ওজনের সীমা',
+        'Lifestyle Expectations':'জীবনযাপন সম্পর্কে প্রত্যাশা', 'Additional Filters':'অতিরিক্ত ফিল্টার', 'Additional Preferences':'অতিরিক্ত পছন্দ',
+        'Detailed Description of Your Ideal Partner':'আপনার পছন্দের জীবনসঙ্গীর বিস্তারিত বিবরণ', 'Question-based Preferences':'প্রশ্নভিত্তিক পছন্দ', 'Preferred Gender':'প্রত্যাশিত জীবনসঙ্গী',
+        'Preferred Location':'পছন্দের ঠিকানা', 'Tea / Coffee':'চা / কফি', 'Sleep Pattern':'ঘুমের ধরন',
+        'Social Nature':'সামাজিক স্বভাব', 'Spending Style':'খরচের ধরন', 'Free Time':'অবসর সময়',
+        'Additional Details About Parents':'বাবা-মা সম্পর্কে অতিরিক্ত তথ্য', 'Paternal Siblings Married':'চাচা-ফুফুদের বৈবাহিক অবস্থা', 'Family Purdah Environment':'পরিবারে পর্দার পরিবেশ',
+        'Family Religious Lifestyle':'পরিবারের ধর্মীয় জীবনযাপন', 'Living With Family':'পরিবারের সঙ্গে বসবাস', 'Guardian Contact':'অভিভাবকের যোগাযোগের তথ্য',
+        'Permanent Home / Hometown':'স্থায়ী বাড়ি / নিজ এলাকা', 'Address Details':'ঠিকানার বিবরণ', 'No health profile information provided.':'স্বাস্থ্যসংক্রান্ত কোনো তথ্য দেওয়া হয়নি।',
+        'Severity:':'তীব্রতা:', 'Treatment:':'চিকিৎসা:', 'None / Not maintained':'নেই / পালন করা হয় না',
+        'Available':'উপলভ্য', 'Not Available':'উপলভ্য নয়', 'Large':'বড়',
+        'Service Holder':'চাকরিজীবী', 'Private Job':'বেসরকারি চাকরি', 'Government Job':'সরকারি চাকরি',
+        'Reserved':'স্বল্পভাষী', 's':'স্নাতকোত্তর', 'High School':'মাধ্যমিক',
+        'Higher Secondary':'উচ্চমাধ্যমিক', '5 ft':'৫ ফুট', 'Social Communication Medium':'সামাজিক যোগাযোগমাধ্যম',
+        'Social communication medium':'সামাজিক যোগাযোগমাধ্যম', 'Verified':'যাচাইকৃত', 'Status':'অবস্থা',
+        'Location':'ঠিকানা', 'Profile Completion':'প্রোফাইল সম্পূর্ণতা', 'profile steps completed':'টি প্রোফাইলের ধাপ সম্পন্ন হয়েছে',
+        'years old':'বছর বয়স', 'Mostly practicing':'বেশিরভাগ ক্ষেত্রে পালন করেন', 'Beard':'দাড়ি',
+        'Partially':'আংশিকভাবে', 's Degree':'স্নাতকোত্তর', '22 – 26 years':'২২ – ২৬ বছর',
+        '5 ft 5 in':'৫ ফুট ৫ ইঞ্চি', '5 ft 8 in':'৫ ফুট ৮ ইঞ্চি', 'Dhaka':'ঢাকা',
+        'Tangail':'টাঙ্গাইল', 'Moderate tea/coffee':'মাঝামাঝি', '40,000 / month':'৪০,০০০ / মাস',
+        '80,000 / month':'৮০,০০০ / মাস'
+    };
+    // Central, audited dropdown translations shared by all profile-value cards.
+    Object.assign(bn, <?= json_encode(sm_profile_value_translation_map(), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>);
+
+    function getLanguage() {
+        // The site's language switcher stores its choice in the sm_language cookie.
+        // Read it first so a generic HTML lang attribute cannot override the user's choice.
+        try {
+            const cookieMatch = document.cookie.match(/(?:^|;\s*)sm_language=(bn|en)(?:;|$)/i);
+            if (cookieMatch) return cookieMatch[1].toLowerCase();
+        } catch (e) {}
+        try {
+            for (const key of ['sm_language','language','lang','site_language','preferred_language']) {
+                const value = (localStorage.getItem(key) || '').toLowerCase();
+                if (value === 'bn' || value === 'en' || value.startsWith('bn-') || value.startsWith('en-')) return value.startsWith('bn') ? 'bn' : 'en';
+            }
+        } catch (e) {}
+        const bodyLang = document.body.getAttribute('data-language') || document.body.getAttribute('data-lang') || '';
+        if (bodyLang.toLowerCase().startsWith('bn')) return 'bn';
+        if (bodyLang.toLowerCase().startsWith('en')) return 'en';
+        const rootLang = (document.documentElement.lang || '').toLowerCase();
+        return rootLang.startsWith('bn') ? 'bn' : 'en';
+    }
+    function toEnglishDigits(value) {
+        return String(value).replace(/[০-৯]/g, function (digit) { return String('০১২৩৪৫৬৭৮৯'.indexOf(digit)); });
+    }
+    function applyLanguage() {
+        const useBn = getLanguage() === 'bn';
+        const root = document.querySelector('.profile-view-page') || document.body;
+        // Keep the photo-overlay verification badge in the same language as the hero badge.
+        // Use dedicated spans so the status and the word "Profile" are translated independently.
+        root.querySelectorAll('.profile-photo-badge').forEach(function (badge) {
+            const label = badge.querySelector('.profile-photo-badge-label');
+            const suffix = badge.querySelector('.profile-photo-badge-suffix');
+            if (!label || !suffix) return;
+            const status = (label.dataset.originalStatus || label.textContent.trim());
+            label.dataset.originalStatus = status;
+            const statusBn = { 'Verified': 'যাচাইকৃত', 'Pending': 'অপেক্ষমাণ', 'Rejected': 'প্রত্যাখ্যাত' };
+            label.textContent = useBn ? (statusBn[status] || status) : status;
+            suffix.textContent = useBn ? 'প্রোফাইল' : 'Profile';
+        });
+        const reverse = {};
+        Object.keys(bn).forEach(function (key) { if (!(bn[key] in reverse)) reverse[bn[key]] = key; });
+        const bnNormalized = {};
+        const enNormalized = {};
+        Object.keys(bn).forEach(function (key) { bnNormalized[key.trim().toLowerCase()] = bn[key]; });
+        Object.keys(reverse).forEach(function (key) { enNormalized[key.trim().toLowerCase()] = reverse[key]; });
+        function lookupLabel(map, normalizedMap, value) {
+            if (Object.prototype.hasOwnProperty.call(map, value)) return map[value];
+            const normalized = String(value).trim().toLowerCase();
+            return Object.prototype.hasOwnProperty.call(normalizedMap, normalized) ? normalizedMap[normalized] : null;
+        }
+        // Translate only elements intended to contain interface labels. Never walk profile-value fields,
+        // member-written answers, introductions, preference descriptions, or arbitrary <strong> data.
+        const selectors = [
+            'h1','h2','h3','h4','h5','h6','small','label','button','a','option',
+            '.profile-view-kicker','.profile-header-summary','.profile-photo-badge','.profile-verified',
+            '.profile-completion-mini-head span','.profile-completion-mini small',
+            '.profile-empty-state span','.detail-card-heading','.profile-quick-copy small','.preference-summary-grid > div > span',
+            '.detail-list > div > span','.health-summary-grid > div > span',
+            '.health-subheading','.health-wide > span','.interest-label',
+            '.preference-block-title','.profile-privacy-note > div > strong','.profile-qa-card-title',
+            '.privacy-drawer-kicker','.privacy-drawer-head p','.privacy-control-field small',
+            '.profile-detail-card > p','.profile-empty-state p','.profile-privacy-note p',
+            '.profile-preferences-card > p','.profile-media-card > p',
+            '.privacy-save-button','.profile-action.unavailable','.profile-action.state-pending',
+            '.profile-action.state-received','.profile-bookmark-label','.detail-wide > strong'
+        ];
+        const seen = new Set();
+        // Translate only whitelisted database enum/option values in structured information rows.
+        // Free-text fields (bio, notes, Q&A, family descriptions), names, email and phone are excluded.
+        const valueSelectors = [
+            '.detail-list > div:not(.detail-wide) > strong',
+            '.preference-summary-grid > div > strong',
+            '.profile-interest-tags .interest-tags span',
+            '.preference-tags span',
+            '.health-summary-grid > div > strong',
+            '.health-condition-item > span',
+            '.detail-wide > strong',
+            '.profile-quick-info .profile-quick-item strong',
+            '.profile-privacy-note > div > strong'
+        ];
+        root.querySelectorAll(valueSelectors.join(',')).forEach(function (el) {
+            if (el.closest('.profile-about-content, .profile-qa-item, .profile-quick-copy[data-personal], .health-wide')) return;
+            const original = el.textContent.trim();
+            if (!original) return;
+            let translated = original;
+            // Dynamic values are transformed by pattern, not by hard-coded numeric examples.
+            // This covers any monthly income amount and keeps user-entered names/free text untouched.
+            const incomeBn = original.match(/^([0-9০-৯][0-9০-৯,]*(?:\.[0-9০-৯]+)?)\s*\/\s*month$/i);
+            const incomeEn = original.match(/^([0-9০-৯][0-9০-৯,]*(?:\.[0-9০-৯]+)?)\s*\/\s*মাস$/i);
+            if (useBn && incomeBn) {
+                translated = incomeBn[1].replace(/[0-9]/g, function (d) { return '০১২৩৪৫৬৭৮৯'[Number(d)]; }) + ' / মাস';
+            } else if (!useBn && incomeEn) {
+                translated = incomeEn[1].replace(/[০-৯]/g, function (d) { return String('০১২৩৪৫৬৭৮৯'.indexOf(d)); }) + ' / month';
+            } else if (useBn) { const label = lookupLabel(bn, bnNormalized, original); if (label !== null) translated = label; }
+            else { const label = lookupLabel(reverse, enNormalized, original); if (label !== null) translated = label; }
+            if (translated !== original) el.textContent = translated;
+            else if (useBn) {
+                const age = original.match(/^(\d+) years?$/i);
+                if (age) el.textContent = age[1] + ' বছর';
+                const weight = original.match(/^(\d+(?:\.\d+)?) kg$/i);
+                if (weight) el.textContent = weight[1] + ' কেজি';
+                const height = original.match(/^(\d+) ft (\d+) in(?:ch(?:es)?)?$/i);
+                if (height) el.textContent = height[1] + ' ফুট ' + height[2] + ' ইঞ্চি';
+                const ageRange = original.match(/^(\d+)\s*[–-]\s*(\d+) years?$/i);
+                if (ageRange) el.textContent = ageRange[1] + ' – ' + ageRange[2] + ' বছর';
+                const heightRange = original.match(/^(\d+) ft (\d+) in\s*[–-]\s*(\d+) ft (\d+) in$/i);
+                if (heightRange) el.textContent = heightRange[1] + ' ফুট ' + heightRange[2] + ' ইঞ্চি – ' + heightRange[3] + ' ফুট ' + heightRange[4] + ' ইঞ্চি';
+            } else {
+                const age = original.match(/^(\d+) বছর$/);
+                if (age) el.textContent = age[1] + ' years';
+                const weight = original.match(/^(\d+(?:\.\d+)?) কেজি$/);
+                if (weight) el.textContent = weight[1] + ' kg';
+                const height = original.match(/^(\d+) ফুট (\d+) ইঞ্চি$/);
+                if (height) el.textContent = height[1] + ' ft ' + height[2] + ' in';
+                const ageRange = original.match(/^(\d+)\s*[–-]\s*(\d+) বছর$/);
+                if (ageRange) el.textContent = ageRange[1] + ' – ' + ageRange[2] + ' years';
+                const heightRange = original.match(/^(\d+) ফুট (\d+) ইঞ্চি\s*[–-]\s*(\d+) ফুট (\d+) ইঞ্চি$/);
+                if (heightRange) el.textContent = heightRange[1] + ' ft ' + heightRange[2] + ' in – ' + heightRange[3] + ' ft ' + heightRange[4] + ' in';
+            }
+        });
+        // Location names use the database's actual Bangla labels; user-entered free text stays untouched.
+        root.querySelectorAll('[data-location-en][data-location-bn]').forEach(function (el) {
+            el.textContent = useBn ? el.getAttribute('data-location-bn') : el.getAttribute('data-location-en');
+        });
+        // Convert digits only in generated numeric UI fields. Never convert public ID, phone numbers,
+        // member-written family details, Q&A answers, names, or other free-text values.
+        function toBanglaDigits(value) {
+            return String(value).replace(/[0-9]/g, function (digit) { return '০১২৩৪৫৬৭৮৯'[Number(digit)]; });
+        }
+        if (useBn) {
+            root.querySelectorAll('.profile-header-summary, .profile-completion-mini-head strong, .profile-completion-mini small, .detail-list > div > span + strong, .preference-summary-grid > div > strong').forEach(function (el) {
+                if (el.closest('.profile-qa-item, .health-condition-item')) return;
+                const rowLabel = el.parentElement && el.parentElement.querySelector(':scope > span');
+                const labelText = rowLabel ? rowLabel.textContent.trim() : '';
+                const isCount = ['ভাই','বোন','চাচা','ফুফু','Brothers','Sisters','Paternal Uncles','Paternal Aunts'].includes(labelText);
+                const isGeneratedNumeric = el.matches('.profile-header-summary, .profile-completion-mini-head strong, .profile-completion-mini small')
+                    || isCount || ['বয়স','উচ্চতা','ওজন','Age','Height','Weight'].includes(labelText)
+                    || ['বয়সের সীমা','উচ্চতার সীমা','ওজনের সীমা','Age Range','Height Range','Weight Range'].includes(labelText)
+                    || ['সর্বনিম্ন আয়','Minimum Income'].includes(labelText);
+                if (!isGeneratedNumeric) return;
+                let value = el.textContent;
+                value = value.replace(/\bkg\b/gi, 'কেজি');
+                el.textContent = toBanglaDigits(value);
+            });
+            // Keep weight range unit localized and numeric values in Bangla digits.
+            root.querySelectorAll('.preference-summary-grid > div').forEach(function (row) {
+                const label = row.querySelector(':scope > span');
+                const value = row.querySelector(':scope > strong');
+                if (label && value && ['ওজনের সীমা','Weight Range'].includes(label.textContent.trim())) {
+                    value.textContent = toBanglaDigits(value.textContent.replace(/\bkg\b/gi, 'কেজি'));
+                }
+            });
+        }
+        // The public profile ID is always Latin/English digits, independent of the selected language.
+        const publicId = root.querySelector('.profile-view-id');
+        if (publicId) publicId.textContent = 'SM-' + String(publicId.textContent).replace(/\D/g, '').replace(/[০-৯]/g, function (digit) { return '০১২৩৪৫৬৭৮৯'.indexOf(digit); }).padStart(6, '0');
+        root.querySelectorAll(selectors.join(',')).forEach(function (el) {
+            if (el.closest('.profile-qa-item, .health-condition-item, .profile-about-content')) return;
+            // For compound controls/headings, translate eligible text nodes only, not nested data values.
+            const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+            const nodes = [];
+            while (walker.nextNode()) {
+                const node = walker.currentNode;
+                if (node.parentElement && node.parentElement.closest('strong, .profile-qa-number, i, svg, script, style')) continue;
+                nodes.push(node);
+            }
+            nodes.forEach(function (node) {
+                if (seen.has(node)) return;
+                seen.add(node);
+                const original = node.nodeValue;
+                const trimmed = original.trim();
+                if (!trimmed) return;
+                let translated = trimmed;
+                if (useBn) { const label = lookupLabel(bn, bnNormalized, trimmed); if (label !== null) translated = label; }
+                else { const label = lookupLabel(reverse, enNormalized, trimmed); if (label !== null) translated = label; }
+                if (translated !== trimmed) node.nodeValue = original.replace(trimmed, translated);
+            });
+        });
+        // Translate the hero summary's fixed-format age/religion/marital-status line.
+        const heroSummary = root.querySelector('.profile-header-summary');
+        if (heroSummary) {
+            const raw = heroSummary.textContent.trim();
+            const parts = raw.split(/\s*·\s*/);
+            if (useBn) {
+                heroSummary.textContent = parts.map(function (part) {
+                    const age = part.match(/^([0-9০-৯]+) years old$/i);
+                    if (age) return toBanglaDigits(age[1]) + ' বছর বয়স';
+                    return Object.prototype.hasOwnProperty.call(bn, part) ? bn[part] : part;
+                }).join(' · ');
+            } else {
+                heroSummary.textContent = parts.map(function (part) {
+                    const age = part.match(/^([0-9০-৯]+) বছর বয়স$/);
+                    if (age) return toEnglishDigits(age[1]) + ' years old';
+                    return Object.prototype.hasOwnProperty.call(reverse, part) ? reverse[part] : part;
+                }).join(' · ');
+            }
+        }
+        // Translate the dynamic completion count while preserving the numeric progress.
+        const completionText = root.querySelector('.profile-completion-mini small');
+        if (completionText) {
+            const match = completionText.textContent.trim().match(/^(\d+) of (\d+) profile steps completed$/i);
+            const bnMatch = completionText.textContent.trim().match(/^(\d+)\s*\/\s*(\d+)টি প্রোফাইলের ধাপ সম্পন্ন হয়েছে$/);
+            if (useBn && match) completionText.textContent = match[1] + ' / ' + match[2] + 'টি প্রোফাইলের ধাপ সম্পন্ন হয়েছে';
+            else if (!useBn && bnMatch) completionText.textContent = bnMatch[1] + ' of ' + bnMatch[2] + ' profile steps completed';
+        }
+        root.querySelectorAll('[aria-label]').forEach(function (el) {
+            const val = el.getAttribute('aria-label');
+            if (useBn && Object.prototype.hasOwnProperty.call(bn, val)) el.setAttribute('aria-label', bn[val]);
+            else if (!useBn && Object.prototype.hasOwnProperty.call(reverse, val)) el.setAttribute('aria-label', reverse[val]);
+        });
+        // Privacy save feedback is inserted asynchronously by the existing request handler.
+        const status = root.querySelector('#privacySaveStatus');
+        if (status && status.textContent.trim()) {
+            const value = status.textContent.trim();
+            if (useBn && bn[value]) status.textContent = bn[value];
+            else if (!useBn && reverse[value]) status.textContent = reverse[value];
+        }
+    }
+    applyLanguage();
+    document.addEventListener('languageChanged', applyLanguage);
+    document.addEventListener('DOMContentLoaded', applyLanguage);
+    window.addEventListener('storage', applyLanguage);
+    const statusNode = document.getElementById('privacySaveStatus');
+    if (statusNode && window.MutationObserver) new MutationObserver(applyLanguage).observe(statusNode, { childList: true, characterData: true, subtree: true });
+}());
+</script>
 
 <?php include '../includes/footer.php'; ?>

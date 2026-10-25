@@ -89,8 +89,8 @@ include 'includes/navbar.php';
                 <div class="password-reset-icon"><i class="fa-solid fa-shield-halved"></i></div>
                 <div class="password-reset-heading">
                     <span class="password-reset-eyebrow">VERIFY YOUR EMAIL</span>
-                    <h1>Enter Verification Code</h1>
-                    <p>We sent a 6-digit code to <strong><?= htmlspecialchars($email) ?></strong>. The code is valid for 2 minutes.</p>
+                    <h1><?= sm_text('Enter Verification Code', 'যাচাইকরণ কোড লিখো'); ?></h1>
+                    <p><?= sm_text('We sent a 6-digit code to', 'আমরা ৬ সংখ্যার কোড পাঠিয়েছি'); ?> <strong><?= htmlspecialchars($email) ?></strong>. The code is valid for 2 minutes.</p>
                 </div>
 
                 <?php if ($error): ?>
@@ -101,7 +101,7 @@ include 'includes/navbar.php';
                 <?php endif; ?>
 
                 <form method="POST" class="password-reset-form otp-form" novalidate>
-                    <label for="reset_code">Verification Code</label>
+                    <label for="reset_code"><?= sm_text('Verification Code', 'যাচাইকরণ কোড'); ?></label>
                     <div class="reset-input-wrap otp-input-wrap">
                         <i class="fa-solid fa-hashtag"></i>
                         <input
@@ -111,7 +111,7 @@ include 'includes/navbar.php';
                             inputmode="numeric"
                             pattern="[0-9]{6}"
                             maxlength="6"
-                            placeholder="Enter 6-digit code"
+                            placeholder="<?= sm_text('Enter 6-digit code', '৬ সংখ্যার কোড লিখো'); ?>"
                             autocomplete="one-time-code"
                             required
                             autofocus
@@ -120,14 +120,14 @@ include 'includes/navbar.php';
 
                     <button type="submit" class="reset-primary-btn">
                         <i class="fa-solid fa-circle-check"></i>
-                        Verify Code
+                        <?= sm_text('Verify Code', 'কোড যাচাই করুন'); ?>
                     </button>
                 </form>
 
                 <div class="reset-secondary-actions">
-                    <a href="forgot_password.php">Request a New Code</a>
+                    <a href="forgot_password.php"><?= sm_text('Request a New Code', 'নতুন কোডের অনুরোধ করুন'); ?></a>
                     <span>•</span>
-                    <a href="login.php">Back to Login</a>
+                    <a href="login.php"><?= sm_text('Back to Login', 'লগইনে ফিরে যাও'); ?></a>
                 </div>
             </div>
         </div>

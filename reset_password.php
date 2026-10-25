@@ -91,9 +91,9 @@ include 'includes/navbar.php';
             <div class="password-reset-card">
                 <div class="password-reset-icon"><i class="fa-solid fa-lock"></i></div>
                 <div class="password-reset-heading">
-                    <span class="password-reset-eyebrow">SECURE YOUR ACCOUNT</span>
-                    <h1>Set New Password</h1>
-                    <p>Create a new password for your Smart Matrimony account using the same security requirements as registration.</p>
+                    <span class="password-reset-eyebrow"><?= sm_text('SECURE YOUR ACCOUNT', 'আপনার অ্যাকাউন্ট সুরক্ষিত করুন'); ?></span>
+                    <h1><?= sm_text('Set New Password', 'নতুন পাসওয়ার্ড সেট করো'); ?></h1>
+                    <p><?= sm_text('Create a new password for your Smart Matrimony account using the same security requirements as registration.', 'নিবন্ধনের সময়ের একই নিরাপত্তার শর্ত মেনে আপনার স্মার্ট ম্যাট্রিমনি অ্যাকাউন্টের জন্য নতুন পাসওয়ার্ড তৈরি করুন।'); ?></p>
                 </div>
 
                 <?php if ($error): ?>
@@ -110,29 +110,29 @@ include 'includes/navbar.php';
                     </div>
                     <a href="login.php" class="reset-primary-btn reset-success-link">
                         <i class="fa-solid fa-right-to-bracket"></i>
-                        Go to Login
+                        <?= sm_text('Go to Login', 'লগইনে যান'); ?>
                     </a>
                 <?php else: ?>
                     <form method="POST" class="password-reset-form" id="resetPasswordForm" novalidate>
-                        <label for="new_password">New Password</label>
+                        <label for="new_password"><?= sm_text('New Password', 'নতুন পাসওয়ার্ড'); ?></label>
                         <div class="reset-input-wrap reset-password-wrap">
                             <i class="fa-solid fa-lock"></i>
-                            <input type="password" id="new_password" name="password" placeholder="Enter your new password" autocomplete="new-password" required>
+                            <input type="password" id="new_password" name="password" placeholder="<?= sm_text('Enter your new password', 'নতুন পাসওয়ার্ড লিখো'); ?>" autocomplete="new-password" required>
                             <button type="button" class="reset-password-toggle" data-target="new_password" aria-label="Show password"><i class="fa-regular fa-eye"></i></button>
                         </div>
 
                         <div class="reset-requirements">
-                            <span data-rule="length"><i class="fa-solid fa-circle"></i> 8+ characters</span>
-                            <span data-rule="upper"><i class="fa-solid fa-circle"></i> One uppercase letter</span>
-                            <span data-rule="lower"><i class="fa-solid fa-circle"></i> One lowercase letter</span>
-                            <span data-rule="number"><i class="fa-solid fa-circle"></i> One number</span>
-                            <span data-rule="special"><i class="fa-solid fa-circle"></i> One special character</span>
+                            <span data-rule="length"><i class="fa-solid fa-circle"></i> <?= sm_text('8+ characters', 'কমপক্ষে ৮টি অক্ষর'); ?></span>
+                            <span data-rule="upper"><i class="fa-solid fa-circle"></i> <?= sm_text('One uppercase letter', 'কমপক্ষে একটি বড় হাতের ইংরেজি অক্ষর'); ?></span>
+                            <span data-rule="lower"><i class="fa-solid fa-circle"></i> <?= sm_text('One lowercase letter', 'কমপক্ষে একটি ছোট হাতের ইংরেজি অক্ষর'); ?></span>
+                            <span data-rule="number"><i class="fa-solid fa-circle"></i> <?= sm_text('One number', 'কমপক্ষে একটি সংখ্যা'); ?></span>
+                            <span data-rule="special"><i class="fa-solid fa-circle"></i> <?= sm_text('One special character', 'কমপক্ষে একটি বিশেষ চিহ্ন'); ?></span>
                         </div>
 
-                        <label for="confirm_password">Confirm New Password</label>
+                        <label for="confirm_password"><?= sm_text('Confirm New Password', 'নতুন পাসওয়ার্ড নিশ্চিত করুন'); ?></label>
                         <div class="reset-input-wrap reset-password-wrap">
                             <i class="fa-solid fa-lock"></i>
-                            <input type="password" id="confirm_password" name="confirm_password" placeholder="Confirm your new password" autocomplete="new-password" required>
+                            <input type="password" id="confirm_password" name="confirm_password" placeholder="<?= sm_text('Confirm your new password', 'নতুন পাসওয়ার্ড নিশ্চিত করো'); ?>" autocomplete="new-password" required>
                             <button type="button" class="reset-password-toggle" data-target="confirm_password" aria-label="Show password"><i class="fa-regular fa-eye"></i></button>
                         </div>
 
@@ -140,7 +140,7 @@ include 'includes/navbar.php';
 
                         <button type="submit" class="reset-primary-btn">
                             <i class="fa-solid fa-key"></i>
-                            Update Password
+                            <?= sm_text('Update Password', 'পাসওয়ার্ড আপডেট করুন'); ?>
                         </button>
                     </form>
                 <?php endif; ?>

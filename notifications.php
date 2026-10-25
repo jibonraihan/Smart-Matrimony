@@ -1,4 +1,5 @@
 <?php
+require_once 'includes/language.php';
 $page_css = 'assets/css/dashboard.css';
 require_once 'config/db.php';
 require_once 'includes/functions.php';
@@ -6,13 +7,24 @@ if (session_status() === PHP_SESSION_NONE) { session_start(); }
 if (!isset($_SESSION['user_id'])) { header('Location: login.php'); exit; }
 $user_id = (int) $_SESSION['user_id'];
 
+// Each account controls its own notification visibility.
+mysqli_query($conn, "CREATE TABLE IF NOT EXISTS user_notification_preferences (
+    user_id INT(11) NOT NULL,
+    notifications_enabled TINYINT(1) NOT NULL DEFAULT 1,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (user_id),
+    CONSTRAINT fk_user_notification_preferences_user FOREIGN KEY (user_id) REFERENCES users (user_id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci");
 $notifications_enabled = true;
-$notification_settings_result = mysqli_query($conn, "SELECT notifications_enabled FROM notification_settings WHERE setting_id = 1 LIMIT 1");
-if ($notification_settings_result) {
-    $notification_settings_row = mysqli_fetch_assoc($notification_settings_result);
-    if ($notification_settings_row !== null) {
-        $notifications_enabled = ((int) ($notification_settings_row['notifications_enabled'] ?? 1)) === 1;
+$notification_preference_stmt = mysqli_prepare($conn, 'SELECT notifications_enabled FROM user_notification_preferences WHERE user_id = ? LIMIT 1');
+if ($notification_preference_stmt) {
+    mysqli_stmt_bind_param($notification_preference_stmt, 'i', $user_id);
+    mysqli_stmt_execute($notification_preference_stmt);
+    $notification_preference_row = mysqli_fetch_assoc(mysqli_stmt_get_result($notification_preference_stmt));
+    if ($notification_preference_row !== null) {
+        $notifications_enabled = ((int) ($notification_preference_row['notifications_enabled'] ?? 1)) === 1;
     }
+    mysqli_stmt_close($notification_preference_stmt);
 }
 
 $stmt = mysqli_prepare($conn, "SELECT u.user_id, u.first_name, u.last_name, u.gender, u.email, u.mobile, u.role, up.photo FROM users u LEFT JOIN user_profiles up ON up.user_id=u.user_id WHERE u.user_id=? LIMIT 1");
@@ -38,7 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['notification_action']
     $posted_csrf=(string)($_POST['notification_csrf']??'');
     $action=(string)($_POST['notification_action']??'');
     if (!$notifications_enabled) {
-        $_SESSION['notification_flash']='Notifications are currently OFF for everyone.';
+        $_SESSION['notification_flash']='Your notifications are currently OFF. You can turn them back on in Settings.';
         header('Location: '.BASE_URL.'notifications.php'); exit;
     }
     $message_id=(int)($_POST['message_id']??0);
@@ -115,19 +127,19 @@ include 'includes/header.php';
     <main>
         <section class="notifications-page-section">
             <div class="dashboard-container notifications-content-container">
-                <a href="<?= BASE_URL; ?>dashboard.php" class="notifications-back-button"><i class="fa-solid fa-arrow-left"></i><span>Back to Dashboard</span></a>
+                <a href="<?= BASE_URL; ?>dashboard.php" class="notifications-back-button"><i class="fa-solid fa-arrow-left"></i><span><?= sm_text('Back to Dashboard', 'ড্যাশবোর্ডে ফিরুন') ?></span></a>
                 <div class="notifications-hero">
                     <div class="notifications-hero-icon"><i class="fa-solid fa-bell"></i></div>
                     <div>
-                        <span class="section-kicker">NOTIFICATION CENTER</span>
-                        <h1>Notifications</h1>
-                        <p>Messages and important notices from the Smart Matrimony team.</p>
+                        <span class="section-kicker"><?= sm_text('NOTIFICATION CENTER', 'নোটিফিকেশন কেন্দ্র') ?></span>
+                        <h1><?= sm_text('Notifications', 'নোটিফিকেশন') ?></h1>
+                        <p><?= sm_text('Messages and important notices from the Smart Matrimony team.', 'স্মার্ট ম্যাট্রিমনি টিমের বার্তা ও গুরুত্বপূর্ণ বিজ্ঞপ্তি।') ?></p>
                     </div>
                     <div class="notifications-hero-count">
                         <?php if ($total_unread_count > 0): ?>
-                            <strong><?= number_format($total_unread_count); ?></strong><span>unread</span>
+                            <strong><?= number_format($total_unread_count); ?></strong><span><?= sm_text('unread', 'অপঠিত') ?></span>
                         <?php else: ?>
-                            <strong>0</strong><span>unread</span>
+                            <strong>0</strong><span><?= sm_text('unread', 'অপঠিত') ?></span>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -135,23 +147,23 @@ include 'includes/header.php';
                 <?php if ($notifications_enabled): ?>
                 <div class="notifications-toolbar">
                     <div class="notifications-filter-tabs" role="tablist" aria-label="Notification sources">
-                        <button type="button" class="notification-filter is-active" data-notification-filter="all">All</button>
-                        <button type="button" class="notification-filter" data-notification-filter="authenticator">Authenticator</button>
-                        <button type="button" class="notification-filter" data-notification-filter="admin">Admin</button>
+                        <button type="button" class="notification-filter is-active" data-notification-filter="all"><?= sm_text('All', 'সব') ?></button>
+                        <button type="button" class="notification-filter" data-notification-filter="authenticator"><?= sm_text('Authenticator', 'ভেরিফিকেশন কর্মকর্তা') ?></button>
+                        <button type="button" class="notification-filter" data-notification-filter="admin"><?= sm_text('Admin', 'অ্যাডমিন') ?></button>
                     </div>
                     <div class="notifications-toolbar-actions">
-                        <button type="button" class="notification-select-all" id="notification-select-all"><i class="fa-regular fa-square"></i> Select all</button>
+                        <button type="button" class="notification-select-all" id="notification-select-all"><i class="fa-regular fa-square"></i> <?= sm_text('Select all', 'সব নির্বাচন করুন') ?></button>
                         <form method="post" class="notifications-inline-form" id="notification-delete-form">
                             <input type="hidden" name="notification_csrf" value="<?= htmlspecialchars($notification_csrf); ?>">
                             <input type="hidden" name="notification_action" value="delete_messages">
                             <div id="notification-delete-inputs"></div>
-                            <button type="submit" class="notification-delete-selected" id="notification-delete-selected" disabled><i class="fa-regular fa-trash-can"></i> Delete selected</button>
+                            <button type="submit" class="notification-delete-selected" id="notification-delete-selected" disabled><i class="fa-regular fa-trash-can"></i> <?= sm_text('Delete selected', 'নির্বাচিতগুলো মুছুন') ?></button>
                         </form>
                     <?php if ($authenticator_unread_count > 0): ?>
                         <form method="post" class="notifications-inline-form">
                             <input type="hidden" name="notification_csrf" value="<?= htmlspecialchars($notification_csrf); ?>">
                             <input type="hidden" name="notification_action" value="mark_all_read">
-                            <button type="submit" class="notification-mark-all"><i class="fa-solid fa-check-double"></i> Mark all as read</button>
+                            <button type="submit" class="notification-mark-all"><i class="fa-solid fa-check-double"></i> <?= sm_text('Mark all as read', 'সব পঠিত হিসেবে চিহ্নিত করুন') ?></button>
                         </form>
                     <?php endif; ?>
                 </div>
@@ -164,27 +176,27 @@ include 'includes/header.php';
                     <div class="notification-source-heading">
                         <div>
                             <span class="notification-source-icon"><i class="fa-solid fa-user-check"></i></span>
-                            <div><span class="section-kicker">VERIFICATION TEAM</span><h2 id="authenticatorNotificationsTitle">Authenticator</h2><p>Private messages and profile-verification notices sent by an Authenticator.</p></div>
+                            <div><span class="section-kicker"><?= sm_text('VERIFICATION TEAM', 'ভেরিফিকেশন টিম') ?></span><h2 id="authenticatorNotificationsTitle"><?= sm_text('Authenticator', 'ভেরিফিকেশন কর্মকর্তা') ?></h2><p><?= sm_text('Private messages and profile-verification notices sent by an Authenticator.', 'ভেরিফিকেশন কর্মকর্তার পাঠানো ব্যক্তিগত বার্তা ও প্রোফাইল যাচাইয়ের বিজ্ঞপ্তি।') ?></p></div>
                         </div>
-                        <?php if ($authenticator_unread_count > 0): ?><span class="notification-source-badge"><?= number_format($authenticator_unread_count); ?> unread</span><?php endif; ?>
+                        <?php if ($authenticator_unread_count > 0): ?><span class="notification-source-badge"><?= number_format($authenticator_unread_count); ?> <?= sm_text('unread', 'অপঠিত') ?></span><?php endif; ?>
                     </div>
 
                     <?php if (!$authenticator_messages): ?>
-                        <div class="notification-empty"><div class="notification-empty-icon"><i class="fa-regular fa-bell-slash"></i></div><div><strong>No notifications yet</strong><p>Important messages from an Authenticator will appear here when they are sent to you.</p></div></div>
+                        <div class="notification-empty"><div class="notification-empty-icon"><i class="fa-regular fa-bell-slash"></i></div><div><strong><?= sm_text('No notifications yet', 'এখনো কোনো নোটিফিকেশন নেই') ?></strong><p><?= sm_text('Important messages from an Authenticator will appear here when they are sent to you.', 'ভেরিফিকেশন কর্মকর্তা আপনাকে বার্তা পাঠালে এখানে দেখা যাবে।') ?></p></div></div>
                     <?php else: ?>
                         <div class="notification-list">
-                            <?php foreach ($authenticator_messages as $auth_message): $message_unread = ($auth_message['status'] ?? '') === 'Unread'; $sender_name = trim(($auth_message['sender_first_name'] ?? '') . ' ' . ($auth_message['sender_last_name'] ?? '')) ?: 'Authenticator'; ?>
+                            <?php foreach ($authenticator_messages as $auth_message): $message_unread = ($auth_message['status'] ?? '') === 'Unread'; $sender_name = trim(($auth_message['sender_first_name'] ?? '') . ' ' . ($auth_message['sender_last_name'] ?? '')) ?: sm_text('Authenticator', 'ভেরিফিকেশন কর্মকর্তা'); ?>
                                 <article class="notification-card <?= $message_unread ? 'is-unread' : ''; ?>" data-notification-card="authenticator">
-                                    <label class="notification-select-box" title="Select notification"><input type="checkbox" class="notification-checkbox" value="authenticator:<?= (int) $auth_message['message_id']; ?>" data-notification-checkbox><span></span></label>
+                                    <label class="notification-select-box" title="নোটিফিকেশন নির্বাচন করুন"><input type="checkbox" class="notification-checkbox" value="authenticator:<?= (int) $auth_message['message_id']; ?>" data-notification-checkbox><span></span></label>
                                     <div class="notification-card-icon"><i class="fa-solid <?= $message_unread ? 'fa-envelope' : 'fa-envelope-open'; ?>"></i></div>
                                     <div class="notification-card-content">
-                                        <div class="notification-card-topline"><div><strong><?= htmlspecialchars($sender_name); ?></strong><?php if ($message_unread): ?><span class="notification-new-pill">NEW</span><?php endif; ?></div><time><?= htmlspecialchars(date('d M Y, h:i A', strtotime($auth_message['created_at']))); ?></time></div>
+                                        <div class="notification-card-topline"><div><strong><?= htmlspecialchars($sender_name); ?></strong><?php if ($message_unread): ?><span class="notification-new-pill"><?= sm_text('NEW', 'নতুন') ?></span><?php endif; ?></div><time><?= htmlspecialchars(date('d M Y, h:i A', strtotime($auth_message['created_at']))); ?></time></div>
                                         <p><?= nl2br(htmlspecialchars($auth_message['message'])); ?></p>
                                         <div class="notification-card-actions">
                                             <?php if ($message_unread): ?>
-                                                <form method="post" class="notifications-inline-form"><input type="hidden" name="notification_csrf" value="<?= htmlspecialchars($notification_csrf); ?>"><input type="hidden" name="notification_action" value="mark_read"><input type="hidden" name="message_id" value="<?= (int) $auth_message['message_id']; ?>"><input type="hidden" name="message_source" value="authenticator"><button type="submit" class="notification-mark-read"><i class="fa-solid fa-check"></i> Mark as read</button></form>
+                                                <form method="post" class="notifications-inline-form"><input type="hidden" name="notification_csrf" value="<?= htmlspecialchars($notification_csrf); ?>"><input type="hidden" name="notification_action" value="mark_read"><input type="hidden" name="message_id" value="<?= (int) $auth_message['message_id']; ?>"><input type="hidden" name="message_source" value="authenticator"><button type="submit" class="notification-mark-read"><i class="fa-solid fa-check"></i> <?= sm_text('Mark as read', 'পঠিত হিসেবে চিহ্নিত করুন') ?></button></form>
                                             <?php else: ?>
-                                                <span class="notification-read-label"><i class="fa-solid fa-check-double"></i> Read</span>
+                                                <span class="notification-read-label"><i class="fa-solid fa-check-double"></i> <?= sm_text('Read', 'পঠিত') ?></span>
                                             <?php endif; ?>
                                         </div>
                                     </div>
@@ -196,18 +208,18 @@ include 'includes/header.php';
 
                 <section class="notification-source-section" data-notification-source="admin" aria-labelledby="adminNotificationsTitle">
                     <div class="notification-source-heading">
-                        <div><span class="notification-source-icon"><i class="fa-solid fa-shield-halved"></i></span><div><span class="section-kicker">ADMINISTRATION</span><h2 id="adminNotificationsTitle">Admin</h2><p>Private messages and important account notices sent by the Smart Matrimony Admin team.</p></div></div>
-                        <?php if ($admin_unread_count > 0): ?><span class="notification-source-badge"><?= number_format($admin_unread_count); ?> unread</span><?php endif; ?>
+                        <div><span class="notification-source-icon"><i class="fa-solid fa-shield-halved"></i></span><div><span class="section-kicker"><?= sm_text('ADMINISTRATION', 'প্রশাসন') ?></span><h2 id="adminNotificationsTitle"><?= sm_text('Admin', 'অ্যাডমিন') ?></h2><p><?= sm_text('Private messages and important account notices sent by the Smart Matrimony Admin team.', 'স্মার্ট ম্যাট্রিমনি অ্যাডমিন টিমের ব্যক্তিগত বার্তা ও গুরুত্বপূর্ণ অ্যাকাউন্ট বিজ্ঞপ্তি।') ?></p></div></div>
+                        <?php if ($admin_unread_count > 0): ?><span class="notification-source-badge"><?= number_format($admin_unread_count); ?> <?= sm_text('unread', 'অপঠিত') ?></span><?php endif; ?>
                     </div>
                     <?php if (!$admin_messages): ?>
-                        <div class="notification-empty"><div class="notification-empty-icon"><i class="fa-regular fa-bell-slash"></i></div><div><strong>No Admin messages yet</strong><p>Private messages from the Admin team will appear here when they are sent to you.</p></div></div>
+                        <div class="notification-empty"><div class="notification-empty-icon"><i class="fa-regular fa-bell-slash"></i></div><div><strong><?= sm_text('No Admin messages yet', 'এখনো কোনো অ্যাডমিন বার্তা নেই') ?></strong><p><?= sm_text('Private messages from the Admin team will appear here when they are sent to you.', 'অ্যাডমিন টিম আপনাকে বার্তা পাঠালে এখানে দেখা যাবে।') ?></p></div></div>
                     <?php else: ?>
                         <div class="notification-list">
-                            <?php foreach ($admin_messages as $admin_message): $message_unread=($admin_message['status']??'')==='Unread'; $sender_name=trim(($admin_message['sender_first_name']??'').' '.($admin_message['sender_last_name']??''))?:'Admin'; $selection_value='admin:'.(int)$admin_message['message_id']; ?>
+                            <?php foreach ($admin_messages as $admin_message): $message_unread=($admin_message['status']??'')==='Unread'; $sender_name=trim(($admin_message['sender_first_name']??'').' '.($admin_message['sender_last_name']??''))?:sm_text('Admin', 'অ্যাডমিন'); $selection_value='admin:'.(int)$admin_message['message_id']; ?>
                                 <article class="notification-card <?= $message_unread?'is-unread':''; ?>" data-notification-card="admin">
-                                    <label class="notification-select-box" title="Select notification"><input type="checkbox" class="notification-checkbox" value="<?= htmlspecialchars($selection_value); ?>" data-notification-checkbox><span></span></label>
+                                    <label class="notification-select-box" title="নোটিফিকেশন নির্বাচন করুন"><input type="checkbox" class="notification-checkbox" value="<?= htmlspecialchars($selection_value); ?>" data-notification-checkbox><span></span></label>
                                     <div class="notification-card-icon"><i class="fa-solid <?= $message_unread?'fa-envelope':'fa-envelope-open'; ?>"></i></div>
-                                    <div class="notification-card-content"><div class="notification-card-topline"><div><strong><?= htmlspecialchars($sender_name); ?></strong><?php if($message_unread): ?><span class="notification-new-pill">NEW</span><?php endif; ?></div><time><?= htmlspecialchars(date('d M Y, h:i A',strtotime($admin_message['created_at']))); ?></time></div><p><?= nl2br(htmlspecialchars($admin_message['message'])); ?></p><div class="notification-card-actions"><?php if($message_unread): ?><form method="post" class="notifications-inline-form"><input type="hidden" name="notification_csrf" value="<?= htmlspecialchars($notification_csrf); ?>"><input type="hidden" name="notification_action" value="mark_read"><input type="hidden" name="message_id" value="<?= (int)$admin_message['message_id']; ?>"><input type="hidden" name="message_source" value="admin"><button type="submit" class="notification-mark-read"><i class="fa-solid fa-check"></i> Mark as read</button></form><?php else: ?><span class="notification-read-label"><i class="fa-solid fa-check-double"></i> Read</span><?php endif; ?></div></div>
+                                    <div class="notification-card-content"><div class="notification-card-topline"><div><strong><?= htmlspecialchars($sender_name); ?></strong><?php if($message_unread): ?><span class="notification-new-pill"><?= sm_text('NEW', 'নতুন') ?></span><?php endif; ?></div><time><?= htmlspecialchars(date('d M Y, h:i A',strtotime($admin_message['created_at']))); ?></time></div><p><?= nl2br(htmlspecialchars($admin_message['message'])); ?></p><div class="notification-card-actions"><?php if($message_unread): ?><form method="post" class="notifications-inline-form"><input type="hidden" name="notification_csrf" value="<?= htmlspecialchars($notification_csrf); ?>"><input type="hidden" name="notification_action" value="mark_read"><input type="hidden" name="message_id" value="<?= (int)$admin_message['message_id']; ?>"><input type="hidden" name="message_source" value="admin"><button type="submit" class="notification-mark-read"><i class="fa-solid fa-check"></i> <?= sm_text('Mark as read', 'পঠিত হিসেবে চিহ্নিত করুন') ?></button></form><?php else: ?><span class="notification-read-label"><i class="fa-solid fa-check-double"></i> <?= sm_text('Read', 'পঠিত') ?></span><?php endif; ?></div></div>
                                 </article>
                             <?php endforeach; ?>
                         </div>
@@ -217,8 +229,8 @@ include 'includes/header.php';
                     <div class="notifications-disabled-notice" role="status">
                         <div class="notifications-disabled-icon"><i class="fa-solid fa-bell-slash"></i></div>
                         <div>
-                            <strong>Notifications are currently OFF</strong>
-                            <p>The notification system is disabled for everyone right now. Existing notification records are kept and will be available again when notifications are turned ON.</p>
+                            <strong><?= sm_text('Notifications are currently OFF', 'নোটিফিকেশন বর্তমানে বন্ধ') ?></strong>
+                            <p><?= sm_text('The notification system is disabled for everyone right now. Existing notification records are kept and will be available again when notifications are turned ON.', 'এই মুহূর্তে সবার জন্য নোটিফিকেশন ব্যবস্থা বন্ধ। আগের নোটিফিকেশন সংরক্ষিত আছে এবং ব্যবস্থা চালু হলে আবার দেখা যাবে।') ?></p>
                         </div>
                     </div>
                 <?php endif; ?>

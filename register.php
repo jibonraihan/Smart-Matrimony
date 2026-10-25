@@ -701,18 +701,18 @@ include 'includes/navbar.php';
         <div class="col-lg-6 register-left">
 
             <div class="register-visual-eyebrow">
-                <span class="register-visual-dot"><i class="fa-solid fa-sparkles"></i></span>
-                <span>Start your journey with confidence</span>
+                <span class="register-visual-dot"><i class="fa-solid fa-star" aria-hidden="true"></i></span>
+                <span><?= sm_text('Start your journey with confidence', 'আত্মবিশ্বাসের সঙ্গে নতুন যাত্রা শুরু করো'); ?></span>
             </div>
 
             <h1 class="register-heading">
-                Create Your<br>
-                <span>Story.</span>
+                <?= sm_text('Create Your', 'তৈরি করো তোমার'); ?><br>
+                <span><?= sm_text('Story.', 'গল্প।'); ?></span>
                 <span class="register-ring">💍</span>
             </h1>
 
             <p class="register-description">
-                Build your profile, share what matters to you, and discover meaningful connections in a respectful space.
+                <?= sm_text('Build your profile, share what matters to you, and discover meaningful connections in a respectful space.', 'নিজের প্রোফাইল তৈরি করো, গুরুত্বপূর্ণ তথ্য শেয়ার করো এবং সম্মানজনক পরিবেশে অর্থবহ সম্পর্ক খুঁজে নাও।'); ?>
             </p>
 
             <div class="register-journey-visual">
@@ -724,21 +724,21 @@ include 'includes/navbar.php';
                         <i class="fa-solid fa-user"></i>
                     </div>
                     <div class="journey-profile-copy">
-                        <span class="journey-kicker">YOUR PROFILE</span>
-                        <strong>Ready to begin</strong>
-                        <small>Tell us about yourself</small>
+                        <span class="journey-kicker"><?= sm_text('YOUR PROFILE', 'আপনার প্রোফাইল'); ?></span>
+                        <strong><?= sm_text('Ready to begin', 'শুরু করতে প্রস্তুত?'); ?></strong>
+                        <small><?= sm_text('Tell us about yourself', 'আপনার সম্পর্কে বলুন'); ?></small>
                     </div>
                     <span class="journey-check"><i class="fa-solid fa-check"></i></span>
                 </div>
 
                 <div class="journey-step-card step-one">
                     <span class="journey-step-icon"><i class="fa-solid fa-user-pen"></i></span>
-                    <span><b>Build your profile</b><small>Share the essentials</small></span>
+                    <span><b><?= sm_text('Build your profile', 'আপনার প্রোফাইল তৈরি করুন'); ?></b><small><?= sm_text('Share the essentials', 'প্রয়োজনীয় তথ্য দিন'); ?></small></span>
                 </div>
 
                 <div class="journey-step-card step-two">
                     <span class="journey-step-icon"><i class="fa-solid fa-sliders"></i></span>
-                    <span><b>Set preferences</b><small>Choose what matters</small></span>
+                    <span><b><?= sm_text('Set preferences', 'পছন্দ নির্ধারণ করুন'); ?></b><small><?= sm_text('Choose what matters', 'গুরুত্বপূর্ণ বিষয় বেছে নিন'); ?></small></span>
                 </div>
 
                 <div class="journey-heart"><i class="fa-solid fa-heart"></i></div>
@@ -748,7 +748,7 @@ include 'includes/navbar.php';
 
             <div class="register-journey-info">
                 <div class="journey-info-head">
-                    <span>YOUR JOURNEY STARTS HERE</span>
+                    <span><?= sm_text('YOUR JOURNEY STARTS HERE', 'আপনার যাত্রা শুরু হোক এখান থেকে'); ?></span>
                     <div class="journey-progress"><i></i></div>
                 </div>
 
@@ -756,22 +756,22 @@ include 'includes/navbar.php';
                     <div class="journey-info-card">
                         <span class="journey-info-number">01</span>
                         <span class="journey-info-icon"><i class="fa-solid fa-user-pen"></i></span>
-                        <strong>Build your profile</strong>
-                        <small>Tell us about yourself and what matters to you.</small>
+                        <strong><?= sm_text('Build your profile', 'আপনার প্রোফাইল তৈরি করুন'); ?></strong>
+                        <small><?= sm_text('Tell us about yourself and what matters to you.', 'আপনার সম্পর্কে এবং আপনার কাছে গুরুত্বপূর্ণ বিষয়গুলো জানান।'); ?></small>
                     </div>
 
                     <div class="journey-info-card">
                         <span class="journey-info-number">02</span>
                         <span class="journey-info-icon"><i class="fa-solid fa-sliders"></i></span>
-                        <strong>Set preferences</strong>
-                        <small>Choose the qualities you value in a partner.</small>
+                        <strong><?= sm_text('Set preferences', 'পছন্দ নির্ধারণ করুন'); ?></strong>
+                        <small><?= sm_text('Choose the qualities you value in a partner.', 'জীবনসঙ্গীর মধ্যে যে গুণগুলো চান, সেগুলো বেছে নিন।'); ?></small>
                     </div>
 
                     <div class="journey-info-card">
                         <span class="journey-info-number">03</span>
                         <span class="journey-info-icon"><i class="fa-solid fa-heart"></i></span>
-                        <strong>Discover connections</strong>
-                        <small>Explore profiles and find meaningful matches.</small>
+                        <strong><?= sm_text('Discover connections', 'পরিচিতি খুঁজুন'); ?></strong>
+                        <small><?= sm_text('Explore profiles and find meaningful matches.', 'প্রোফাইল দেখুন এবং উপযুক্ত মিল খুঁজে নিন।'); ?></small>
                     </div>
                 </div>
             </div>
@@ -779,15 +779,15 @@ include 'includes/navbar.php';
             <div class="register-benefit-row">
                 <div class="register-benefit-pill">
                     <span><i class="fa-solid fa-shield-heart"></i></span>
-                    <strong>Private</strong>
+                    <strong><?= sm_text('Private', 'গোপনীয়'); ?></strong>
                 </div>
                 <div class="register-benefit-pill">
                     <span><i class="fa-solid fa-heart"></i></span>
-                    <strong>Respectful</strong>
+                    <strong><?= sm_text('Respectful', 'সম্মানজনক'); ?></strong>
                 </div>
                 <div class="register-benefit-pill">
                     <span><i class="fa-solid fa-users"></i></span>
-                    <strong>Family Friendly</strong>
+                    <strong><?= sm_text('Family Friendly', 'পরিবারবান্ধব'); ?></strong>
                 </div>
             </div>
 
@@ -800,25 +800,25 @@ include 'includes/navbar.php';
                 <div class="stats-item">
                     <i class="fa-solid fa-users"></i>
                     <h4><?= number_format($memberCount) ?>+</h4>
-                    <p>Members</p>
+                    <p><?= sm_text('Members', 'সদস্য'); ?></p>
                 </div>
 
                 <div class="stats-item">
                     <i class="fa-solid fa-shield"></i>
                     <h4>100%</h4>
-                    <p>Verified</p>
+                    <p><?= sm_text('Verified', 'যাচাইকৃত'); ?></p>
                 </div>
 
                 <div class="stats-item">
                     <i class="fa-solid fa-lock"></i>
-                    <h4>Secure</h4>
-                    <p>Protected</p>
+                    <h4><?= sm_text('Secure', 'নিরাপদ'); ?></h4>
+                    <p><?= sm_text('Protected', 'সুরক্ষিত'); ?></p>
                 </div>
 
                 <div class="stats-item">
                     <i class="fa-solid fa-headset"></i>
                     <h4>24/7</h4>
-                    <p>Support</p>
+                    <p><?= sm_text('Support', 'সহায়তা'); ?></p>
                 </div>
 
             </div>
@@ -835,9 +835,9 @@ include 'includes/navbar.php';
 
                     <div class="register-card-header">
 
-    <h2>Create Account</h2>
+    <h2><?= sm_text('Create Account', 'অ্যাকাউন্ট তৈরি'); ?></h2>
 
-    <p>Join Smart Matrimony community</p>
+    <p><?= sm_text('Join Smart Matrimony community', 'স্মার্ট ম্যাট্রিমনি কমিউনিটিতে যোগ দাও'); ?></p>
 
 </div>
 
@@ -876,7 +876,7 @@ include 'includes/navbar.php';
 
 <label class="form-label">
 
-First Name
+<?= sm_text('First Name', 'নামের প্রথম অংশ'); ?>
 
 </label>
 
@@ -892,7 +892,7 @@ First Name
         type="text"
         name="first_name"
         class="form-control register-input"
-        placeholder="First Name"
+        placeholder="<?= sm_text('First Name', 'নামের প্রথম অংশ'); ?>"
         value="<?php echo htmlspecialchars($first_name ?? ''); ?>"
         <?php if($isSocialRegistration) echo 'readonly'; ?>>
 
@@ -904,7 +904,7 @@ First Name
 
 <label class="form-label">
 
-Last Name
+<?= sm_text('Last Name', 'নামের শেষ অংশ'); ?>
 
 </label>
 
@@ -920,7 +920,7 @@ Last Name
         type="text"
         name="last_name"
         class="form-control register-input"
-        placeholder="Last Name"
+        placeholder="<?= sm_text('Last Name', 'নামের শেষ অংশ'); ?>"
         value="<?php echo htmlspecialchars($last_name ?? ''); ?>"
         <?php if($isSocialRegistration) echo 'readonly'; ?>>
 
@@ -936,7 +936,7 @@ Last Name
 
 <label class="form-label">
 
-Gender
+<?= sm_text('Gender', 'লিঙ্গ'); ?>
 
 </label>
 
@@ -948,13 +948,13 @@ class="form-select register-input"
 
 required>
 
-<option value="">Select Gender</option>
+<option value=""><?= sm_text('Select Gender', 'লিঙ্গ নির্বাচন করুন'); ?></option>
 
 <option value="Male"
 
 <?= (($_POST['gender'] ?? '')=="Male")?'selected':''; ?>>
 
-Male
+<?= sm_text('Male', 'পুরুষ'); ?>
 
 </option>
 
@@ -962,7 +962,7 @@ Male
 
 <?= (($_POST['gender'] ?? '')=="Female")?'selected':''; ?>>
 
-Female
+<?= sm_text('Female', 'নারী'); ?>
 
 </option>
 
@@ -974,7 +974,7 @@ Female
 
 <label class="form-label">
 
-Mobile Number
+<?= sm_text('Mobile Number', 'মোবাইল নম্বর'); ?>
 
 </label>
 
@@ -1002,7 +1002,7 @@ Mobile Number
 
 <label class="form-label">
 
-Email Address
+<?= sm_text('Email Address', 'ইমেইল ঠিকানা'); ?>
 
 </label>
 
@@ -1018,7 +1018,7 @@ Email Address
         type="email"
         name="email"
         class="form-control register-input"
-        placeholder="example@email.com"
+        placeholder="<?= sm_text('example@email.com', 'example@email.com'); ?>"
         value="<?php echo htmlspecialchars($email ?? ''); ?>"
         <?php if($isSocialRegistration) echo 'readonly'; ?>>
     </div>
@@ -1028,7 +1028,7 @@ Email Address
 
     <label class="form-label">
 
-        Password
+        <?= sm_text('Password', 'পাসওয়ার্ড'); ?>
 
     </label>
 
@@ -1041,7 +1041,7 @@ Email Address
             name="password"
             id="password"
             class="form-control register-input"
-            placeholder="Enter Password"
+            placeholder="<?= sm_text('Enter Password', 'পাসওয়ার্ড লিখো'); ?>"
             required>
 
         <i class="fa-regular fa-eye input-icon-right toggle-password"
@@ -1052,32 +1052,10 @@ Email Address
     <div id="passwordStrength" class="password-strength mt-2"></div>
 
     <div class="password-requirements password-requirements-compact" id="passwordRequirements">
-
-        <div class="password-requirement" data-rule="length">
+        <div class="password-requirement" data-rule="all">
             <i class="fa-solid fa-circle-xmark"></i>
-            <span>At least 8 characters</span>
+            <span><?= sm_text('Use 8 or more characters with a mix of character types (0, A, a, @...).', 'সকল ধরনের ক্যারেক্টার (0, A, a, @...) মিলিয়ে ৮ বা বেশি অক্ষরের পাসওয়ার্ড লিখুন।'); ?></span>
         </div>
-
-        <div class="password-requirement" data-rule="upper">
-            <i class="fa-solid fa-circle-xmark"></i>
-            <span>One uppercase letter (A-Z)</span>
-        </div>
-
-        <div class="password-requirement" data-rule="lower">
-            <i class="fa-solid fa-circle-xmark"></i>
-            <span>One lowercase letter (a-z)</span>
-        </div>
-
-        <div class="password-requirement" data-rule="number">
-            <i class="fa-solid fa-circle-xmark"></i>
-            <span>One number (0-9)</span>
-        </div>
-
-        <div class="password-requirement" data-rule="special">
-            <i class="fa-solid fa-circle-xmark"></i>
-            <span>One special character (!@#$...)</span>
-        </div>
-
     </div>
 
 </div>
@@ -1086,7 +1064,7 @@ Email Address
 
     <label class="form-label">
 
-        Confirm Password
+        <?= sm_text('Confirm Password', 'পাসওয়ার্ড নিশ্চিত করুন'); ?>
 
     </label>
 
@@ -1099,7 +1077,7 @@ Email Address
             name="confirm_password"
             id="confirm_password"
             class="form-control register-input"
-            placeholder="Confirm Password"
+            placeholder="<?= sm_text('Confirm Password', 'পাসওয়ার্ড নিশ্চিত করো'); ?>"
             required>
 
         <i class="fa-regular fa-eye input-icon-right toggle-password"
@@ -1121,8 +1099,8 @@ Email Address
 
     <label class="form-check-label" for="terms">
 
-        I agree to the
-        <a href="<?= BASE_URL; ?>terms.php">Terms &amp; Conditions</a>
+        <?= sm_text('I agree to the', 'আমি সম্মত হচ্ছি'); ?>
+        <a href="<?= BASE_URL; ?>terms.php"><?= sm_text('Terms &amp; Conditions', 'শর্তাবলী'); ?></a>
 
     </label>
 
@@ -1151,7 +1129,7 @@ name="register"
 id="registerBtn"
 class="btn btn-success w-100 py-2">
 
-Create Account
+<?= sm_text('Create Account', 'অ্যাকাউন্ট তৈরি করুন'); ?>
 
 </button>
 
@@ -1161,14 +1139,14 @@ Create Account
 
 <div class="register-divider">
 
-    <span>OR</span>
+    <span><?= sm_text('OR', 'অথবা'); ?></span>
 
 </div>
 
 <div class="register-social-section">
 
     <p class="register-social-title">
-        Sign up with
+        <?= sm_text('Sign up with', 'এর মাধ্যমে নিবন্ধন করুন'); ?>
     </p>
 
     <div class="register-social-buttons">
@@ -1200,11 +1178,11 @@ Create Account
 <?php endif; ?>
 
 <p class="text-center mb-0">
-    Already have an account?
+    <?= sm_text('Already have an account?', 'ইতিমধ্যে অ্যাকাউন্ট আছে?'); ?>
 
     <a href="login.php" class="login-link">
 
-        Login
+        <?= sm_text('Login', 'লগইন'); ?>
 
     </a>
 
@@ -1222,10 +1200,7 @@ Create Account
 
 <style>
 .password-requirements-compact {
-    display: grid !important;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    column-gap: 14px;
-    row-gap: 4px;
+    display: flex !important;
     padding: 8px 12px !important;
 }
 .password-requirements-compact .password-requirement {
@@ -1234,20 +1209,10 @@ Create Account
     gap: 6px;
     font-size: 12px;
     line-height: 1.25;
-    white-space: nowrap;
 }
 .password-requirements-compact .password-requirement i {
     font-size: 12px;
     flex-shrink: 0;
-}
-@media (max-width: 600px) {
-    .password-requirements-compact {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        column-gap: 10px;
-    }
-    .password-requirements-compact .password-requirement {
-        white-space: normal;
-    }
 }
 </style>
 
@@ -1285,13 +1250,7 @@ const confirm = document.getElementById("confirm_password");
 const strength = document.getElementById("passwordStrength");
 const match = document.getElementById("passwordMatch");
 
-const requirementElements = {
-    length: document.querySelector('[data-rule="length"]'),
-    upper: document.querySelector('[data-rule="upper"]'),
-    lower: document.querySelector('[data-rule="lower"]'),
-    number: document.querySelector('[data-rule="number"]'),
-    special: document.querySelector('[data-rule="special"]')
-};
+const requirementElement = document.querySelector('[data-rule="all"]');
 
 function updateRequirement(element, fulfilled) {
 
@@ -1316,14 +1275,10 @@ function updatePasswordStatus() {
         special: /[^A-Za-z0-9]/.test(value)
     };
 
-    Object.keys(rules).forEach(function(rule){
-
-        updateRequirement(
-            requirementElements[rule],
-            rules[rule]
-        );
-
-    });
+    updateRequirement(
+        requirementElement,
+        Object.values(rules).every(Boolean)
+    );
 
     const fulfilled = Object.values(rules).filter(Boolean).length;
 
@@ -1333,17 +1288,17 @@ function updatePasswordStatus() {
 
     }else if(fulfilled === 5){
 
-        strength.textContent = "Password Strength: Strong";
+        strength.textContent = <?= json_encode(sm_text('Password Strength: Strong', 'পাসওয়ার্ডের শক্তি: শক্তিশালী'), JSON_UNESCAPED_UNICODE); ?>;
         strength.style.color = "#16a34a";
 
     }else if(fulfilled >= 2){
 
-        strength.textContent = "Password Strength: Medium";
+        strength.textContent = <?= json_encode(sm_text('Password Strength: Medium', 'পাসওয়ার্ডের শক্তি: মাঝারি'), JSON_UNESCAPED_UNICODE); ?>;
         strength.style.color = "#d97706";
 
     }else{
 
-        strength.textContent = "Password Strength: Weak";
+        strength.textContent = <?= json_encode(sm_text('Password Strength: Weak', 'পাসওয়ার্ডের শক্তি: দুর্বল'), JSON_UNESCAPED_UNICODE); ?>;
         strength.style.color = "#dc2626";
 
     }
@@ -1365,12 +1320,12 @@ function updatePasswordMatch() {
 
     if(confirm.value === password.value){
 
-        match.textContent = "✓ Password Matched";
+        match.textContent = <?= json_encode(sm_text('✓ Password Matched', '✓ পাসওয়ার্ড মিলেছে'), JSON_UNESCAPED_UNICODE); ?>;
         match.style.color = "#16a34a";
 
     }else{
 
-        match.textContent = "✕ Password Not Matched";
+        match.textContent = <?= json_encode(sm_text('✕ Password Not Matched', '✕ পাসওয়ার্ড মেলেনি'), JSON_UNESCAPED_UNICODE); ?>;
         match.style.color = "#dc2626";
 
     }
@@ -1389,7 +1344,7 @@ registerForm.addEventListener("submit", function () {
 
     registerBtn.innerHTML = `
         <span class="spinner-border spinner-border-sm me-2"></span>
-        Creating Account...
+        <?= json_encode(sm_text('Creating Account...', 'অ্যাকাউন্ট তৈরি হচ্ছে...'), JSON_UNESCAPED_UNICODE); ?>
     `;
 
 });
@@ -1398,7 +1353,7 @@ window.addEventListener("pageshow", function () {
 
     registerBtn.disabled = false;
 
-    registerBtn.innerHTML = "Create Account";
+    registerBtn.innerHTML = <?= json_encode(sm_text('Create Account', 'অ্যাকাউন্ট তৈরি করুন'), JSON_UNESCAPED_UNICODE); ?>;
 
 });
 

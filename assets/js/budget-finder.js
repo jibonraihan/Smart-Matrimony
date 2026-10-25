@@ -24,6 +24,18 @@
     const packagesByService = config.packagesByService || {};
     const services = Array.isArray(config.services) ? config.services : [];
 
+    const serviceTranslations = {
+        'Photography':'ফটোগ্রাফি', 'Catering':'খাবার ও আপ্যায়ন', 'Decoration':'সাজসজ্জা',
+        'Car Rental':'গাড়ি ভাড়া', 'Makeup Artist':'মেকআপ শিল্পী', 'Wedding Planner':'বিয়ের পরিকল্পনাকারী',
+        'Convention Center':'কনভেনশন সেন্টার', 'Resort / Lawn':'রিসোর্ট / লন', 'Mehendi Artist':'মেহেদি শিল্পী',
+        'Wedding Flowers':'বিয়ের ফুল', 'Basor Ghor Decoration':'বাসর ঘর সাজসজ্জা', 'Wedding Dress':'বিয়ের পোশাক',
+        'Groom Dress':'বরের পোশাক', 'Bridal Accessories':'কনের সাজসজ্জার সামগ্রী', 'Sound & Lighting':'সাউন্ড ও লাইটিং',
+        'Invitation & Printing':'নিমন্ত্রণপত্র ও মুদ্রণ'
+    };
+    function translateService(name) {
+        return serviceTranslations[name] || name || 'সেবা';
+    }
+
     function updateServiceCardState(input) {
         const label = input.closest('.budget-service-option');
         if (label) label.classList.toggle('is-checked', input.checked);
@@ -79,13 +91,18 @@
         row.dataset.price = String(price);
 
         const title = row.querySelector('.budget-package-copy h3');
+        const codeBadge = row.querySelector('.budget-package-copy .package-code-badge');
         const provider = row.querySelector('.budget-package-copy p');
         const details = row.querySelector('.budget-package-copy small');
         const priceBox = row.querySelector('.budget-package-price');
         const imageBox = row.querySelector('.budget-package-image');
         const ratingBox = row.querySelector('.budget-package-rating');
 
-        if (title) title.textContent = option.dataset.name || 'Selected Package';
+        if (title) title.textContent = option.dataset.name || 'নির্বাচিত প্যাকেজ';
+        if (codeBadge) {
+            codeBadge.textContent = option.dataset.code || '';
+            codeBadge.hidden = !option.dataset.code;
+        }
         if (provider) provider.textContent = option.dataset.provider || '';
         if (details) {
             details.textContent = option.dataset.details || '';
@@ -97,7 +114,7 @@
             if (image) {
                 const img = document.createElement('img');
                 img.src = (config.baseUrl || '../') + 'uploads/services/' + image;
-                img.alt = option.dataset.name || 'Selected package';
+                img.alt = option.dataset.name || 'নির্বাচিত প্যাকেজ';
                 img.loading = 'lazy';
                 imageBox.appendChild(img);
             } else {
@@ -146,10 +163,10 @@
             element.classList.remove('within', 'over');
             if (difference >= -0.009) {
                 element.classList.add('within');
-                element.textContent = money(Math.max(0, difference)) + ' remaining';
+                element.textContent = money(Math.max(0, difference)) + ' অবশিষ্ট';
             } else {
                 element.classList.add('over');
-                element.textContent = money(Math.abs(difference)) + ' over';
+                element.textContent = money(Math.abs(difference)) + ' বেশি';
             }
         };
 
@@ -159,13 +176,13 @@
             liveStatus.classList.remove('within', 'over');
             if (total <= budget + 0.009) {
                 liveStatus.classList.add('within');
-                liveStatus.textContent = 'Within your budget';
+                liveStatus.textContent = 'আপনার বাজেটের মধ্যে';
             } else if (total <= max + 0.009) {
                 liveStatus.classList.add('over');
-                liveStatus.textContent = 'Above budget — within the allowed 10% flexibility';
+                liveStatus.textContent = 'বাজেটের বেশি—তবে অনুমোদিত ১০% সীমার মধ্যে';
             } else {
                 liveStatus.classList.add('over');
-                liveStatus.textContent = 'Above the allowed 10% flexibility';
+                liveStatus.textContent = 'অনুমোদিত ১০% সীমার বেশি';
             }
         }
     }
@@ -188,7 +205,7 @@
         const row = document.createElement('article');
         row.className = 'budget-package-row';
         row.dataset.serviceId = String(serviceId);
-        row.dataset.serviceName = service ? service.service_name : 'Service';
+        row.dataset.serviceName = service ? translateService(service.service_name) : 'সেবা';
 
         const imageBox = document.createElement('div');
         imageBox.className = 'budget-package-image';
@@ -197,11 +214,14 @@
         const copy = document.createElement('div');
         copy.className = 'budget-package-copy';
         const serviceLabel = document.createElement('span');
-        serviceLabel.textContent = service ? service.service_name : 'Wedding Service';
+        serviceLabel.textContent = service ? translateService(service.service_name) : 'বিয়ের সেবা';
+        const codeBadge = document.createElement('span');
+        codeBadge.className = 'package-code-badge';
+        codeBadge.hidden = true;
         const title = document.createElement('h3');
         const provider = document.createElement('p');
         const details = document.createElement('small');
-        copy.append(serviceLabel, title, provider, details);
+        copy.append(serviceLabel, codeBadge, title, provider, details);
         row.appendChild(copy);
 
         const priceBox = document.createElement('div');
@@ -217,7 +237,7 @@
         const select = document.createElement('select');
         select.className = 'budget-package-select';
         select.dataset.serviceId = String(serviceId);
-        select.setAttribute('aria-label', 'Change package for ' + (service ? service.service_name : 'service'));
+        select.setAttribute('aria-label', 'প্যাকেজ পরিবর্তন করুন: ' + (service ? translateService(service.service_name) : 'সেবা'));
 
         packageList.forEach((item) => {
             const option = document.createElement('option');
@@ -232,6 +252,7 @@
             option.dataset.image = item.image || '';
             option.dataset.rating = String(item.rating || 0);
             option.dataset.reviews = String(item.review_count || 0);
+            option.dataset.code = item.package_code || '';
             option.textContent = (item.package_name || item.provider_name || 'Package') + ' — ' + money(finalPrice);
             select.appendChild(option);
         });
@@ -240,7 +261,7 @@
         remove.type = 'button';
         remove.className = 'budget-remove-btn';
         remove.dataset.removeService = String(serviceId);
-        remove.title = 'Remove this service';
+        remove.title = 'এই সেবাটি সরান';
         remove.innerHTML = '<i class="fa-solid fa-xmark"></i>';
 
         actions.append(select, remove);

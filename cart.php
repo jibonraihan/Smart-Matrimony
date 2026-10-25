@@ -1,4 +1,5 @@
 <?php
+require_once 'includes/language.php';
 
 $page_css = 'assets/css/service-details.css';
 
@@ -175,7 +176,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $items = [];
 $total = 0.0;
 $stmt = mysqli_prepare($conn, "SELECT ci.cart_item_id, ci.quantity,
-        sp.provider_id, sp.provider_name, sp.package_name, sp.price, sp.discount_percent, sp.location, sp.image,
+        sp.provider_id, sp.package_code, sp.provider_name, sp.package_name, sp.price, sp.discount_percent, sp.location, sp.image,
         s.service_id, s.service_name
     FROM service_cart_items ci
     INNER JOIN service_providers sp ON sp.provider_id = ci.provider_id
@@ -212,11 +213,11 @@ include 'includes/header.php';
             <nav class="cart-topbar-actions" aria-label="Cart navigation">
                 <a href="<?= BASE_URL; ?>dashboard.php#wedding-services" class="cart-nav-link">
                     <i class="fa-solid fa-arrow-left"></i>
-                    <span>Wedding Services</span>
+                    <span><?= sm_text('Wedding Services', 'বিয়ের সেবা'); ?></span>
                 </a>
                 <a href="<?= BASE_URL; ?>my_bookings.php" class="cart-nav-link cart-nav-primary">
                     <i class="fa-solid fa-calendar-check"></i>
-                    <span>My Bookings</span>
+                    <span><?= sm_text('My Bookings', 'আমার বুকিং'); ?></span>
                 </a>
             </nav>
         </div>
@@ -225,24 +226,24 @@ include 'includes/header.php';
     <main class="service-container cart-page-main">
         <div class="service-section-heading">
             <div>
-                <span class="service-kicker">YOUR SELECTION</span>
-                <h1>Review & Book</h1>
-                <p>Choose your event date, review selected packages and submit your booking request.</p>
+                <span class="service-kicker"><?= sm_text('YOUR SELECTION', 'আপনার নির্বাচন'); ?></span>
+                <h1><?= sm_text('Review & Book', 'পর্যালোচনা ও বুকিং'); ?></h1>
+                <p><?= sm_text('Choose your event date, review selected packages and submit your booking request.', 'অনুষ্ঠানের তারিখ নির্বাচন করুন, বাছাই করা প্যাকেজগুলো পর্যালোচনা করুন এবং বুকিংয়ের অনুরোধ পাঠান।'); ?></p>
             </div>
         </div>
 
         <?php if (isset($_GET['booked'])): ?>
-            <div class="cart-alert success"><i class="fa-solid fa-circle-check"></i> Booking request #<?= (int) $_GET['booked']; ?> was created successfully.</div>
+            <div class="cart-alert success"><i class="fa-solid fa-circle-check"></i> <?= sm_text('Booking request', 'বুকিংয়ের অনুরোধ'); ?> #<?= (int) $_GET['booked']; ?> <?= sm_text('was created successfully.', 'সফলভাবে তৈরি হয়েছে।'); ?></div>
         <?php elseif (isset($_GET['error'])): ?>
-            <div class="cart-alert error"><i class="fa-solid fa-circle-exclamation"></i> Please check your event date and try again.</div>
+            <div class="cart-alert error"><i class="fa-solid fa-circle-exclamation"></i> <?= sm_text('Please check your event date and try again.', 'অনুষ্ঠানের তারিখটি যাচাই করে আবার চেষ্টা করুন।'); ?></div>
         <?php endif; ?>
 
         <?php if (!$items): ?>
             <div class="service-empty cart-empty">
                 <div><i class="fa-solid fa-cart-shopping"></i></div>
-                <h3>Your cart is empty</h3>
-                <p>Add one or more wedding service packages before booking.</p>
-                <a href="<?= BASE_URL; ?>dashboard.php#wedding-services">Explore Wedding Services</a>
+                <h3><?= sm_text('Your cart is empty', 'আপনার কার্ট খালি'); ?></h3>
+                <p><?= sm_text('Add one or more wedding service packages before booking.', 'বুকিং করার আগে এক বা একাধিক বিয়ের সেবার প্যাকেজ যোগ করুন।'); ?></p>
+                <a href="<?= BASE_URL; ?>dashboard.php#wedding-services"><?= sm_text('Explore Wedding Services', 'বিয়ের সেবাগুলো দেখুন'); ?></a>
             </div>
         <?php else: ?>
             <div class="cart-layout">
@@ -258,6 +259,7 @@ include 'includes/header.php';
                             </div>
                             <div class="cart-item-info">
                                 <span><?= htmlspecialchars($item['service_name']); ?></span>
+                                <?php if (!empty($item['package_code'])): ?><span class="package-code-badge"><?= htmlspecialchars($item['package_code']); ?></span><?php endif; ?>
                                 <h3><?= htmlspecialchars($item['package_name'] ?: $item['provider_name']); ?></h3>
                                 <p><?= htmlspecialchars($item['provider_name']); ?><?= !empty($item['location']) ? ' · ' . htmlspecialchars($item['location']) : ''; ?></p>
                             </div>
@@ -271,30 +273,30 @@ include 'includes/header.php';
                                 <input type="hidden" name="action" value="update">
                                 <input type="hidden" name="cart_item_id" value="<?= (int) $item['cart_item_id']; ?>">
                                 <input type="number" name="quantity" min="1" max="20" value="<?= (int) $item['quantity']; ?>">
-                                <button type="submit" title="Update quantity"><i class="fa-solid fa-rotate"></i></button>
+                                <button type="submit" title="<?= sm_text('Update quantity', 'পরিমাণ হালনাগাদ করুন'); ?>"><i class="fa-solid fa-rotate"></i></button>
                             </form>
                             <form method="post">
                                 <input type="hidden" name="csrf" value="<?= htmlspecialchars($csrf); ?>">
                                 <input type="hidden" name="action" value="remove">
                                 <input type="hidden" name="cart_item_id" value="<?= (int) $item['cart_item_id']; ?>">
-                                <button class="remove-cart-btn" type="submit" title="Remove"><i class="fa-solid fa-trash-can"></i></button>
+                                <button class="remove-cart-btn" type="submit" title="<?= sm_text('Remove', 'সরিয়ে ফেলুন'); ?>"><i class="fa-solid fa-trash-can"></i></button>
                             </form>
                         </article>
                     <?php endforeach; ?>
                 </section>
 
                 <aside class="checkout-card">
-                    <div class="checkout-total"><span>Cart Total</span><strong>৳<?= number_format($total, 2); ?></strong></div>
+                    <div class="checkout-total"><span><?= sm_text('Cart Total', 'কার্টের মোট'); ?></span><strong>৳<?= number_format($total, 2); ?></strong></div>
                     <form method="post">
                         <input type="hidden" name="csrf" value="<?= htmlspecialchars($csrf); ?>">
                         <input type="hidden" name="action" value="book">
-                        <label for="event_date">Event date</label>
+                        <label for="event_date"><?= sm_text('Event date', 'অনুষ্ঠানের তারিখ'); ?></label>
                         <input id="event_date" type="date" name="event_date" min="<?= date('Y-m-d'); ?>" required>
-                        <label for="special_instruction">Special instruction <span>Optional</span></label>
-                        <textarea id="special_instruction" name="special_instruction" rows="4" maxlength="1000" placeholder="Tell the manager anything important about your booking..."></textarea>
-                        <button class="confirm-book-btn" type="submit"><i class="fa-solid fa-calendar-check"></i> Request Booking</button>
+                        <label for="special_instruction"><?= sm_text('Special instruction', 'বিশেষ নির্দেশনা'); ?> <span><?= sm_text('Optional', 'ঐচ্ছিক'); ?></span></label>
+                        <textarea id="special_instruction" name="special_instruction" rows="4" maxlength="1000" placeholder="<?= sm_text('Tell the manager anything important about your booking...', 'আপনার বুকিং সম্পর্কে ম্যানেজারকে প্রয়োজনীয় কিছু জানাতে লিখুন...'); ?>"></textarea>
+                        <button class="confirm-book-btn" type="submit"><i class="fa-solid fa-calendar-check"></i> <?= sm_text('Request Booking', 'বুকিংয়ের অনুরোধ করুন'); ?></button>
                     </form>
-                    <p class="checkout-note"><i class="fa-solid fa-shield-heart"></i> Your request starts as <strong>Pending</strong>. You can track its status from My Bookings.</p>
+                    <p class="checkout-note"><i class="fa-solid fa-shield-heart"></i> <?= sm_text('Your request starts as', 'আপনার অনুরোধের প্রাথমিক অবস্থা'); ?> <strong><?= sm_text('Pending', 'অপেক্ষমাণ'); ?></strong><?= sm_text('. You can track its status from My Bookings.', '। আমার বুকিং পেজ থেকে এর অবস্থা দেখতে পারবেন।'); ?></p>
                 </aside>
             </div>
         <?php endif; ?>

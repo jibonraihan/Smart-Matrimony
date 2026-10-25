@@ -17,17 +17,16 @@ include 'includes/navbar.php';
                 <div class="about-bismillah" lang="ar" dir="rtl">
                     بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ
                 </div>
-                <span class="about-eyebrow">ABOUT SMART MATRIMONY</span>
-                <h1>A Meaningful Journey Toward <span>Marriage</span></h1>
-                <p>
-                    Smart Matrimony is a Bangladesh-based matrimonial platform created to make
-                    the search for a suitable life partner more organized, respectful,
-                    privacy-conscious and family-friendly.
-                </p>
+                <span class="about-eyebrow"><?= sm_text('ABOUT SMART MATRIMONY', 'স্মার্ট ম্যাট্রিমনি সম্পর্কে'); ?></span>
+                <h1><?= sm_text('A Meaningful Journey Toward ', 'বিয়ের পথে একটি অর্থবহ যাত্রা '); ?><span><?= sm_text('Marriage', 'বিবাহ'); ?></span></h1>
+                <p><?= sm_text(
+                    'Smart Matrimony is a Bangladesh-based matrimonial platform created to make the search for a suitable life partner more organized, respectful, privacy-conscious and family-friendly.',
+                    'স্মার্ট ম্যাট্রিমনি বাংলাদেশভিত্তিক একটি বিবাহের প্ল্যাটফর্ম, যা উপযুক্ত জীবনসঙ্গী খোঁজার প্রক্রিয়াকে আরও সুসংগঠিত, সম্মানজনক, গোপনীয়তাসচেতন এবং পরিবারবান্ধব করতে তৈরি করা হয়েছে।'
+                ); ?></p>
                 <div class="about-hero-tags">
-                    <span><i class="fa-solid fa-heart"></i> Faith &amp; Values</span>
-                    <span><i class="fa-solid fa-people-roof"></i> Family Focused</span>
-                    <span><i class="fa-solid fa-shield-heart"></i> Privacy Conscious</span>
+                    <span><i class="fa-solid fa-heart"></i> <?= sm_text('Faith &amp; Values', 'ঈমান ও মূল্যবোধ'); ?></span>
+                    <span><i class="fa-solid fa-people-roof"></i> <?= sm_text('Family Focused', 'পরিবারকেন্দ্রিক'); ?></span>
+                    <span><i class="fa-solid fa-shield-heart"></i> <?= sm_text('Privacy Conscious', 'গোপনীয়তা-সচেতন'); ?></span>
                 </div>
             </div>
         </div>
@@ -68,8 +67,8 @@ include 'includes/navbar.php';
     <section class="about-section">
         <div class="container">
             <div class="about-section-heading">
-                <span>OUR PURPOSE</span>
-                <h2>Why Smart Matrimony?</h2>
+                <span><?= sm_text('OUR PURPOSE', 'আমাদের উদ্দেশ্য'); ?></span>
+                <h2><?= sm_text('Why Smart Matrimony?', 'কেন স্মার্ট ম্যাট্রিমনি?'); ?></h2>
                 <p>
                     একটি সুন্দর বিবাহের শুরু হওয়া উচিত পরিষ্কার উদ্দেশ্য, পারস্পরিক সম্মান
                     এবং দায়িত্বশীলতার মাধ্যমে।
@@ -79,7 +78,7 @@ include 'includes/navbar.php';
             <div class="about-feature-grid">
                 <article class="about-feature-card">
                     <div class="about-feature-icon"><i class="fa-solid fa-mosque"></i></div>
-                    <h3>Faith &amp; Values</h3>
+                    <h3><?= sm_text('Faith &amp; Values', 'ঈমান ও মূল্যবোধ'); ?></h3>
                     <p>
                         ইসলামী মূল্যবোধ, পারিবারিক সম্মান ও দায়িত্বশীলতার বিষয়গুলোকে
                         বিবাহের যাত্রার গুরুত্বপূর্ণ অংশ হিসেবে বিবেচনা করা।
@@ -88,7 +87,7 @@ include 'includes/navbar.php';
 
                 <article class="about-feature-card">
                     <div class="about-feature-icon"><i class="fa-solid fa-user-group"></i></div>
-                    <h3>Family Friendly</h3>
+                    <h3><?= sm_text('Family Friendly', 'পরিবারবান্ধব'); ?></h3>
                     <p>
                         পাত্র-পাত্রীর পাশাপাশি পরিবার ও অভিভাবকদের ভূমিকার প্রতি সম্মান
                         রেখে পরিচয় ও যোগাযোগের একটি সুন্দর পরিবেশ তৈরি করা।
@@ -97,7 +96,7 @@ include 'includes/navbar.php';
 
                 <article class="about-feature-card">
                     <div class="about-feature-icon"><i class="fa-solid fa-shield-halved"></i></div>
-                    <h3>Privacy &amp; Safety</h3>
+                    <h3><?= sm_text('Privacy &amp; Safety', 'গোপনীয়তা ও নিরাপত্তা'); ?></h3>
                     <p>
                         ব্যবহারকারীর তথ্যের প্রতি সচেতন থেকে verification, responsible
                         communication এবং নিরাপদ ব্যবহারকে উৎসাহিত করা।
@@ -106,7 +105,7 @@ include 'includes/navbar.php';
 
                 <article class="about-feature-card">
                     <div class="about-feature-icon"><i class="fa-solid fa-magnifying-glass"></i></div>
-                    <h3>Smart Discovery</h3>
+                    <h3><?= sm_text('Smart Discovery', 'স্মার্ট অনুসন্ধান'); ?></h3>
                     <p>
                         পছন্দ, তথ্য ও প্রয়োজনের ভিত্তিতে সম্ভাব্য উপযুক্ত profile খুঁজে
                         পাওয়ার প্রক্রিয়াকে আরও সংগঠিত করা।
@@ -120,8 +119,8 @@ include 'includes/navbar.php';
         <div class="container">
             <div class="about-two-column">
                 <div>
-                    <span class="about-kicker">A BETTER WAY TO SEARCH</span>
-                    <h2>Technology with a Human Purpose</h2>
+                    <span class="about-kicker"><?= sm_text('A BETTER WAY TO SEARCH', 'অনুসন্ধানের আরও ভালো উপায়'); ?></span>
+                    <h2><?= sm_text('Technology with a Human Purpose', 'মানবিক উদ্দেশ্যে প্রযুক্তি'); ?></h2>
                     <p>
                         পাত্র-পাত্রীর সন্ধানে আগে যেখানে পরিচিতজন, আত্মীয়স্বজন বা সীমিত
                         সামাজিক পরিসরের ওপর বেশি নির্ভর করতে হতো, সেখানে একটি digital
@@ -138,21 +137,21 @@ include 'includes/navbar.php';
                     <div class="about-process-item">
                         <span>01</span>
                         <div>
-                            <strong>Create a profile</strong>
+                            <strong><?= sm_text('Create a profile', 'প্রোফাইল তৈরি করুন'); ?></strong>
                             <p>নিজের প্রয়োজনীয় তথ্য ও পছন্দগুলো সুন্দরভাবে উপস্থাপন করুন।</p>
                         </div>
                     </div>
                     <div class="about-process-item">
                         <span>02</span>
                         <div>
-                            <strong>Discover matches</strong>
+                            <strong><?= sm_text('Discover matches', 'ম্যাচ খুঁজে দেখুন'); ?></strong>
                             <p>প্রাসঙ্গিক profile ও matching suggestions দেখুন।</p>
                         </div>
                     </div>
                     <div class="about-process-item">
                         <span>03</span>
                         <div>
-                            <strong>Connect responsibly</strong>
+                            <strong><?= sm_text('Connect responsibly', 'দায়িত্বশীলভাবে যোগাযোগ করুন'); ?></strong>
                             <p>সম্মানজনক ও নিরাপদ উপায়ে যোগাযোগের পরবর্তী ধাপে এগিয়ে যান।</p>
                         </div>
                     </div>
@@ -164,17 +163,17 @@ include 'includes/navbar.php';
     <section class="about-section">
         <div class="container">
             <div class="about-section-heading">
-                <span>OUR PLATFORM</span>
-                <h2>What Smart Matrimony Brings Together</h2>
+                <span><?= sm_text('OUR PLATFORM', 'আমাদের প্ল্যাটফর্ম'); ?></span>
+                <h2><?= sm_text('What Smart Matrimony Brings Together', 'স্মার্ট ম্যাট্রিমনি যেসব সুবিধা একত্র করেছে'); ?></h2>
             </div>
 
             <div class="about-services-grid">
-                <div><i class="fa-solid fa-id-card"></i><span>Detailed Profiles</span></div>
-                <div><i class="fa-solid fa-sliders"></i><span>Partner Preferences</span></div>
-                <div><i class="fa-solid fa-handshake"></i><span>Smart Matching</span></div>
-                <div><i class="fa-solid fa-calendar-check"></i><span>Wedding Services</span></div>
-                <div><i class="fa-solid fa-book-quran"></i><span>Islamic Guidance</span></div>
-                <div><i class="fa-solid fa-lock"></i><span>Privacy &amp; Security</span></div>
+                <div><i class="fa-solid fa-id-card"></i><span><?= sm_text('Detailed Profiles', 'বিস্তারিত প্রোফাইল'); ?></span></div>
+                <div><i class="fa-solid fa-sliders"></i><span><?= sm_text('Partner Preferences', 'জীবনসঙ্গী-সংক্রান্ত পছন্দ'); ?></span></div>
+                <div><i class="fa-solid fa-handshake"></i><span><?= sm_text('Smart Matching', 'স্মার্ট ম্যাচিং'); ?></span></div>
+                <div><i class="fa-solid fa-calendar-check"></i><span><?= sm_text('Wedding Services', 'বিয়ের সেবা'); ?></span></div>
+                <div><i class="fa-solid fa-book-quran"></i><span><?= sm_text('Islamic Guidance', 'ইসলামি নির্দেশনা'); ?></span></div>
+                <div><i class="fa-solid fa-lock"></i><span><?= sm_text('Privacy &amp; Security', 'গোপনীয়তা ও নিরাপত্তা'); ?></span></div>
             </div>
         </div>
     </section>
@@ -184,8 +183,8 @@ include 'includes/navbar.php';
             <div class="about-islamic-card">
                 <div class="about-quote-mark">“</div>
                 <div>
-                    <span class="about-kicker">OUR BELIEF</span>
-                    <h2>Marriage is more than finding a profile</h2>
+                    <span class="about-kicker"><?= sm_text('OUR BELIEF', 'আমাদের বিশ্বাস'); ?></span>
+                    <h2><?= sm_text('Marriage is more than finding a profile', 'বিয়ে শুধু একটি প্রোফাইল খোঁজার চেয়েও বেশি'); ?></h2>
                     <p>
                         এটি দুটি মানুষের পাশাপাশি দুটি পরিবারেরও একটি নতুন বন্ধন। তাই
                         Smart Matrimony-তে আমরা শুধু profile matching নয়, বরং সম্মান,
@@ -204,10 +203,10 @@ include 'includes/navbar.php';
         <div class="container">
             <div class="about-contact-card">
                 <div class="about-contact-heading">
-                    <span class="about-kicker">CONTACT INFORMATION</span>
-                    <h2>Get in Touch with Smart Matrimony</h2>
+                    <span class="about-kicker"><?= sm_text('CONTACT INFORMATION', 'যোগাযোগের তথ্য'); ?></span>
+                    <h2><?= sm_text('Get in Touch with Smart Matrimony', 'স্মার্ট ম্যাট্রিমনির সঙ্গে যোগাযোগ করুন'); ?></h2>
                     <p>
-                        Platform সম্পর্কে কোনো প্রশ্ন, মতামত বা সহায়তার প্রয়োজন হলে
+                        <?= sm_text('Platform', 'প্ল্যাটফর্ম'); ?> সম্পর্কে কোনো প্রশ্ন, মতামত বা সহায়তার প্রয়োজন হলে
                         আমাদের support team-এর সঙ্গে যোগাযোগ করতে পারেন।
                     </p>
                 </div>
@@ -216,7 +215,7 @@ include 'includes/navbar.php';
                     <div class="about-contact-detail">
                         <span class="about-detail-icon"><i class="fa-solid fa-building"></i></span>
                         <div>
-                            <small>Platform</small>
+                            <small><?= sm_text('Platform', 'প্ল্যাটফর্ম'); ?></small>
                             <strong>Smart Matrimony Plattform</strong>
                         </div>
                     </div>
@@ -224,7 +223,7 @@ include 'includes/navbar.php';
                     <div class="about-contact-detail">
                         <span class="about-detail-icon"><i class="fa-solid fa-location-dot"></i></span>
                         <div>
-                            <small>Address</small>
+                            <small><?= sm_text('Address', 'ঠিকানা'); ?></small>
                             <strong>Room- 502, KiU, Kishoreganj Sadar, Kishoreganj, Bangladesh</strong>
                         </div>
                     </div>
@@ -232,7 +231,7 @@ include 'includes/navbar.php';
                     <div class="about-contact-detail">
                         <span class="about-detail-icon"><i class="fa-solid fa-envelope"></i></span>
                         <div>
-                            <small>Email</small>
+                            <small><?= sm_text('Email', 'ইমেইল'); ?></small>
                             <strong><a href="mailto:support.smartmatrimony@gmail.com">support.smartmatrimony@gmail.com</a></strong>
                         </div>
                     </div>

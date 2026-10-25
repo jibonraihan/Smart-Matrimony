@@ -1,5 +1,6 @@
 <?php
 require_once '../config/db.php';
+require_once '../includes/language.php';
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -55,23 +56,23 @@ include '../includes/navbar.php';
 ?>
 <main class="matching-page">
     <div class="matching-wrap narrow">
-        <a class="back-link" href="<?= htmlspecialchars($return_url); ?>"><i class="fa-solid fa-arrow-left"></i> Back</a>
+        <a class="back-link" href="<?= htmlspecialchars($return_url); ?>"><i class="fa-solid fa-arrow-left"></i> <?=sm_text('Back','ফিরে যান')?></a>
         <section class="interest-form-card">
-            <span class="section-kicker">SEND INTEREST</span>
-            <h1>Express your interest</h1>
-            <p>Send a respectful message to <strong><?= htmlspecialchars(trim($profile['first_name'].' '.$profile['last_name'])) ?></strong>. Keep it sincere and appropriate.</p>
+            <span class="section-kicker"><?=sm_text('SEND INTEREST','আগ্রহ জানান')?></span>
+            <h1><?=sm_text('Express your interest','আপনার আগ্রহ প্রকাশ করুন')?></h1>
+            <p><?=sm_text('Send a respectful message to','সম্মানজনক একটি বার্তা পাঠান')?><strong><?= htmlspecialchars(trim($profile['first_name'].' '.$profile['last_name'])) ?></strong><?=sm_text('. Keep it sincere and appropriate.','- বার্তাটি আন্তরিক ও উপযুক্ত রাখুন।')?></p>
             <?php if ($can_send_interest): ?>
                 <form method="post" action="send_interest_action.php">
                     <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['matching_csrf']) ?>">
                     <input type="hidden" name="user_id" value="<?= $target ?>">
                     <input type="hidden" name="action" value="send_interest">
                     <input type="hidden" name="return_to" value="profile">
-                    <textarea id="interest_message" name="interest_message" maxlength="300" placeholder="I would like to express my interest in your profile..."></textarea>
-                    <div class="form-note">Maximum 300 characters.</div>
-                    <button class="primary-btn" type="submit"><i class="fa-solid fa-heart"></i> Send Interest</button>
+                    <textarea id="interest_message" name="interest_message" maxlength="300" placeholder="<?=sm_text('I would like to express my interest in your profile...','আমি আপনার প্রোফাইলের প্রতি আমার আগ্রহ জানাতে চাই...')?>"></textarea>
+                    <div class="form-note"><?=sm_text('Maximum 300 characters.','সর্বোচ্চ ৩০০টি অক্ষর।')?></div>
+                    <button class="primary-btn" type="submit"><i class="fa-solid fa-heart"></i> <?=sm_text('Send Interest','আগ্রহ পাঠান')?></button>
                 </form>
             <?php else: ?>
-                <div class="interest-unavailable"><i class="fa-solid fa-ban"></i><strong>Interest cannot be sent</strong><p>You can view and bookmark this profile, but interest requests can only be sent to the opposite gender.</p></div>
+                <div class="interest-unavailable"><i class="fa-solid fa-ban"></i><strong><?=sm_text('Interest cannot be sent','আগ্রহ পাঠানো যাচ্ছে না')?></strong><p><?=sm_text('You can view and bookmark this profile, but interest requests can only be sent to the opposite gender.','আপনি এই প্রোফাইল দেখতে ও বুকমার্ক করতে পারবেন, তবে শুধু বিপরীত লিঙ্গের সদস্যকে আগ্রহের অনুরোধ পাঠানো যাবে।')?></p></div>
             <?php endif; ?>
         </section>
     </div>

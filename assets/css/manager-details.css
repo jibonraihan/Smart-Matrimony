@@ -76,3 +76,6 @@
   .manager-table-scroll::-webkit-scrollbar{width:12px;height:12px}
   .table-action-group{flex-wrap:nowrap}
 }
+
+/* Package-code badge: compact manager package oversight table and modal. */
+.manager-table .package-code-badge,.control-modal-card > .package-code-badge{display:inline-flex;align-items:center;width:max-content;max-width:100%;min-height:23px;margin:1px 0;padding:3px 7px;box-sizing:border-box;border:1px solid #b9ddd5;border-left:3px solid #d4af37;border-radius:7px;background:#f0faf7;color:#164e4a;font:800 11px/1.1 "SFMono-Regular",Consolas,"Liberation Mono",monospace;letter-spacing:.05em;white-space:nowrap}

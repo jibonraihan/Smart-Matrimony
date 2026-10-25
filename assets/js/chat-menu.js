@@ -28,7 +28,7 @@
                     <a href="../dashboard.php#partner-search"><i class="fa-solid fa-magnifying-glass"></i><span>Find Partner</span></a>
                     <a href="my_matches.php"><i class="fa-solid fa-heart"></i><span>My Matches</span></a>
                     <a href="bookmarks.php"><i class="fa-solid fa-bookmark"></i><span>Bookmarks</span></a>
-                    <a href="chat_requests.php"><i class="fa-solid fa-comments"></i><span>Messages</span></a>
+                    <a href="message_requests.php"><i class="fa-solid fa-comments"></i><span>Messages</span></a>
                     <a href="../cart.php"><i class="fa-solid fa-cart-shopping"></i><span>My Service Cart</span></a>
                     <a href="../my_bookings.php"><i class="fa-solid fa-calendar-check"></i><span>My Bookings</span></a>
                 </nav>

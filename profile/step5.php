@@ -2,6 +2,8 @@
 
 require_once '../config/db.php';
 require_once '../includes/functions.php';
+require_once '../includes/language.php';
+require_once '../includes/dropdowns.php';
 require_once '../includes/image_helper.php';
 require_once '../includes/profile_completion.php';
 
@@ -114,6 +116,44 @@ if ($video_stmt) {
 
 $visibility_options = ['Everyone', 'Verified Users', 'Matched Users', 'Hidden'];
 $profile_visibility = (string) ($user['profile_visibility'] ?? 'Public');
+
+// Step 5 display-only labels; stored option values remain unchanged.
+if (!function_exists('sm_step5_visibility_label')) {
+    function sm_step5_visibility_label(string $value): string
+    {
+        $labels = [
+            'Public' => ['Public', 'সবার জন্য উন্মুক্ত'],
+            'Hidden' => ['Hidden', 'গোপন'],
+            'Everyone' => ['Everyone', 'সবাই'],
+            'Verified Users' => ['Verified Users', 'যাচাইকৃত ব্যবহারকারী'],
+            'Matched Users' => ['Matched Users', 'ম্যাচ হওয়া ব্যবহারকারী'],
+            'Private' => ['Private', 'গোপন'],
+        ];
+        $pair = $labels[$value] ?? [$value, $value];
+        return sm_text($pair[0], $pair[1]);
+    }
+}
+
+// Translate permanent Step 5 feedback messages according to the selected language.
+if (!function_exists('sm_step5_feedback_message')) {
+    function sm_step5_feedback_message(string $message): string
+    {
+        $translations = [
+            'Please select a valid profile visibility option.' => 'প্রোফাইলের দৃশ্যমানতার জন্য সঠিক অপশন নির্বাচন করুন।',
+            'Please select a valid photo visibility option.' => 'ছবির দৃশ্যমানতার জন্য সঠিক অপশন নির্বাচন করুন।',
+            'Please select a valid voice visibility option.' => 'কণ্ঠ পরিচিতির দৃশ্যমানতার জন্য সঠিক অপশন নির্বাচন করুন।',
+            'Please select a valid video visibility option.' => 'ভিডিও পরিচিতির দৃশ্যমানতার জন্য সঠিক অপশন নির্বাচন করুন।',
+            'Please complete both the Hearing Check and Visual Check before continuing.' => 'এগিয়ে যাওয়ার আগে শ্রবণ ও দৃষ্টিশক্তি—দুটি পরীক্ষাই সম্পন্ন করুন।',
+            'The photo upload failed. Please try again.' => 'ছবি আপলোড করা যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন।',
+            'Only JPG, JPEG, PNG and WEBP images are allowed.' => 'শুধু JPG, JPEG, PNG ও WEBP ছবি ব্যবহার করা যাবে।',
+            'Maximum photo size is 20 MB.' => 'ছবির সর্বোচ্চ আকার ২০ এমবি।',
+            'Unable to process the photo. Please try another image.' => 'ছবিটি প্রক্রিয়া করা যায়নি। অনুগ্রহ করে অন্য ছবি ব্যবহার করুন।',
+            'Unable to prepare the profile update.' => 'প্রোফাইল আপডেট প্রস্তুত করা যায়নি।',
+            'Unable to save Step 5 right now. Please try again.' => 'এখন ধাপ ৫ সংরক্ষণ করা যাচ্ছে না। অনুগ্রহ করে আবার চেষ্টা করুন।',
+        ];
+        return isset($translations[$message]) ? sm_text($message, $translations[$message]) : $message;
+    }
+}
 
 function sync_profile_media(mysqli $conn, int $user_id, string $file_path, string $visibility, string $status = 'Active'): void
 {
@@ -228,7 +268,7 @@ if (isset($_POST['save_step5'])) {
             $mime = function_exists('mime_content_type') ? mime_content_type($file_tmp) : '';
 
             if (!in_array($extension, $allowed_extensions, true) || !in_array($mime, $allowed_mime, true)) {
-                $error = 'Only JPG, JPEG and WEBP images are allowed.';
+                $error = 'Only JPG, JPEG, PNG and WEBP images are allowed.';
             } elseif ($file_size > 20 * 1024 * 1024) {
                 $error = 'Maximum photo size is 20 MB.';
             } else {
@@ -341,12 +381,12 @@ include '../includes/navbar.php';
 
 $currentStep = 5;
 $steps = [
-    1 => ['title' => 'Personal', 'icon' => 'bi-person-circle', 'url' => 'step1.php'],
-    2 => ['title' => 'Family', 'icon' => 'bi-people', 'url' => 'step2.php'],
-    3 => ['title' => 'Lifestyle', 'icon' => 'bi-heart', 'url' => 'step3.php'],
-    4 => ['title' => 'Location', 'icon' => 'bi-geo-alt', 'url' => 'step4.php'],
-    5 => ['title' => 'Photo & Checks', 'icon' => 'bi-shield-lock', 'url' => 'step5.php'],
-    6 => ['title' => 'PP & QnA', 'icon' => 'bi-patch-question', 'url' => 'step6.php']
+    1 => ['title' => sm_text('Personal', 'ব্যক্তিগত তথ্য'), 'icon' => 'bi-person-circle', 'url' => 'step1.php'],
+    2 => ['title' => sm_text('Family', 'পারিবারিক তথ্য'), 'icon' => 'bi-people', 'url' => 'step2.php'],
+    3 => ['title' => sm_text('Lifestyle', 'জীবনযাপন ও স্বাস্থ্য'), 'icon' => 'bi-heart', 'url' => 'step3.php'],
+    4 => ['title' => sm_text('Location', 'ঠিকানা'), 'icon' => 'bi-geo-alt', 'url' => 'step4.php'],
+    5 => ['title' => sm_text('Photo & Checks', 'ছবি ও যাচাইকরণ'), 'icon' => 'bi-shield-lock', 'url' => 'step5.php'],
+    6 => ['title' => sm_text('PP & QnA', 'জীবনসঙ্গীর পছন্দ ও প্রশ্নোত্তর'), 'icon' => 'bi-patch-question', 'url' => 'step6.php']
 ];
 $completion = sm_get_profile_completion($conn, $user_id);
                 $progress = $completion['percentage'];
@@ -361,8 +401,8 @@ $preview = ($hasPhoto && $profile_media_id > 0) ? 'media.php?id=' . $profile_med
                 <header class="step5-wizard-head">
                     <div class="step5-heading-row">
                         <div>
-                            <span class="step5-kicker">PROFILE BUILDER</span>
-                            <h1>Step <?= $currentStep ?></h1>
+                            <span class="step5-kicker"><?= sm_text('PROFILE BUILDER', 'প্রোফাইল তৈরি') ?></span>
+                            <h1><?= sm_text('Step', 'ধাপ') ?> <?= (($GLOBALS['current_language'] ?? 'bn') === 'en' ? $currentStep : strtr((string)$currentStep, ['0'=>'০','1'=>'১','2'=>'২','3'=>'৩','4'=>'৪','5'=>'৫','6'=>'৬','7'=>'৭','8'=>'৮','9'=>'৯'])) ?></h1>
                         </div>
                         <a class="step5-logo" href="../dashboard.php" aria-label="Back to dashboard">
                             <img src="<?= BASE_URL ?>assets/images/logo/logo.png" alt="Smart Matrimony">
@@ -381,23 +421,23 @@ $preview = ($hasPhoto && $profile_media_id > 0) ? 'media.php?id=' . $profile_med
                     </nav>
 
                     <div class="step5-progress-wrap">
-                        <div class="step5-progress-track" role="progressbar" aria-valuenow="<?= $progress ?>" aria-valuemin="0" aria-valuemax="100" aria-label="Profile completion">
+                        <div class="step5-progress-track" role="progressbar" aria-valuenow="<?= $progress ?>" aria-valuemin="0" aria-valuemax="100" aria-label="<?= sm_text('Profile completion', 'প্রোফাইল সম্পন্নের অগ্রগতি') ?>">
                             <div class="step5-progress-fill" style="width: <?= $progress ?>%"></div>
                         </div>
                         <div class="step5-progress-meta">
-                            <span>Step <?= $currentStep ?> of <?= count($steps) ?></span>
-                            <strong><?= $progress ?>% complete</strong>
+                            <span><?= sm_text('Step', 'ধাপ') ?> <?= (($GLOBALS['current_language'] ?? 'bn') === 'en' ? $currentStep : strtr((string)$currentStep, ['0'=>'০','1'=>'১','2'=>'২','3'=>'৩','4'=>'৪','5'=>'৫','6'=>'৬','7'=>'৭','8'=>'৮','9'=>'৯'])) ?> / <?= count($steps) ?></span>
+                            <strong><?= $progress ?><?= sm_text('% complete', '% সম্পন্ন') ?></strong>
                         </div>
                     </div>
                 </header>
 
                 <?php if ($error !== ''): ?>
                     <div class="alert alert-danger step5-alert" role="alert">
-                        <i class="bi bi-exclamation-circle me-2"></i><?= htmlspecialchars($error) ?>
+                        <i class="bi bi-exclamation-circle me-2"></i><?= htmlspecialchars(sm_step5_feedback_message($error), ENT_QUOTES, 'UTF-8') ?>
                     </div>
                 <?php elseif (isset($_GET['removed'])): ?>
                     <div class="alert alert-success step5-alert step5-remove-alert" role="alert">
-                        <i class="bi bi-check-circle me-2"></i>Profile photo removed successfully.
+                        <i class="bi bi-check-circle me-2"></i><?= sm_text("Profile photo removed successfully.", "প্রোফাইলের ছবি সফলভাবে সরানো হয়েছে।") ?>
                     </div>
                 <?php endif; ?>
 
@@ -406,7 +446,7 @@ $preview = ($hasPhoto && $profile_media_id > 0) ? 'media.php?id=' . $profile_med
                         <div class="section-heading">
                             <span class="section-icon"><i class="bi bi-image"></i></span>
                             <div>
-                                <h2>Profile Photo</h2>
+                                <h2><?= sm_text('Profile Photo', 'প্রোফাইল ছবি') ?></h2>
                             </div>
                         </div>
 
@@ -416,12 +456,12 @@ $preview = ($hasPhoto && $profile_media_id > 0) ? 'media.php?id=' . $profile_med
                                     <img src="<?= htmlspecialchars($preview) ?>" id="photoPreview" class="photo-preview" alt="Profile photo preview">
                                     <div id="photoPlaceholder" class="photo-placeholder d-none" aria-hidden="true">
                                         <i class="bi bi-person-fill"></i>
-                                        <span>No photo</span>
+                                        <span><?= sm_text('No photo', 'কোনো ছবি নেই') ?></span>
                                     </div>
                                 <?php else: ?>
                                     <div id="photoPlaceholder" class="photo-placeholder" aria-label="No profile photo">
                                         <i class="bi bi-person-fill"></i>
-                                        <span>No photo</span>
+                                        <span><?= sm_text('No photo', 'কোনো ছবি নেই') ?></span>
                                     </div>
                                     <img src="" id="photoPreview" class="photo-preview d-none" alt="Profile photo preview">
                                 <?php endif; ?>
@@ -433,7 +473,7 @@ $preview = ($hasPhoto && $profile_media_id > 0) ? 'media.php?id=' . $profile_med
                             <div>
                                 <div class="photo-actions">
                                     <button type="button" class="btn btn-outline-success" id="choosePhoto">
-                                        <i class="bi bi-camera me-1"></i><?= $hasPhoto ? 'Change Photo' : 'Upload Photo' ?>
+                                        <i class="bi bi-camera me-1"></i><?= $hasPhoto ? sm_text('Change Photo', 'ছবি পরিবর্তন করুন') : sm_text('Upload Photo', 'ছবি আপলোড করুন') ?>
                                     </button>
                                     <button
                                         type="button"
@@ -441,11 +481,11 @@ $preview = ($hasPhoto && $profile_media_id > 0) ? 'media.php?id=' . $profile_med
                                         id="removePhotoButton"
                                         data-has-saved-photo="<?= $hasPhoto ? '1' : '0' ?>"
                                     >
-                                        <i class="bi bi-trash me-1"></i>Remove
+                                        <i class="bi bi-trash me-1"></i><?= sm_text('Remove', 'সরিয়ে ফেলুন') ?>
                                     </button>
                                 </div>
                                 <div class="photo-status mt-2" id="photoStatus">
-                                    <?= $hasPhoto ? 'Your current profile photo is shown above.' : 'No profile photo added yet.' ?>
+                                    <?= $hasPhoto ? sm_text('Your current profile photo is shown above.', 'আপনার বর্তমান প্রোফাইল ছবি উপরে দেখানো হয়েছে।') : sm_text('No profile photo added yet.', 'এখনো কোনো প্রোফাইল ছবি যোগ করা হয়নি।') ?>
                                 </div>
                             </div>
 
@@ -458,7 +498,7 @@ $preview = ($hasPhoto && $profile_media_id > 0) ? 'media.php?id=' . $profile_med
                         <div class="section-heading">
                             <span class="section-icon"><i class="bi bi-universal-access"></i></span>
                             <div>
-                                <h2>Accessibility Checks</h2>
+                                <h2><?= sm_text('Accessibility Checks', 'যাচাইকরণ পরীক্ষা') ?></h2>
                             </div>
                         </div>
 
@@ -467,26 +507,26 @@ $preview = ($hasPhoto && $profile_media_id > 0) ? 'media.php?id=' . $profile_med
                                 <div class="accessibility-check-head">
                                     <div class="accessibility-check-icon"><i class="bi bi-volume-up-fill"></i></div>
                                     <div>
-                                        <h3>Hearing Check <span class="required-badge">Required</span></h3>
+                                        <h3><?= sm_text('Hearing Check', 'শ্রবণ পরীক্ষা') ?> <span class="required-badge"><?= sm_text('Required', 'আবশ্যক') ?></span></h3>
                                     </div>
                                 </div>
                                 <div class="hearing-check-body">
                                     <button type="button" class="btn btn-outline-success accessibility-play-btn" id="playHearingCheck">
-                                        <i class="bi bi-play-fill"></i> Play Audio
+                                        <i class="bi bi-play-fill"></i> <?= sm_text('Play Audio', 'অডিও শুনুন') ?>
                                     </button>
                                     <button type="button" class="btn btn-outline-secondary d-none" id="replayHearingCheck">
-                                        <i class="bi bi-arrow-repeat"></i> Play Again
+                                        <i class="bi bi-arrow-repeat"></i> <?= sm_text('Play Again', 'আবার শুনুন') ?>
                                     </button>
-                                    <div class="accessibility-code-hint" id="hearingCheckPrompt" data-code="<?= htmlspecialchars($step5_hearing_code) ?>">Listen carefully to the spoken four-digit code.</div>
+                                    <div class="accessibility-code-hint" id="hearingCheckPrompt" data-code="<?= htmlspecialchars($step5_hearing_code) ?>"><?= sm_text('Listen carefully to the spoken four-digit code.', 'শোনানো চার অঙ্কের কোডটি মনোযোগ দিয়ে শুনুন।') ?></div>
                                     <div class="accessibility-answer-row">
-                                        <label for="hearingCheckAnswer">Your answer</label>
+                                        <label for="hearingCheckAnswer"><?= sm_text('Your answer', 'আপনার উত্তর') ?></label>
                                         <div class="accessibility-answer-controls">
-                                            <input type="text" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" id="hearingCheckAnswer" class="form-control" autocomplete="off" placeholder="4 digits">
-                                            <button type="button" class="btn btn-success" id="verifyHearingCheck">Verify</button>
+                                            <input type="text" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" id="hearingCheckAnswer" class="form-control" autocomplete="off" placeholder="<?= sm_text('4 digits', '৪টি অঙ্ক') ?>">
+                                            <button type="button" class="btn btn-success" id="verifyHearingCheck"><?= sm_text('Verify', 'যাচাই করুন') ?></button>
                                         </div>
                                     </div>
                                     <div class="accessibility-check-status <?= $hearing_check_passed ? 'is-success' : '' ?>" id="hearingCheckStatus" role="status">
-                                        <?= $hearing_check_passed ? '✓ Hearing check passed.' : 'Not completed yet.' ?>
+                                        <?= $hearing_check_passed ? sm_text('✓ Hearing check passed.', '✓ শ্রবণ পরীক্ষা সফল হয়েছে।') : sm_text('Not completed yet.', 'এখনো সম্পন্ন হয়নি।') ?>
                                     </div>
                                 </div>
                             </article>
@@ -495,28 +535,28 @@ $preview = ($hasPhoto && $profile_media_id > 0) ? 'media.php?id=' . $profile_med
                                 <div class="accessibility-check-head">
                                     <div class="accessibility-check-icon"><i class="bi bi-eye-fill"></i></div>
                                     <div>
-                                        <h3>Visual Check <span class="required-badge">Required</span></h3>
+                                        <h3><?= sm_text('Visual Check', 'দৃষ্টিশক্তি পরীক্ষা') ?> <span class="required-badge"><?= sm_text('Required', 'আবশ্যক') ?></span></h3>
                                     </div>
                                 </div>
                                 <div class="visual-captcha-wrap">
-                                    <img src="accessibility_captcha.php?<?= time() ?>" id="visualCaptchaImage" class="visual-captcha-image" alt="Visual verification code">
-                                    <button type="button" class="btn btn-outline-secondary accessibility-refresh-btn" id="refreshVisualCaptcha" aria-label="Refresh visual verification code">
+                                    <img src="accessibility_captcha.php?<?= time() ?>" id="visualCaptchaImage" class="visual-captcha-image" alt="<?= sm_text('Visual verification code', 'দৃশ্যমান যাচাইকরণ কোড') ?>">
+                                    <button type="button" class="btn btn-outline-secondary accessibility-refresh-btn" id="refreshVisualCaptcha" aria-label="<?= sm_text('Refresh visual verification code', 'যাচাইকরণ কোড নতুন করে নিন') ?>">
                                         <i class="bi bi-arrow-clockwise"></i>
                                     </button>
                                 </div>
                                 <div class="accessibility-answer-row">
-                                    <label for="visionCheckAnswer">Your answer</label>
+                                    <label for="visionCheckAnswer"><?= sm_text('Your answer', 'আপনার উত্তর') ?></label>
                                     <div class="accessibility-answer-controls">
-                                        <input type="text" maxlength="5" id="visionCheckAnswer" class="form-control" autocomplete="off" placeholder="Enter the code">
-                                        <button type="button" class="btn btn-success" id="verifyVisionCheck">Verify</button>
+                                        <input type="text" maxlength="5" id="visionCheckAnswer" class="form-control" autocomplete="off" placeholder="<?= sm_text('Enter the code', 'কোড লিখুন') ?>">
+                                        <button type="button" class="btn btn-success" id="verifyVisionCheck"><?= sm_text('Verify', 'যাচাই করুন') ?></button>
                                     </div>
                                 </div>
                                 <div class="accessibility-check-status <?= $vision_check_passed ? 'is-success' : '' ?>" id="visionCheckStatus" role="status">
-                                    <?= $vision_check_passed ? '✓ Visual check passed.' : 'Not completed yet.' ?>
+                                    <?= $vision_check_passed ? sm_text('✓ Visual check passed.', '✓ দৃষ্টিশক্তি পরীক্ষা সফল হয়েছে।') : sm_text('Not completed yet.', 'এখনো সম্পন্ন হয়নি।') ?>
                                 </div>
                             </article>
                         </div>
-                        <div class="accessibility-required-note"><i class="bi bi-info-circle"></i> Both checks are required before Step 5 can be completed.</div>
+                        <div class="accessibility-required-note"><i class="bi bi-info-circle"></i> <?= sm_text('Both checks are required before Step 5 can be completed.', 'ধাপ ৫ সম্পন্ন করতে দুটি পরীক্ষাই পাস করতে হবে।') ?></div>
                     </section>
 
                     
@@ -525,7 +565,7 @@ $preview = ($hasPhoto && $profile_media_id > 0) ? 'media.php?id=' . $profile_med
                         <div class="section-heading">
                             <span class="section-icon"><i class="bi bi-soundwave"></i></span>
                             <div>
-                                <h2>Voice &amp; Video Introductions</h2>
+                                <h2><?= sm_text('Voice &amp; Video Introductions', 'কণ্ঠ ও ভিডিও পরিচিতি') ?></h2>
                             </div>
                         </div>
 
@@ -534,7 +574,7 @@ $preview = ($hasPhoto && $profile_media_id > 0) ? 'media.php?id=' . $profile_med
                         <div class="section-heading">
                             <span class="section-icon"><i class="bi bi-camera-video"></i></span>
                             <div>
-                                <h2>Video Introduction</h2>
+                                <h2><?= sm_text('Video Introduction', 'ভিডিও পরিচিতি') ?></h2>
                             </div>
                         </div>
 
@@ -543,32 +583,32 @@ $preview = ($hasPhoto && $profile_media_id > 0) ? 'media.php?id=' . $profile_med
                                 <video id="videoPreview" class="video-preview <?= $video_media_id > 0 ? '' : 'd-none' ?>" controls playsinline preload="metadata" <?= $video_media_id > 0 ? 'src="media.php?id=' . $video_media_id . '"' : '' ?>></video>
                                 <div id="videoPlaceholder" class="video-placeholder <?= $video_media_id > 0 ? 'd-none' : '' ?>">
                                     <i class="bi bi-camera-video-fill"></i>
-                                    <span>No video yet</span>
+                                    <span><?= sm_text('No video yet', 'এখনো কোনো ভিডিও নেই') ?></span>
                                 </div>
-                                <div id="videoRecordingBadge" class="video-recording-badge d-none"><span></span>Recording</div>
+                                <div id="videoRecordingBadge" class="video-recording-badge d-none"><span></span><?= sm_text('Recording', 'রেকর্ড হচ্ছে') ?></div>
                             </div>
 
                             <div class="video-controls">
                                 <div class="video-time" id="videoTimer">00:00 / 00:30</div>
                                 <div class="video-buttons">
                                     <button type="button" class="btn btn-success" id="startVideo">
-                                        <i class="bi bi-camera-video-fill me-1"></i>Start Recording
+                                        <i class="bi bi-camera-video-fill me-1"></i><?= sm_text('Start Recording', 'রেকর্ডিং শুরু করুন') ?>
                                     </button>
                                     <button type="button" class="btn btn-outline-secondary d-none" id="stopVideo">
-                                        <i class="bi bi-stop-fill me-1"></i>Stop
+                                        <i class="bi bi-stop-fill me-1"></i><?= sm_text('Stop', 'থামান') ?>
                                     </button>
                                     <button type="button" class="btn btn-outline-success d-none" id="recordAgainVideo">
-                                        <i class="bi bi-arrow-repeat me-1"></i>Record Again
+                                        <i class="bi bi-arrow-repeat me-1"></i><?= sm_text('Record Again', 'আবার রেকর্ড করুন') ?>
                                     </button>
                                     <?php if ($video_media_id > 0): ?>
                                         <button type="button" class="btn btn-outline-danger" id="removeVideo">
-                                            <i class="bi bi-trash me-1"></i>Remove
+                                            <i class="bi bi-trash me-1"></i><?= sm_text('Remove', 'সরিয়ে ফেলুন') ?>
                                         </button>
                                     <?php endif; ?>
                                 </div>
                                 <div class="video-error alert alert-danger d-none" id="videoError" role="alert"></div>
                                 <div class="video-status" id="videoStatus">
-                                    <?= $video_media_id > 0 ? 'Your current video introduction is ready to play.' : 'Optional — record up to 30 seconds.' ?>
+                                    <?= $video_media_id > 0 ? sm_text('Your current video introduction is ready to play.', 'আপনার বর্তমান ভিডিও পরিচিতি চালানোর জন্য প্রস্তুত।') : sm_text('Optional — record up to 30 seconds.', 'ঐচ্ছিক — সর্বোচ্চ ৩০ সেকেন্ড রেকর্ড করুন।') ?>
                                 </div>
                             </div>
                         </div>
@@ -578,7 +618,7 @@ $preview = ($hasPhoto && $profile_media_id > 0) ? 'media.php?id=' . $profile_med
                         <div class="section-heading">
                             <span class="section-icon"><i class="bi bi-mic"></i></span>
                             <div>
-                                <h2>Voice Introduction</h2>
+                                <h2><?= sm_text('Voice Introduction', 'কণ্ঠে পরিচিতি') ?></h2>
                             </div>
                         </div>
 
@@ -594,24 +634,24 @@ $preview = ($hasPhoto && $profile_media_id > 0) ? 'media.php?id=' . $profile_med
                                 <div class="voice-time" id="voiceTimer">00:00 / 00:30</div>
                                 <div class="voice-buttons">
                                     <button type="button" class="btn btn-success" id="startVoice">
-                                        <i class="bi bi-mic-fill me-1"></i>Start Recording
+                                        <i class="bi bi-mic-fill me-1"></i><?= sm_text('Start Recording', 'রেকর্ডিং শুরু করুন') ?>
                                     </button>
                                     <button type="button" class="btn btn-outline-secondary d-none" id="stopVoice">
-                                        <i class="bi bi-stop-fill me-1"></i>Stop
+                                        <i class="bi bi-stop-fill me-1"></i><?= sm_text('Stop', 'থামান') ?>
                                     </button>
                                     <button type="button" class="btn btn-outline-success d-none" id="recordAgainVoice">
-                                        <i class="bi bi-arrow-repeat me-1"></i>Record Again
+                                        <i class="bi bi-arrow-repeat me-1"></i><?= sm_text('Record Again', 'আবার রেকর্ড করুন') ?>
                                     </button>
                                     <?php if ($voice_media_id > 0): ?>
                                         <button type="button" class="btn btn-outline-danger" id="removeVoice">
-                                            <i class="bi bi-trash me-1"></i>Remove
+                                            <i class="bi bi-trash me-1"></i><?= sm_text('Remove', 'সরিয়ে ফেলুন') ?>
                                         </button>
                                     <?php endif; ?>
                                 </div>
                                 <audio id="voicePlayer" class="voice-player <?= $voice_media_id > 0 ? '' : 'd-none' ?>" controls preload="metadata" <?= $voice_media_id > 0 ? 'src="media.php?id=' . $voice_media_id . '"' : '' ?>></audio>
                                 <div class="voice-error alert alert-danger d-none" id="voiceError" role="alert"></div>
                                 <div class="voice-status" id="voiceStatus">
-                                    <?= $voice_media_id > 0 ? 'Your current voice introduction is ready to play.' : 'Optional — record up to 30 seconds.' ?>
+                                    <?= $voice_media_id > 0 ? sm_text('Your current voice introduction is ready to play.', 'আপনার বর্তমান কণ্ঠ পরিচিতি চালানোর জন্য প্রস্তুত।') : sm_text('Optional — record up to 30 seconds.', 'ঐচ্ছিক — সর্বোচ্চ ৩০ সেকেন্ড রেকর্ড করুন।') ?>
                                 </div>
                             </div>
                         </div>
@@ -623,49 +663,49 @@ $preview = ($hasPhoto && $profile_media_id > 0) ? 'media.php?id=' . $profile_med
                         <div class="section-heading">
                             <span class="section-icon"><i class="bi bi-shield-lock"></i></span>
                             <div>
-                                <h2>Privacy &amp; Visibility</h2>
+                                <h2><?= sm_text('Privacy &amp; Visibility', 'গোপনীয়তা ও দৃশ্যমানতা') ?></h2>
                             </div>
                         </div>
 
                         <div class="step5-visibility-grid">
                             <div class="step5-visibility-field">
-                                <label class="form-label" for="profileVisibility">Profile Visibility</label>
+                                <label class="form-label" for="profileVisibility"><?= sm_text('Profile Visibility', 'প্রোফাইলের দৃশ্যমানতা') ?></label>
                                 <select name="profile_visibility" id="profileVisibility" class="form-select">
-                                    <option value="Public" <?= $profile_visibility === 'Public' ? 'selected' : '' ?>>Public</option>
-                                    <option value="Hidden" <?= $profile_visibility === 'Hidden' ? 'selected' : '' ?>>Hidden</option>
+                                    <option value="Public" <?= $profile_visibility === 'Public' ? 'selected' : '' ?>><?= sm_text('Public', 'সবার জন্য উন্মুক্ত') ?></option>
+                                    <option value="Hidden" <?= $profile_visibility === 'Hidden' ? 'selected' : '' ?>><?= sm_text('Hidden', 'গোপন') ?></option>
                                 </select>
                             </div>
 
                             <div class="step5-visibility-field">
-                                <label class="form-label" for="photoVisibility">Photo Visibility</label>
+                                <label class="form-label" for="photoVisibility"><?= sm_text('Photo Visibility', 'ছবির দৃশ্যমানতা') ?></label>
                                 <select name="photo_visibility" id="photoVisibility" class="form-select">
                                     <?php foreach ($visibility_options as $option): ?>
                                         <option value="<?= htmlspecialchars($option) ?>" <?= (($user['photo_visibility'] ?? 'Verified Users') === $option) ? 'selected' : '' ?>>
-                                            <?= htmlspecialchars($option) ?>
+                                            <?= htmlspecialchars(sm_step5_visibility_label($option)) ?>
                                         </option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
 
                             <div class="step5-visibility-field">
-                                <label class="form-label" for="voiceVisibility">Voice Visibility</label>
+                                <label class="form-label" for="voiceVisibility"><?= sm_text('Voice Visibility', 'কণ্ঠ পরিচিতির দৃশ্যমানতা') ?></label>
                                 <select name="voice_visibility" id="voiceVisibility" class="form-select">
                                     <?php foreach ($visibility_options as $option): ?>
                                         <?php $voice_option = ($option === 'Hidden') ? 'Private' : $option; ?>
                                         <option value="<?= htmlspecialchars($voice_option) ?>" <?= ($voice_visibility === $voice_option) ? 'selected' : '' ?>>
-                                            <?= htmlspecialchars($option) ?>
+                                            <?= htmlspecialchars(sm_step5_visibility_label($option)) ?>
                                         </option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
 
                             <div class="step5-visibility-field">
-                                <label class="form-label" for="videoVisibility">Video Visibility</label>
+                                <label class="form-label" for="videoVisibility"><?= sm_text('Video Visibility', 'ভিডিও পরিচিতির দৃশ্যমানতা') ?></label>
                                 <select name="video_visibility" id="videoVisibility" class="form-select">
                                     <?php foreach ($visibility_options as $option): ?>
                                         <?php $video_option = ($option === 'Hidden') ? 'Private' : $option; ?>
                                         <option value="<?= htmlspecialchars($video_option) ?>" <?= ($video_visibility === $video_option) ? 'selected' : '' ?>>
-                                            <?= htmlspecialchars($option) ?>
+                                            <?= htmlspecialchars(sm_step5_visibility_label($option)) ?>
                                         </option>
                                     <?php endforeach; ?>
                                 </select>
@@ -677,7 +717,7 @@ $preview = ($hasPhoto && $profile_media_id > 0) ? 'media.php?id=' . $profile_med
                         <div class="section-heading">
                             <span class="section-icon"><i class="bi bi-eye"></i></span>
                             <div>
-                                <h2>Privacy Summary</h2>
+                                <h2><?= sm_text('Privacy Summary', 'গোপনীয়তার সারসংক্ষেপ') ?></h2>
                             </div>
                         </div>
 
@@ -685,29 +725,29 @@ $preview = ($hasPhoto && $profile_media_id > 0) ? 'media.php?id=' . $profile_med
                             <div class="privacy-summary-item">
                                 <div class="privacy-summary-icon"><i class="bi bi-person-check"></i></div>
                                 <div>
-                                    <span>Profile Visibility</span>
-                                    <strong id="summaryProfileVisibility"><?= htmlspecialchars($profile_visibility) ?></strong>
+                                    <span><?= sm_text('Profile Visibility', 'প্রোফাইলের দৃশ্যমানতা') ?></span>
+                                    <strong id="summaryProfileVisibility"><?= htmlspecialchars(sm_step5_visibility_label($profile_visibility)) ?></strong>
                                 </div>
                             </div>
                             <div class="privacy-summary-item">
                                 <div class="privacy-summary-icon"><i class="bi bi-image"></i></div>
                                 <div>
-                                    <span>Profile Photo</span>
-                                    <strong id="summaryPhotoVisibility"><?= htmlspecialchars($user['photo_visibility'] ?? 'Verified Users') ?></strong>
+                                    <span><?= sm_text('Profile Photo', 'প্রোফাইল ছবি') ?></span>
+                                    <strong id="summaryPhotoVisibility"><?= htmlspecialchars(sm_step5_visibility_label((string) ($user['photo_visibility'] ?? 'Verified Users'))) ?></strong>
                                 </div>
                             </div>
                             <div class="privacy-summary-item">
                                 <div class="privacy-summary-icon"><i class="bi bi-mic"></i></div>
                                 <div>
-                                    <span>Voice Introduction</span>
-                                    <strong id="summaryVoiceVisibility"><?= htmlspecialchars($voice_visibility === 'Private' ? 'Hidden' : $voice_visibility) ?></strong>
+                                    <span><?= sm_text('Voice Introduction', 'কণ্ঠে পরিচিতি') ?></span>
+                                    <strong id="summaryVoiceVisibility"><?= htmlspecialchars(sm_step5_visibility_label($voice_visibility === 'Private' ? 'Hidden' : $voice_visibility)) ?></strong>
                                 </div>
                             </div>
                             <div class="privacy-summary-item">
                                 <div class="privacy-summary-icon"><i class="bi bi-camera-video"></i></div>
                                 <div>
-                                    <span>Video Introduction</span>
-                                    <strong id="summaryVideoVisibility"><?= htmlspecialchars($video_visibility === 'Private' ? 'Hidden' : $video_visibility) ?></strong>
+                                    <span><?= sm_text('Video Introduction', 'ভিডিও পরিচিতি') ?></span>
+                                    <strong id="summaryVideoVisibility"><?= htmlspecialchars(sm_step5_visibility_label($video_visibility === 'Private' ? 'Hidden' : $video_visibility)) ?></strong>
                                 </div>
                             </div>
                         </div>
@@ -716,11 +756,11 @@ $preview = ($hasPhoto && $profile_media_id > 0) ? 'media.php?id=' . $profile_med
 
 
                     <div class="step5-actions">
-                        <a href="../profile/view_profile.php" class="btn step5-back">
-                            <i class="bi bi-arrow-left-circle"></i> Back to Profile
+                        <a href="view_profile.php?user_id=<?= (int)$user_id ?>" class="btn step5-back">
+                            <i class="bi bi-arrow-left-circle"></i> <?= sm_text('Back to Profile', 'প্রোফাইলে ফিরে যান') ?>
                         </a>
                         <button type="submit" name="save_step5" value="1" class="btn step5-save">
-                            Save &amp; Continue <i class="bi bi-arrow-right-circle"></i>
+                            <?= sm_text('Save &amp; Continue', 'সংরক্ষণ করে এগিয়ে যান') ?> <i class="bi bi-arrow-right-circle"></i>
                         </button>
                     </div>
                 </form>
@@ -778,10 +818,10 @@ $preview = ($hasPhoto && $profile_media_id > 0) ? 'media.php?id=' . $profile_med
                 input.value = '';
                 if (defaultPreview) {
                     showImage(defaultPreview);
-                    status.textContent = 'Your current profile photo is shown above.';
+                    status.textContent = <?= json_encode(sm_text('Your current profile photo is shown above.', 'আপনার বর্তমান প্রোফাইল ছবি উপরে দেখানো হয়েছে।'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
                 } else {
                     showPlaceholder();
-                    status.textContent = 'No profile photo added yet.';
+                    status.textContent = <?= json_encode(sm_text('No profile photo added yet.', 'এখনো কোনো প্রোফাইল ছবি যোগ করা হয়নি।'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
                 }
                 updateRemoveButton();
                 return;
@@ -790,7 +830,7 @@ $preview = ($hasPhoto && $profile_media_id > 0) ? 'media.php?id=' . $profile_med
             // If the image is already saved, submit the existing server-side
             // removal action.
             if (removePhotoButton.dataset.hasSavedPhoto === '1') {
-                if (!window.confirm('Remove your profile photo?')) return;
+                if (!window.confirm(<?= json_encode(sm_text('Remove your profile photo?', 'আপনি কি প্রোফাইলের ছবি সরাতে চান?'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>)) return;
                 const removeInput = document.createElement('input');
                 removeInput.type = 'hidden';
                 removeInput.name = 'remove_photo';
@@ -811,7 +851,7 @@ $preview = ($hasPhoto && $profile_media_id > 0) ? 'media.php?id=' . $profile_med
             return;
         }
         if (file.size > maxSize) {
-            errorBox.textContent = 'Maximum photo size is 5 MB.';
+            errorBox.textContent = <?= json_encode(sm_text('Maximum photo size is 20 MB.', 'ছবির সর্বোচ্চ আকার ২০ এমবি।'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
             errorBox.classList.remove('d-none');
             input.value = '';
             if (defaultPreview) showImage(defaultPreview); else showPlaceholder();
@@ -819,7 +859,7 @@ $preview = ($hasPhoto && $profile_media_id > 0) ? 'media.php?id=' . $profile_med
             return;
         }
         if (!allowed.includes(file.type)) {
-            errorBox.textContent = 'Only JPG, PNG and WEBP images are allowed.';
+            errorBox.textContent = <?= json_encode(sm_text('Only JPG, JPEG, PNG and WEBP images are allowed.', 'শুধু JPG, JPEG, PNG ও WEBP ছবি ব্যবহার করা যাবে।'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
             errorBox.classList.remove('d-none');
             input.value = '';
             if (defaultPreview) showImage(defaultPreview); else showPlaceholder();
@@ -827,10 +867,18 @@ $preview = ($hasPhoto && $profile_media_id > 0) ? 'media.php?id=' . $profile_med
             return;
         }
         showImage(URL.createObjectURL(file));
-        status.textContent = 'New photo selected. Save & Continue to apply it.';
+        status.textContent = <?= json_encode(sm_text('New photo selected. Save & Continue to apply it.', 'নতুন ছবি নির্বাচন করা হয়েছে। কার্যকর করতে “সংরক্ষণ করে এগিয়ে যান” চাপুন।'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
         updateRemoveButton();
     });
 
+    window.smDropdownLabels = <?= json_encode([
+        'Public' => sm_text('Public', 'সবার জন্য উন্মুক্ত'),
+        'Hidden' => sm_text('Hidden', 'গোপন'),
+        'Everyone' => sm_text('Everyone', 'সবাই'),
+        'Verified Users' => sm_text('Verified Users', 'যাচাইকৃত ব্যবহারকারী'),
+        'Matched Users' => sm_text('Matched Users', 'ম্যাচ হওয়া ব্যবহারকারী'),
+        'Private' => sm_text('Private', 'ব্যক্তিগত'),
+    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
     const visibility = document.getElementById('photoVisibility');
     updateRemoveButton();
 
@@ -840,12 +888,12 @@ $preview = ($hasPhoto && $profile_media_id > 0) ? 'media.php?id=' . $profile_med
     const summaryVoice = document.getElementById('summaryVoiceVisibility');
     const summaryVideo = document.getElementById('summaryVideoVisibility');
     function updatePrivacySummary() {
-        if (summaryProfile && profileVisibility) summaryProfile.textContent = profileVisibility.value;
-        if (summaryPhoto && visibility) summaryPhoto.textContent = visibility.value;
+        if (summaryProfile && profileVisibility) summaryProfile.textContent = (window.smDropdownLabels && window.smDropdownLabels[profileVisibility.value]) || profileVisibility.value;
+        if (summaryPhoto && visibility) summaryPhoto.textContent = (window.smDropdownLabels && window.smDropdownLabels[visibility.value]) || visibility.value;
         const voiceSelect = document.getElementById('voiceVisibility');
         const videoSelect = document.getElementById('videoVisibility');
-        if (summaryVoice && voiceSelect) summaryVoice.textContent = voiceSelect.value === 'Private' ? 'Hidden' : voiceSelect.value;
-        if (summaryVideo && videoSelect) summaryVideo.textContent = videoSelect.value === 'Private' ? 'Hidden' : videoSelect.value;
+        if (summaryVoice && voiceSelect) { const v = voiceSelect.value === 'Private' ? 'Hidden' : voiceSelect.value; summaryVoice.textContent = (window.smDropdownLabels && window.smDropdownLabels[v]) || v; }
+        if (summaryVideo && videoSelect) { const v = videoSelect.value === 'Private' ? 'Hidden' : videoSelect.value; summaryVideo.textContent = (window.smDropdownLabels && window.smDropdownLabels[v]) || v; }
     }
     if (visibility) visibility.addEventListener('change', updatePrivacySummary);
     if (profileVisibility) profileVisibility.addEventListener('change', updatePrivacySummary);

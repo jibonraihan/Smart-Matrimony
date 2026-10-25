@@ -200,7 +200,7 @@ $service_pages = max(1, (int)ceil($service_total_rows / $service_per_page));
 if ($service_page > $service_pages) $service_page = $service_pages;
 $service_offset = ($service_page - 1) * $service_per_page;
 
-$service_sql = "SELECT sp.provider_id, sp.provider_name, sp.package_name, sp.package_details, sp.price, sp.contact_number,
+$service_sql = "SELECT sp.provider_id, sp.package_code, sp.provider_name, sp.package_name, sp.package_details, sp.price, sp.contact_number,
                        sp.location, sp.rating, sp.review_count, sp.status, sp.created_at,
                        s.service_name, u.first_name AS manager_first_name, u.last_name AS manager_last_name
                 FROM service_providers sp
@@ -468,6 +468,7 @@ require __DIR__ . '/admin_header.php';
 
     <nav class="operation-section-nav" aria-label="Operation Center sections">
         <a href="#service-operations-heading">Service &amp; Package</a>
+        <a class="operation-nav-link operation-nav-link-manage-services" href="manage_services.php"><i class="fa-solid fa-layer-group" aria-hidden="true"></i><span>Manage Service Categories</span></a>
         <a href="#booking-operations-heading">Booking Operations</a>
         <a href="#match-operations-heading">Matching Operations</a>
         <a href="#communication-operations-heading">Communication Operations</a>
@@ -479,6 +480,7 @@ require __DIR__ . '/admin_header.php';
         <div class="panel-head operation-panel-head">
             <div>
                 <h2 id="service-operations-heading">Service &amp; Package Operations</h2>
+                <p>Manage provider packages and booking activity.</p>
             </div>
         </div>
 
@@ -551,7 +553,7 @@ require __DIR__ . '/admin_header.php';
                 <?php else: foreach ($service_rows as $row): ?>
                     <?php $manager_name = trim(($row['manager_first_name'] ?? '') . ' ' . ($row['manager_last_name'] ?? '')); ?>
                     <tr>
-                        <td><strong><?=h($row['provider_name'])?></strong><small><?=h($row['package_name'] ?: 'Unnamed package')?></small></td>
+                        <td><strong><?=h($row['provider_name'])?></strong><?php if(!empty($row['package_code'])): ?><span class="package-code-badge"><?=h($row['package_code'])?></span><?php endif; ?><small><?=h($row['package_name'] ?: 'Unnamed package')?></small></td>
                         <td><?=h($row['service_name'])?></td>
                         <td><?=h($manager_name ?: 'Unassigned')?></td>
                         <td>৳ <?=number_format((float)$row['price'], 2)?></td>
@@ -580,6 +582,7 @@ require __DIR__ . '/admin_header.php';
             <div class="service-modal-card" role="dialog" aria-modal="true" aria-labelledby="service-title-<?=h($row['provider_id'])?>">
                 <button type="button" class="service-modal-close" data-service-close aria-label="Close">×</button>
                 <span class="eyebrow">PACKAGE DETAILS</span>
+                <?php if(!empty($row['package_code'])): ?><span class="package-code-badge"><?=h($row['package_code'])?></span><?php endif; ?>
                 <h3 id="service-title-<?=h($row['provider_id'])?>"><?=h($row['package_name'] ?: 'Unnamed package')?></h3>
                 <p class="service-modal-provider"><?=h($row['provider_name'])?> · <?=h($row['service_name'])?></p>
                 <div class="service-detail-grid">

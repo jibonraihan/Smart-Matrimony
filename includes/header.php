@@ -1,5 +1,6 @@
+<?php require_once __DIR__ . '/language.php'; ?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="<?= htmlspecialchars($current_language === 'en' ? 'en' : 'bn', ENT_QUOTES, 'UTF-8'); ?>">
 
 
 <head>
@@ -26,12 +27,12 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <!-- Google Font -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Sora:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&family=Sora:wght@500;600;700;800&display=swap" rel="stylesheet">
 
     <!-- Custom CSS -->
     <link
     rel="stylesheet"
-    href="<?php echo BASE_URL; ?>assets/css/style.css?v=8"
+    href="<?php echo BASE_URL; ?>assets/css/style.css?v=9"
 >
 
     <?php if (!empty($page_css)) : ?>

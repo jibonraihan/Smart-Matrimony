@@ -1,8 +1,10 @@
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;500;600;700&display=swap");
+
 /* Google Font */
 
 body{
 
-    font-family: 'Poppins', sans-serif;
+    font-family: 'Hind Siliguri', 'Poppins', sans-serif;
 
     background:#f8fafc;
 
@@ -2029,4 +2031,47 @@ hr{
         padding: 4px 6px !important;
         font-size: 9px;
     }
+}
+
+/* Language-specific typography: preserve Poppins for English and Hind Siliguri for Bengali. */
+html[lang="en"] body {
+    font-family: 'Poppins', sans-serif;
+}
+
+html[lang="bn"] body {
+    font-family: 'Noto Sans Bengali', 'Hind Siliguri', 'Poppins', sans-serif;
+}
+
+
+/* Package code badge — high-contrast, theme-matched, always single-line. */
+.package-code-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    align-self: flex-start;
+    width: max-content;
+    max-width: 100%;
+    min-height: 24px;
+    box-sizing: border-box;
+    margin: 2px 0 3px;
+    padding: 3px 8px;
+    border: 1px solid #b9ddd5;
+    border-left: 3px solid #d4af37;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #f0faf7 0%, #ffffff 100%);
+    box-shadow: 0 2px 7px rgba(15, 118, 110, 0.10);
+    color: #164e4a;
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+    font-size: 12px;
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: 0.055em;
+    white-space: nowrap;
+    overflow-wrap: normal;
+    vertical-align: middle;
+    text-transform: none;
+}
+
+.package-code-badge[hidden] {
+    display: none !important;
 }

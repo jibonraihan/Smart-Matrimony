@@ -1,4 +1,90 @@
 <?php
+require_once 'includes/language.php';
+
+// Localize numeric digits only in Bengali-language search-card UI.
+if (!function_exists('sm_search_localize_digits')) {
+    function sm_search_localize_digits($value): string {
+        $text = (string) $value;
+        if (($GLOBALS['current_language'] ?? 'bn') === 'en') return $text;
+        return strtr($text, ['0'=>'০','1'=>'১','2'=>'২','3'=>'৩','4'=>'৪','5'=>'৫','6'=>'৬','7'=>'৭','8'=>'৮','9'=>'৯']);
+    }
+}
+
+// Display-only translations for common stored labels. Canonical database values stay unchanged.
+if (!function_exists('sm_display_profile_value')) {
+    function sm_display_profile_value(string $value): string {
+        $map = [
+            'Islam' => 'ইসলাম', 'Muslim' => 'মুসলিম', 'Hinduism' => 'হিন্দুধর্ম', 'Hindu' => 'হিন্দু',
+            'Christianity' => 'খ্রিষ্টধর্ম', 'Christian' => 'খ্রিষ্টান', 'Buddhism' => 'বৌদ্ধধর্ম', 'Buddhist' => 'বৌদ্ধ',
+            'Other' => 'অন্যান্য', 'Not specified' => 'উল্লেখ করা হয়নি',
+            'Unverified' => 'যাচাই হয়নি', 'Pending' => 'যাচাই অপেক্ষমাণ', 'Verified' => 'যাচাইকৃত', 'Rejected' => 'প্রত্যাখ্যাত',
+            'Single' => 'অবিবাহিত', 'Married' => 'বিবাহিত', 'Divorced' => 'বিবাহবিচ্ছেদ হয়েছে', 'Widowed' => 'বিধবা/বিপত্নীক',
+            'Male' => 'পুরুষ', 'Female' => 'নারী',
+            'SSC' => 'এসএসসি', 'HSC' => 'এইচএসসি', 'Bachelor' => 'স্নাতক', "Bachelor's" => 'স্নাতক',
+            'Masters' => 'স্নাতকোত্তর', "Master's" => 'স্নাতকোত্তর', 'PhD' => 'পিএইচডি', 'Doctorate' => 'ডক্টরেট',
+            'Government Job' => 'সরকারি চাকরি', 'Private Job' => 'বেসরকারি চাকরি', 'Business' => 'ব্যবসা',
+            'Employed' => 'চাকরিজীবী', 'Self-employed' => 'স্বনিযুক্ত', 'Housewife' => 'গৃহিণী', 'Homemaker' => 'গৃহস্থালি পরিচালনাকারী',
+            'Higher Secondary' => 'উচ্চমাধ্যমিক', 'Secondary' => 'মাধ্যমিক', 'Honours' => 'সম্মান', 'Diploma' => 'ডিপ্লোমা',
+            'A+' => 'এ পজিটিভ', 'A-' => 'এ নেগেটিভ', 'B+' => 'বি পজিটিভ', 'B-' => 'বি নেগেটিভ', 'O+' => 'ও পজিটিভ', 'O-' => 'ও নেগেটিভ', 'AB+' => 'এবি পজিটিভ', 'AB-' => 'এবি নেগেটিভ',
+            'Student' => 'শিক্ষার্থী', 'Teacher' => 'শিক্ষক', 'Doctor' => 'চিকিৎসক', 'Engineer' => 'প্রকৌশলী',
+        ];
+        if (($GLOBALS['current_language'] ?? 'bn') === 'en') return $value;
+        return $map[$value] ?? $value;
+    }
+}
+if (!function_exists('sm_search_display_value')) {
+    function sm_search_display_value(string $value): string {
+        if (($GLOBALS['current_language'] ?? 'bn') === 'en') return $value;
+        static $labels = [
+            'Islam' => 'ইসলাম', 'Hinduism' => 'হিন্দুধর্ম', 'Christianity' => 'খ্রিষ্টধর্ম', 'Buddhism' => 'বৌদ্ধধর্ম', 'Other' => 'অন্যান্য',
+            'Government Service' => 'সরকারি চাকরি', 'Private Service' => 'বেসরকারি চাকরি', 'Agriculture (Farmer)' => 'কৃষিকাজ (কৃষক)',
+            'Business' => 'ব্যবসা', 'Teacher' => 'শিক্ষক', 'Engineer' => 'প্রকৌশলী', 'Doctor' => 'চিকিৎসক', 'Nurse' => 'নার্স',
+            'Lecturer' => 'প্রভাষক', 'Professor' => 'অধ্যাপক', 'Software Engineer' => 'সফটওয়্যার প্রকৌশলী', 'IT Professional' => 'আইটি পেশাজীবী',
+            'Dentist' => 'দন্তচিকিৎসক', 'Pharmacist' => 'ফার্মাসিস্ট', 'Architect' => 'স্থপতি', 'Accountant' => 'হিসাবরক্ষক',
+            'Journalist' => 'সাংবাদিক', 'Lawyer' => 'আইনজীবী', 'Banker' => 'ব্যাংকার', 'Police' => 'পুলিশ', 'Army' => 'সেনাবাহিনী',
+            'Navy' => 'নৌবাহিনী', 'Air Force' => 'বিমানবাহিনী', 'BGB' => 'বিজিবি', 'Ansar' => 'আনসার', 'Fire Service' => 'ফায়ার সার্ভিস',
+            'Imam' => 'ইমাম', 'Muazzin' => 'মুয়াজ্জিন', 'Islamic Scholar' => 'ইসলামি পণ্ডিত', 'Driver' => 'চালক', 'Shopkeeper' => 'দোকানদার',
+            'Electrician' => 'ইলেকট্রিশিয়ান', 'Plumber' => 'প্লাম্বার', 'Mechanic' => 'মেকানিক', 'Tailor' => 'দর্জি', 'Overseas Worker' => 'প্রবাসী কর্মী',
+            'Retired' => 'অবসরপ্রাপ্ত', 'Housewife' => 'গৃহিণী', 'Entrepreneur' => 'উদ্যোক্তা', 'Student' => 'শিক্ষার্থী', 'Freelancer' => 'ফ্রিল্যান্সার',
+            'Unemployed' => 'বেকার', 'Small' => 'ছোট পরিবার', 'Joint' => 'যৌথ পরিবার', 'Lower Middle Class' => 'নিম্ন-মধ্যবিত্ত',
+            'Middle Class' => 'মধ্যবিত্ত', 'Upper Middle Class' => 'উচ্চ-মধ্যবিত্ত', 'Affluent' => 'সচ্ছল',
+            'Very Fair' => 'খুব ফর্সা', 'Fair' => 'ফর্সা', 'Medium' => 'মাঝারি', 'Medium-Deep' => 'শ্যামলা', 'Dark' => 'গাঢ় বর্ণ',
+            'No Formal Education' => 'প্রাতিষ্ঠানিক শিক্ষা নেই', 'Primary' => 'প্রাথমিক', 'Ebtedayi' => 'ইবতেদায়ি', 'JDC / JSC' => 'জেডিসি / জেএসসি',
+            'Dakhil (SSC)' => 'দাখিল (এসএসসি)', 'SSC (General)' => 'এসএসসি (সাধারণ)', 'Vocational SSC' => 'কারিগরি এসএসসি',
+            'Alim (HSC)' => 'আলিম (এইচএসসি)', 'HSC (General)' => 'এইচএসসি (সাধারণ)', 'Diploma' => 'ডিপ্লোমা',
+            'Fazil (Bachelor)' => 'ফাজিল (স্নাতক)', "Bachelor's" => 'স্নাতক', 'BSc Engineering' => 'বিএসসি ইঞ্জিনিয়ারিং', 'MBBS' => 'এমবিবিএস',
+            'BDS' => 'বিডিএস', 'DVM' => 'ডিভিএম', 'LLB' => 'এলএলবি', 'BBA' => 'বিবিএ', 'Kamil (Master)' => 'কামিল (স্নাতকোত্তর)',
+            "Master's" => 'স্নাতকোত্তর', 'MSc Engineering' => 'এমএসসি ইঞ্জিনিয়ারিং', 'MBA' => 'এমবিএ', 'LLM' => 'এলএলএম', 'MPhil' => 'এমফিল',
+            'PhD' => 'পিএইচডি', 'Hifz' => 'হিফজ', 'Qari' => 'কারী', 'Mufti' => 'মুফতি',
+            'Unmarried' => 'অবিবাহিত', 'Divorced' => 'বিবাহবিচ্ছেদ হয়েছে', 'Widowed' => 'বিধবা/বিপত্নীক', 'Separated' => 'আলাদা থাকেন',
+            'Five Times Daily' => 'দিনে পাঁচ ওয়াক্ত', 'Usually Five Times' => 'সাধারণত পাঁচ ওয়াক্ত', 'Sometimes' => 'মাঝেমধ্যে', 'Rarely' => 'কদাচিৎ',
+            'Never' => 'কখনো না', 'Occasionally' => 'মাঝেমধ্যে', 'Regular' => 'নিয়মিত', 'Quit' => 'ছেড়ে দিয়েছেন',
+            'Hanafi' => 'হানাফি', 'Shafi' => 'শাফেয়ি', 'Maliki' => 'মালিকি', 'Hanbali' => 'হাম্বলি', 'Ahle Hadith' => 'আহলে হাদিস', 'Salafi' => 'সালাফি',
+            "Don't Know" => 'জানা নেই', 'A+' => 'এ পজিটিভ', 'A-' => 'এ নেগেটিভ', 'B+' => 'বি পজিটিভ', 'B-' => 'বি নেগেটিভ',
+            'AB+' => 'এবি পজিটিভ', 'AB-' => 'এবি নেগেটিভ', 'O+' => 'ও পজিটিভ', 'O-' => 'ও নেগেটিভ',
+            'Full Beard' => 'পূর্ণ দাড়ি', 'Short Beard' => 'ছোট দাড়ি', 'No Beard' => 'দাড়ি নেই', 'Not Yet Grown' => 'এখনো গজায়নি',
+            'Orna' => 'ওড়না', 'Hijab (Face Open)' => 'হিজাব (মুখ খোলা)', 'Hijab (Face Covered)' => 'হিজাব (মুখ ঢাকা)',
+            'Hijab (Hand, Foot, Face Covered)' => 'হিজাব (হাত, পা ও মুখ ঢাকা)', 'Hijab + Niqab (Fully Covered)' => 'হিজাব ও নিকাব (সম্পূর্ণ আবৃত)',
+            'Modern' => 'আধুনিক', 'Not Maintained' => 'পালন করা হয় না', 'Maintained' => 'মেনে চলেন', 'Not Maintained' => 'মেনে চলেন না',
+        ];
+        return $labels[$value] ?? $value;
+    }
+}
+
+if (!function_exists('sm_display_service_name')) {
+    function sm_display_service_name(string $value): string {
+        $map = [
+            'Photography' => 'ফটোগ্রাফি', 'Catering' => 'খাবার পরিবেশন', 'Decoration' => 'সাজসজ্জা',
+            'Car Rental' => 'গাড়ি ভাড়া', 'Makeup Artist' => 'মেকআপ আর্টিস্ট', 'Wedding Planner' => 'বিয়ের আয়োজন পরিকল্পনা',
+            'Convention Center' => 'কনভেনশন সেন্টার', 'Resort / Lawn' => 'রিসোর্ট / লন', 'Mehendi Artist' => 'মেহেদি শিল্পী',
+            'Wedding Flowers' => 'বিয়ের ফুল', 'Basor Ghor Decoration' => 'বাসরঘর সাজসজ্জা', 'Wedding Dress' => 'বিয়ের পোশাক',
+            'Groom Dress' => 'বরের পোশাক', 'Bridal Accessories' => 'কনের সাজসজ্জার সামগ্রী',
+            'Sound & Lighting' => 'সাউন্ড ও লাইটিং', 'Invitation & Printing' => 'নিমন্ত্রণপত্র ও মুদ্রণ'
+        ];
+        if (($GLOBALS['current_language'] ?? 'bn') === 'en') return $value;
+        return $map[$value] ?? $value;
+    }
+}
 
 $page_css = 'assets/css/dashboard.css';
 
@@ -19,6 +105,10 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 $user_id = (int) $_SESSION['user_id'];
+
+// Consume the one-time language prompt flag set by successful regular/social login.
+$show_language_prompt = !empty($_SESSION['show_language_prompt']);
+unset($_SESSION['show_language_prompt']);
 
 if (empty($_SESSION['matching_csrf'])) {
     $_SESSION['matching_csrf'] = bin2hex(random_bytes(32));
@@ -402,8 +492,11 @@ if ($search_submitted && in_array($target_gender, ['Male', 'Female'], true)) {
             up.upazila_id,
             up.division_id,
             d.name_en AS district_name,
+            d.name_bn AS district_name_bn,
             uz.name_en AS upazila_name,
-            dv.name_en AS division_name
+            uz.name_bn AS upazila_name_bn,
+            dv.name_en AS division_name,
+            dv.name_bn AS division_name_bn
         FROM users u
         INNER JOIN user_profiles up ON up.user_id = u.user_id
         LEFT JOIN health_profiles hp ON hp.user_id = up.user_id
@@ -456,7 +549,7 @@ if (!empty($results)) {
         mysqli_stmt_close($viewer_profile_stmt);
     }
     if ($viewer_profile) {
-        $loc_stmt = mysqli_prepare($conn, 'SELECT d.name_en AS district_name, uz.name_en AS upazila_name, dv.name_en AS division_name FROM user_profiles up LEFT JOIN districts d ON d.id=up.district_id LEFT JOIN upazilas uz ON uz.id=up.upazila_id LEFT JOIN divisions dv ON dv.id=up.division_id WHERE up.user_id=? LIMIT 1');
+        $loc_stmt = mysqli_prepare($conn, 'SELECT d.name_en AS district_name, d.name_bn AS district_name_bn, uz.name_en AS upazila_name, uz.name_bn AS upazila_name_bn, dv.name_en AS division_name, dv.name_bn AS division_name_bn FROM user_profiles up LEFT JOIN districts d ON d.id=up.district_id LEFT JOIN upazilas uz ON uz.id=up.upazila_id LEFT JOIN divisions dv ON dv.id=up.division_id WHERE up.user_id=? LIMIT 1');
         if ($loc_stmt) {
             mysqli_stmt_bind_param($loc_stmt, 'i', $user_id);
             mysqli_stmt_execute($loc_stmt);
@@ -477,7 +570,7 @@ if (!empty($results)) {
 
     // Match Details needs readable location names for the viewer's saved preference.
     if ($viewer_preferences) {
-        $pref_loc_stmt = mysqli_prepare($conn, 'SELECT d.name_en AS district_name, uz.name_en AS upazila_name, dv.name_en AS division_name FROM search_preferences sp LEFT JOIN districts d ON d.id=sp.district_id LEFT JOIN upazilas uz ON uz.id=sp.upazila_id LEFT JOIN divisions dv ON dv.id=sp.division_id WHERE sp.user_id=? LIMIT 1');
+        $pref_loc_stmt = mysqli_prepare($conn, 'SELECT d.name_en AS district_name, d.name_bn AS district_name_bn, uz.name_en AS upazila_name, uz.name_bn AS upazila_name_bn, dv.name_en AS division_name, dv.name_bn AS division_name_bn FROM search_preferences sp LEFT JOIN districts d ON d.id=sp.district_id LEFT JOIN upazilas uz ON uz.id=sp.upazila_id LEFT JOIN divisions dv ON dv.id=sp.division_id WHERE sp.user_id=? LIMIT 1');
         if ($pref_loc_stmt) {
             mysqli_stmt_bind_param($pref_loc_stmt, 'i', $user_id);
             mysqli_stmt_execute($pref_loc_stmt);
@@ -630,7 +723,7 @@ if (!empty($results)) {
 --------------------------------------------------------- */
 
 $divisions = [];
-$division_result = mysqli_query($conn, "SELECT id, name_en, name_en FROM divisions ORDER BY name_en");
+$division_result = mysqli_query($conn, "SELECT id, name_en, name_bn FROM divisions ORDER BY name_en");
 if ($division_result) {
     while ($row = mysqli_fetch_assoc($division_result)) {
         $divisions[] = $row;
@@ -643,13 +736,14 @@ if ($division_result) {
 
 $services = [];
 $service_result = mysqli_query($conn, "
-    SELECT s.service_id, s.service_name, s.description,
+    SELECT s.service_id, s.service_name, s.service_name_bn, s.description, s.description_bn, s.icon_class, s.is_active,
            COUNT(sp.provider_id) AS provider_count
     FROM services s
     LEFT JOIN service_providers sp
         ON sp.service_id = s.service_id
        AND sp.status = 'Active'
-    GROUP BY s.service_id, s.service_name, s.description
+    WHERE (s.is_active = 1 OR s.is_active IS NULL)
+    GROUP BY s.service_id, s.service_name, s.service_name_bn, s.description, s.description_bn, s.icon_class, s.is_active
     ORDER BY s.service_id
 ");
 if ($service_result) {
@@ -686,12 +780,12 @@ include 'includes/header.php';
     <header class="dashboard-topbar">
         <div class="dashboard-container topbar-inner">
 
-            <a href="<?= BASE_URL; ?>dashboard.php" class="dashboard-brand" aria-label="Smart Matrimony Dashboard">
+            <a href="<?= BASE_URL; ?>dashboard.php" class="dashboard-brand" aria-label="<?= sm_text('Smart Matrimony Dashboard', 'স্মার্ট ম্যাট্রিমনি ড্যাশবোর্ড'); ?>">
                 <span class="dashboard-brand-logo">
-                    <img src="<?= BASE_URL; ?>assets/images/logo/logo.png" alt="Smart Matrimony Logo">
+                    <img src="<?= BASE_URL; ?>assets/images/logo/logo.png" alt="<?= sm_text('Smart Matrimony Logo', 'স্মার্ট ম্যাট্রিমনি লোগো'); ?>">
                 </span>
                 <span class="dashboard-brand-title">
-                    <img src="<?= BASE_URL; ?>assets/images/logo/matrimony_title.png" alt="Smart Matrimony">
+                    <img src="<?= BASE_URL; ?>assets/images/logo/matrimony_title.png" alt="<?= sm_text('Smart Matrimony', 'স্মার্ট ম্যাট্রিমনি'); ?>">
                 </span>
             </a>
 
@@ -701,7 +795,7 @@ include 'includes/header.php';
                     <span></span>
                 </a>
 
-                <button class="menu-toggle" type="button" id="dashboardMenuToggle" aria-label="Open menu" aria-expanded="false">
+                <button class="menu-toggle" type="button" id="dashboardMenuToggle" aria-label="<?= sm_text('Open menu', 'মেনু খুলুন'); ?>" aria-expanded="false">
                     <span></span>
                     <span></span>
                     <span></span>
@@ -716,10 +810,10 @@ include 'includes/header.php';
     <aside class="dashboard-menu" id="dashboardMenu" aria-hidden="true">
         <div class="menu-header">
             <div>
-                <span class="menu-kicker">ACCOUNT MENU</span>
-                <h3>Quick Navigation</h3>
+                <span class="menu-kicker"><?= sm_text('ACCOUNT MENU', 'অ্যাকাউন্ট মেনু') ?></span>
+                <h3><?= sm_text('Quick Navigation', 'দ্রুত নেভিগেশন') ?></h3>
             </div>
-            <button type="button" class="menu-close" id="menuClose" aria-label="Close menu">
+            <button type="button" class="menu-close" id="menuClose" aria-label="<?= sm_text('Close menu', 'মেনু বন্ধ করুন'); ?>">
                 <i class="fa-solid fa-xmark"></i>
             </button>
         </div>
@@ -727,7 +821,7 @@ include 'includes/header.php';
         <div class="menu-user-card">
             <div class="menu-user-avatar">
                 <?php if (!empty($current_user['photo'])): ?>
-                    <img src="<?= BASE_URL; ?>uploads/profile/<?= htmlspecialchars($current_user['photo']); ?>" alt="Profile photo">
+                    <img src="<?= BASE_URL; ?>uploads/profile/<?= htmlspecialchars($current_user['photo']); ?>" alt="<?= sm_text('Profile photo', 'প্রোফাইলের ছবি'); ?>">
                 <?php else: ?>
                     <i class="fa-solid fa-user"></i>
                 <?php endif; ?>
@@ -739,23 +833,23 @@ include 'includes/header.php';
         </div>
 
         <nav class="menu-links">
-            <a class="active" href="<?= BASE_URL; ?>dashboard.php"><i class="fa-solid fa-grid-2"></i><span>Dashboard</span></a>
-            <a href="<?= BASE_URL; ?><?= htmlspecialchars($own_profile_link); ?>"><i class="fa-solid fa-user-circle"></i><span>My Profile</span></a>
-            <a href="#partner-search"><i class="fa-solid fa-magnifying-glass"></i><span>Find Partner</span></a>
-            <a href="#wedding-services"><i class="fa-solid fa-ring"></i><span>Wedding Services</span></a>
-            <a href="<?= BASE_URL; ?>cart.php"><i class="fa-solid fa-cart-shopping"></i><span>My Service Cart</span><?php if ($cart_count > 0): ?><span class="menu-count"><?= $cart_count; ?></span><?php endif; ?></a>
-            <a href="<?= BASE_URL; ?>my_bookings.php"><i class="fa-solid fa-calendar-check"></i><span>My Bookings</span><?php if ($booking_count > 0): ?><span class="menu-count"><?= $booking_count; ?></span><?php endif; ?></a>
-            <a href="<?= BASE_URL; ?>matching/my_matches.php"><i class="fa-solid fa-heart"></i><span>My Matches</span></a>
-            <a href="<?= BASE_URL; ?>matching/bookmarks.php"><i class="fa-solid fa-bookmark"></i><span>Bookmarks</span></a>
-            <a href="<?= BASE_URL; ?>matching/messages.php"><i class="fa-solid fa-comments"></i><span>Messages</span></a>
-            <a href="<?= BASE_URL; ?>notifications.php" class="notifications-menu-link"><i class="fa-solid fa-bell"></i><span>Notifications</span><?php if ($authenticator_unread_count > 0): ?><span class="menu-count notifications-menu-count"><?= $authenticator_unread_count; ?></span><?php endif; ?></a>
-            <a href="<?= BASE_URL; ?>settings.php"><i class="fa-solid fa-gear"></i><span>Settings</span></a>
+            <a class="active" href="<?= BASE_URL; ?>dashboard.php"><i class="fa-solid fa-grid-2"></i><span><?= sm_text('Dashboard', 'ড্যাশবোর্ড') ?></span></a>
+            <a href="<?= BASE_URL; ?><?= htmlspecialchars($own_profile_link); ?>"><i class="fa-solid fa-user-circle"></i><span><?= sm_text('My Profile', 'আমার প্রোফাইল') ?></span></a>
+            <a href="#partner-search"><i class="fa-solid fa-magnifying-glass"></i><span><?= sm_text('Find Partner', 'সঙ্গী খুঁজুন') ?></span></a>
+            <a href="#wedding-services"><i class="fa-solid fa-ring"></i><span><?= sm_text('Wedding Services', 'বিয়ের সেবা') ?></span></a>
+            <a href="<?= BASE_URL; ?>cart.php"><i class="fa-solid fa-cart-shopping"></i><span><?= sm_text('My Service Cart', 'আমার সেবা কার্ট') ?></span><?php if ($cart_count > 0): ?><span class="menu-count"><?= $cart_count; ?></span><?php endif; ?></a>
+            <a href="<?= BASE_URL; ?>my_bookings.php"><i class="fa-solid fa-calendar-check"></i><span><?= sm_text('My Bookings', 'আমার বুকিং') ?></span><?php if ($booking_count > 0): ?><span class="menu-count"><?= $booking_count; ?></span><?php endif; ?></a>
+            <a href="<?= BASE_URL; ?>matching/my_matches.php"><i class="fa-solid fa-heart"></i><span><?= sm_text('My Matches', 'আমার মিল') ?></span></a>
+            <a href="<?= BASE_URL; ?>matching/bookmarks.php"><i class="fa-solid fa-bookmark"></i><span><?= sm_text('Bookmarks', 'বুকমার্ক') ?></span></a>
+            <a href="<?= BASE_URL; ?>matching/messages.php"><i class="fa-solid fa-comments"></i><span><?= sm_text('Messages', 'বার্তা') ?></span></a>
+            <a href="<?= BASE_URL; ?>notifications.php" class="notifications-menu-link"><i class="fa-solid fa-bell"></i><span><?= sm_text('Notifications', 'নোটিফিকেশন') ?></span><?php if ($authenticator_unread_count > 0): ?><span class="menu-count notifications-menu-count"><?= $authenticator_unread_count; ?></span><?php endif; ?></a>
+            <a href="<?= BASE_URL; ?>settings.php"><i class="fa-solid fa-gear"></i><span><?= sm_text('Settings', 'সেটিংস') ?></span></a>
         </nav>
 
         <div class="menu-footer">
             <a href="<?= BASE_URL; ?>logout.php" class="menu-logout">
                 <i class="fa-solid fa-right-from-bracket"></i>
-                Logout
+                <?= sm_text('Logout', 'লগআউট') ?>
             </a>
         </div>
     </aside>
@@ -769,14 +863,14 @@ include 'includes/header.php';
                     <div class="hero-identity">
                         <div class="profile-avatar hero-profile-avatar">
                             <?php if (!empty($current_user['photo'])): ?>
-                                <img src="<?= BASE_URL; ?>uploads/profile/<?= htmlspecialchars($current_user['photo']); ?>" alt="Profile photo">
+                                <img src="<?= BASE_URL; ?>uploads/profile/<?= htmlspecialchars($current_user['photo']); ?>" alt="<?= sm_text('Profile photo', 'প্রোফাইলের ছবি'); ?>">
                             <?php else: ?>
                                 <i class="fa-solid <?= ($current_user['gender'] ?? '') === 'Female' ? 'fa-user-large' : 'fa-user'; ?>"></i>
                             <?php endif; ?>
                         </div>
 
                         <div class="hero-identity-copy">
-                            <span class="hero-profile-label">MY PROFILE</span>
+                            <span class="hero-profile-label"><?= sm_text('MY PROFILE', 'আমার প্রোফাইল') ?></span>
                             <div class="hero-name-row">
                                 <h1><?= htmlspecialchars($display_name); ?></h1>
                                 <?php
@@ -785,7 +879,7 @@ include 'includes/header.php';
                                 ?>
                                 <span class="hero-verification-badge <?= htmlspecialchars($hero_verification_class); ?>">
                                     <i class="fa-solid <?= $hero_verification === 'Verified' ? 'fa-circle-check' : ($hero_verification === 'Rejected' ? 'fa-circle-xmark' : 'fa-clock') ; ?>"></i>
-                                    <?= htmlspecialchars($hero_verification); ?>
+                                    <?= sm_text($hero_verification, $hero_verification === 'Verified' ? 'যাচাইকৃত' : ($hero_verification === 'Rejected' ? 'প্রত্যাখ্যাত' : 'যাচাই অপেক্ষমাণ')); ?>
                                 </span>
                             </div>
                             <div style="margin-top: 6px; color: #6f8582; font-size: .82rem; line-height: 1.4; overflow-wrap: anywhere;">
@@ -796,53 +890,53 @@ include 'includes/header.php';
                     </div>
 
                     <div class="hero-info-grid">
-                        <div class="hero-info-item"><i class="fa-solid fa-venus-mars"></i><span><small>Gender</small><strong><?= htmlspecialchars($current_user['gender'] ?? '—'); ?></strong></span></div>
-                        <div class="hero-info-item"><i class="fa-solid fa-mosque"></i><span><small>Religion</small><strong><?= htmlspecialchars($current_user['religion'] ?? '—'); ?></strong></span></div>
-                        <div class="hero-info-item"><i class="fa-solid fa-graduation-cap"></i><span><small>Education</small><strong><?= htmlspecialchars($current_user['highest_education'] ?? '—'); ?></strong></span></div>
-                        <div class="hero-info-item"><i class="fa-solid fa-briefcase"></i><span><small>Profession</small><strong><?= htmlspecialchars($current_user['profession'] ?? '—'); ?></strong></span></div>
+                        <div class="hero-info-item"><i class="fa-solid fa-venus-mars"></i><span><small><?= sm_text('Gender', 'লিঙ্গ') ?></small><strong><?= sm_text((string)($current_user['gender'] ?? '—'), ['Male' => 'পুরুষ', 'Female' => 'নারী'][$current_user['gender'] ?? ''] ?? (string)($current_user['gender'] ?? '—')); ?></strong></span></div>
+                        <div class="hero-info-item"><i class="fa-solid fa-mosque"></i><span><small><?= sm_text('Religion', 'ধর্ম') ?></small><strong><?= htmlspecialchars(sm_display_profile_value((string)($current_user['religion'] ?? '—'))); ?></strong></span></div>
+                        <div class="hero-info-item"><i class="fa-solid fa-graduation-cap"></i><span><small><?= sm_text('Education', 'শিক্ষা') ?></small><strong><?= htmlspecialchars(sm_display_profile_value((string)($current_user['highest_education'] ?? '—'))); ?></strong></span></div>
+                        <div class="hero-info-item"><i class="fa-solid fa-briefcase"></i><span><small><?= sm_text('Profession', 'পেশা') ?></small><strong><?= htmlspecialchars(sm_display_profile_value((string)($current_user['profession'] ?? '—'))); ?></strong></span></div>
                     </div>
 
                     <div class="hero-action-row">
-                        <a href="<?= BASE_URL . $own_profile_link; ?>" class="hero-action primary"><i class="fa-solid fa-user"></i> View Profile</a>
-                        <a href="<?= BASE_URL . $profile_link; ?>" class="hero-action secondary"><i class="fa-solid fa-pen-to-square"></i> Update Profile</a>
+                        <a href="<?= BASE_URL . $own_profile_link; ?>" class="hero-action primary"><i class="fa-solid fa-user"></i> <?= sm_text('View Profile', 'প্রোফাইল দেখুন') ?></a>
+                        <a href="<?= BASE_URL . $profile_link; ?>" class="hero-action secondary"><i class="fa-solid fa-pen-to-square"></i> <?= sm_text('Update Profile', 'প্রোফাইল আপডেট করুন') ?></a>
                     </div>
                 </div>
 
                 <div class="hero-overview-panel">
                     <div class="hero-panel-heading">
                         <div>
-                            <span class="hero-profile-label">PROFILE OVERVIEW</span>
-                            <h2>Your Matrimony Dashboard</h2>
+                            <span class="hero-profile-label"><?= sm_text('PROFILE OVERVIEW', 'প্রোফাইলের সারসংক্ষেপ') ?></span>
+                            <h2><?= sm_text('Your Matrimony Dashboard', 'আপনার ম্যাট্রিমনি ড্যাশবোর্ড') ?></h2>
                         </div>
-                        <span class="hero-status-dot"><i class="fa-solid fa-shield-heart"></i> Account Active</span>
+                        <span class="hero-status-dot"><i class="fa-solid fa-shield-heart"></i> <?= sm_text('Account Active', 'অ্যাকাউন্ট সচল') ?></span>
                     </div>
 
                     <div class="hero-stat-grid">
-                        <div class="hero-stat-card"><span class="hero-stat-icon"><i class="fa-solid fa-heart"></i></span><div><strong><?= number_format($current_matches_count); ?></strong><small>Current Matches</small></div></div>
-                        <div class="hero-stat-card"><span class="hero-stat-icon"><i class="fa-solid fa-chart-line"></i></span><div><strong><?= $profile_completion; ?>%</strong><small>Profile Complete</small></div></div>
-                        <div class="hero-stat-card"><span class="hero-stat-icon"><i class="fa-solid fa-bookmark"></i></span><div><strong><?= number_format($bookmark_count); ?></strong><small>Bookmark Profile</small></div></div>
-                        <div class="hero-stat-card"><span class="hero-stat-icon"><i class="fa-solid fa-box-open"></i></span><div><strong><?= number_format($booking_package_count); ?></strong><small>Booking Packages</small></div></div>
+                        <div class="hero-stat-card"><span class="hero-stat-icon"><i class="fa-solid fa-heart"></i></span><div><strong><?= htmlspecialchars(sm_search_localize_digits(number_format($current_matches_count)), ENT_QUOTES, 'UTF-8'); ?></strong><small><?= sm_text('Current Matches', 'বর্তমান মিল') ?></small></div></div>
+                        <div class="hero-stat-card"><span class="hero-stat-icon"><i class="fa-solid fa-chart-line"></i></span><div><strong><?= htmlspecialchars(sm_search_localize_digits($profile_completion), ENT_QUOTES, 'UTF-8'); ?>%</strong><small><?= sm_text('Profile Complete', 'প্রোফাইল সম্পন্ন') ?></small></div></div>
+                        <div class="hero-stat-card"><span class="hero-stat-icon"><i class="fa-solid fa-bookmark"></i></span><div><strong><?= htmlspecialchars(sm_search_localize_digits(number_format($bookmark_count)), ENT_QUOTES, 'UTF-8'); ?></strong><small><?= sm_text('Bookmark Profile', 'সংরক্ষিত প্রোফাইল') ?></small></div></div>
+                        <div class="hero-stat-card"><span class="hero-stat-icon"><i class="fa-solid fa-box-open"></i></span><div><strong><?= htmlspecialchars(sm_search_localize_digits(number_format($booking_package_count)), ENT_QUOTES, 'UTF-8'); ?></strong><small><?= sm_text('Booking Packages', 'বুকিং প্যাকেজ') ?></small></div></div>
                     </div>
 
                     <div class="hero-completion">
-                        <div class="hero-completion-head"><span>Profile completion</span><strong><?= $profile_completion; ?>%</strong></div>
+                        <div class="hero-completion-head"><span><?= sm_text('Profile completion', 'প্রোফাইল সম্পূর্ণতা') ?></span><strong><?= htmlspecialchars(sm_search_localize_digits($profile_completion), ENT_QUOTES, 'UTF-8'); ?>%</strong></div>
                         <div class="completion-track"><span style="width: <?= $profile_completion; ?>%"></span></div>
                         <div class="hero-completion-note">
                             <?php if ($profile_complete): ?>
-                                <i class="fa-solid fa-circle-check"></i><span>Your profile is complete and ready for matching.</span>
+                                <i class="fa-solid fa-circle-check"></i><span><?= sm_text('Your profile is complete and ready for matching.', 'আপনার প্রোফাইল সম্পূর্ণ এবং ম্যাচিংয়ের জন্য প্রস্তুত।') ?></span>
                             <?php else: ?>
-                                <i class="fa-solid fa-circle-info"></i><span>Complete your profile to improve visibility and matching.</span>
+                                <i class="fa-solid fa-circle-info"></i><span><?= sm_text('Complete your profile to improve visibility and matching.', 'প্রোফাইলের দৃশ্যমানতা ও ম্যাচিং উন্নত করতে প্রোফাইল সম্পূর্ণ করুন।') ?></span>
                             <?php endif; ?>
                         </div>
                     </div>
 
                     <div class="hero-quick-actions">
-                        <span class="hero-quick-label">QUICK ACTIONS</span>
+                        <span class="hero-quick-label"><?= sm_text('QUICK ACTIONS', 'দ্রুত কাজ') ?></span>
                         <div class="hero-quick-grid">
-                            <a href="<?= BASE_URL; ?>matching/my_matches.php"><i class="fa-solid fa-heart"></i><span>My Matches</span></a>
-                            <a href="<?= BASE_URL; ?>matching/bookmarks.php"><i class="fa-solid fa-bookmark"></i><span>Bookmarks</span></a>
-                            <a href="<?= BASE_URL; ?>matching/messages.php"><i class="fa-solid fa-comments"></i><span>Messages</span></a>
-                            <a href="#wedding-services"><i class="fa-solid fa-ring"></i><span>Wedding Services</span></a>
+                            <a href="<?= BASE_URL; ?>matching/my_matches.php"><i class="fa-solid fa-heart"></i><span><?= sm_text('My Matches', 'আমার মিল') ?></span></a>
+                            <a href="<?= BASE_URL; ?>matching/bookmarks.php"><i class="fa-solid fa-bookmark"></i><span><?= sm_text('Bookmarks', 'বুকমার্ক') ?></span></a>
+                            <a href="<?= BASE_URL; ?>matching/messages.php"><i class="fa-solid fa-comments"></i><span><?= sm_text('Messages', 'বার্তা') ?></span></a>
+                            <a href="#wedding-services"><i class="fa-solid fa-ring"></i><span><?= sm_text('Wedding Services', 'বিয়ের সেবা') ?></span></a>
                         </div>
                     </div>
                 </div>
@@ -851,13 +945,13 @@ include 'includes/header.php';
 
 
         <!-- ===================== ACCOUNT OVERVIEW / QUICK ACTIONS ===================== -->
-        <section class="dashboard-account-overview" aria-label="Account overview and quick actions">
+        <section class="dashboard-account-overview" aria-label="অ্যাকাউন্টের সারসংক্ষেপ ও দ্রুত কাজ">
             <div class="dashboard-container">
                 <div class="account-overview-head">
                     <div>
-                        <span class="section-kicker">ACCOUNT OVERVIEW</span>
-                        <h2>Quick Actions</h2>
-                        <p>Jump directly to the parts of your matrimony account you use most.</p>
+                        <span class="section-kicker"><?= sm_text('ACCOUNT OVERVIEW', 'অ্যাকাউন্টের সারসংক্ষেপ') ?></span>
+                        <h2><?= sm_text('Quick Actions', 'দ্রুত কাজ') ?></h2>
+                        <p><?= sm_text('Jump directly to the parts of your matrimony account you use most.', 'আপনার ম্যাট্রিমনি অ্যাকাউন্টের প্রয়োজনীয় অংশে সরাসরি যান।') ?></p>
                     </div>
                 </div>
 
@@ -865,8 +959,8 @@ include 'includes/header.php';
                     <a class="account-action-card" href="<?= BASE_URL; ?><?= htmlspecialchars($own_profile_link); ?>">
                         <span class="account-action-icon"><i class="fa-solid fa-user"></i></span>
                         <span class="account-action-copy">
-                            <strong>My Profile</strong>
-                            <small>View your profile</small>
+                            <strong><?= sm_text('My Profile', 'আমার প্রোফাইল') ?></strong>
+                            <small><?= sm_text('View your profile', 'আপনার প্রোফাইল দেখুন'); ?></small>
                         </span>
                         <i class="fa-solid fa-arrow-right account-action-arrow"></i>
                     </a>
@@ -874,8 +968,8 @@ include 'includes/header.php';
                     <a class="account-action-card" href="#partner-search">
                         <span class="account-action-icon"><i class="fa-solid fa-magnifying-glass"></i></span>
                         <span class="account-action-copy">
-                            <strong>Find Partner</strong>
-                            <small>Search suitable profiles</small>
+                            <strong><?= sm_text('Find Partner', 'সঙ্গী খুঁজুন') ?></strong>
+                            <small><?= sm_text('Search suitable profiles', 'পছন্দের প্রোফাইল খুঁজুন'); ?></small>
                         </span>
                         <i class="fa-solid fa-arrow-right account-action-arrow"></i>
                     </a>
@@ -883,8 +977,8 @@ include 'includes/header.php';
                     <a class="account-action-card" href="<?= BASE_URL; ?>matching/my_matches.php">
                         <span class="account-action-icon"><i class="fa-solid fa-heart"></i></span>
                         <span class="account-action-copy">
-                            <strong>My Matches</strong>
-                            <small><?= number_format($current_matches_count); ?> current matches</small>
+                            <strong><?= sm_text('My Matches', 'আমার মিল') ?></strong>
+                            <small><?= htmlspecialchars(sm_search_localize_digits(number_format($current_matches_count)), ENT_QUOTES, 'UTF-8'); ?> <?= sm_text('current matches', 'টি সম্ভাব্য মিল'); ?></small>
                         </span>
                         <i class="fa-solid fa-arrow-right account-action-arrow"></i>
                     </a>
@@ -892,8 +986,8 @@ include 'includes/header.php';
                     <a class="account-action-card" href="<?= BASE_URL; ?>matching/bookmarks.php">
                         <span class="account-action-icon"><i class="fa-solid fa-bookmark"></i></span>
                         <span class="account-action-copy">
-                            <strong>Bookmarks</strong>
-                            <small>Saved profiles</small>
+                            <strong><?= sm_text('Bookmarks', 'বুকমার্ক') ?></strong>
+                            <small><?= sm_text('Saved profiles', 'সংরক্ষিত প্রোফাইল'); ?></small>
                         </span>
                         <i class="fa-solid fa-arrow-right account-action-arrow"></i>
                     </a>
@@ -901,8 +995,8 @@ include 'includes/header.php';
                     <a class="account-action-card" href="<?= BASE_URL; ?>matching/messages.php">
                         <span class="account-action-icon"><i class="fa-solid fa-comments"></i></span>
                         <span class="account-action-copy">
-                            <strong>Messages</strong>
-                            <small>Interests &amp; conversations</small>
+                            <strong><?= sm_text('Messages', 'বার্তা') ?></strong>
+                            <small><?= sm_text('Interests &amp; conversations', 'আগ্রহ ও কথোপকথন'); ?></small>
                         </span>
                         <i class="fa-solid fa-arrow-right account-action-arrow"></i>
                     </a>
@@ -910,8 +1004,8 @@ include 'includes/header.php';
                     <a class="account-action-card" href="#wedding-services">
                         <span class="account-action-icon"><i class="fa-solid fa-ring"></i></span>
                         <span class="account-action-copy">
-                            <strong>Wedding Services</strong>
-                            <small><?= count($services); ?> service categories</small>
+                            <strong><?= sm_text('Wedding Services', 'বিয়ের সেবা') ?></strong>
+                            <small><?= htmlspecialchars(sm_search_localize_digits(count($services)), ENT_QUOTES, 'UTF-8'); ?> <?= sm_text('service categories', 'ধরনের সেবা'); ?></small>
                         </span>
                         <i class="fa-solid fa-arrow-right account-action-arrow"></i>
                     </a>
@@ -919,8 +1013,8 @@ include 'includes/header.php';
                     <a class="account-action-card" href="<?= BASE_URL; ?>cart.php">
                         <span class="account-action-icon"><i class="fa-solid fa-cart-shopping"></i></span>
                         <span class="account-action-copy">
-                            <strong>Service Cart</strong>
-                            <small><?= number_format($cart_count); ?> saved item<?= $cart_count === 1 ? '' : 's'; ?></small>
+                            <strong><?= sm_text('Service Cart', 'সেবার কার্ট'); ?></strong>
+                            <small><?= htmlspecialchars(sm_search_localize_digits(number_format($cart_count)), ENT_QUOTES, 'UTF-8'); ?> <?= sm_text('saved items', 'টি সংরক্ষিত আইটেম'); ?></small>
                         </span>
                         <i class="fa-solid fa-arrow-right account-action-arrow"></i>
                     </a>
@@ -928,8 +1022,8 @@ include 'includes/header.php';
                     <a class="account-action-card" href="<?= BASE_URL; ?>my_bookings.php">
                         <span class="account-action-icon"><i class="fa-solid fa-calendar-check"></i></span>
                         <span class="account-action-copy">
-                            <strong>My Bookings</strong>
-                            <small><?= number_format($booking_count); ?> booking<?= $booking_count === 1 ? '' : 's'; ?></small>
+                            <strong><?= sm_text('My Bookings', 'আমার বুকিং') ?></strong>
+                            <small><?= htmlspecialchars(sm_search_localize_digits(number_format($booking_count)), ENT_QUOTES, 'UTF-8'); ?> <?= sm_text('bookings', 'টি বুকিং'); ?></small>
                         </span>
                         <i class="fa-solid fa-arrow-right account-action-arrow"></i>
                     </a>
@@ -943,13 +1037,13 @@ include 'includes/header.php';
 
                 <div class="section-heading">
                     <div>
-                        <span class="section-kicker">SMART MATCHMAKING</span>
-                        <h2>Find Your Life Partner</h2>
-                        <p>Choose Bride or Groom first, then refine your search with the filters you need.</p>
+                        <span class="section-kicker"><?= sm_text('SMART MATCHMAKING', 'স্মার্ট জীবনসঙ্গী খোঁজা'); ?></span>
+                        <h2><?= sm_text('Find Your Life Partner', 'খুঁজে নিন আপনার জীবনসঙ্গী'); ?></h2>
+                        <p><?= sm_text('Choose Bride or Groom first, then refine your search with the filters you need.', 'প্রথমে বর অথবা কনে নির্বাচন করুন। এরপর প্রয়োজন অনুযায়ী ফিল্টার দিয়ে খোঁজ আরও নির্দিষ্ট করুন।'); ?></p>
                     </div>
                     <div class="result-badge">
                         <i class="fa-solid fa-users"></i>
-                        <?= number_format($total_results); ?> profiles
+                        <?= sm_text(sm_search_localize_digits(number_format($total_results)) . ' profiles', 'মোট ' . sm_search_localize_digits(number_format($total_results)) . 'টি প্রোফাইল'); ?>
                     </div>
                 </div>
 
@@ -957,20 +1051,20 @@ include 'includes/header.php';
                     <input type="hidden" name="search" value="1">
 
                     <div class="gender-choice-wrap">
-                        <label class="filter-label required-label">Looking for</label>
+                        <label class="filter-label required-label"><?= sm_text('Looking for', 'যাঁকে খুঁজছেন'); ?></label>
                         <div class="gender-choice-grid">
                             <label class="gender-option <?= $target_gender === 'Female' ? 'selected' : ''; ?>">
                                 <input type="radio" name="gender" value="Female" <?= $target_gender === 'Female' ? 'checked' : ''; ?> required>
                                 <span class="gender-icon"><i class="fa-solid fa-venus"></i></span>
-                                <span class="gender-copy"><strong>Bride</strong><small>Search female profiles</small></span>
-                                <span class="gender-selected-badge"><i class="fa-solid fa-check"></i> Selected</span>
+                                <span class="gender-copy"><strong><?= sm_text('Bride', 'কনে'); ?></strong><small><?= sm_text('Search female profiles', 'কনের প্রোফাইল খুঁজুন'); ?></small></span>
+                                <span class="gender-selected-badge"><i class="fa-solid fa-check"></i> <?= sm_text('Selected', 'নির্বাচিত'); ?></span>
                             </label>
 
                             <label class="gender-option <?= $target_gender === 'Male' ? 'selected' : ''; ?>">
                                 <input type="radio" name="gender" value="Male" <?= $target_gender === 'Male' ? 'checked' : ''; ?> required>
                                 <span class="gender-icon"><i class="fa-solid fa-mars"></i></span>
-                                <span class="gender-copy"><strong>Groom</strong><small>Search male profiles</small></span>
-                                <span class="gender-selected-badge"><i class="fa-solid fa-check"></i> Selected</span>
+                                <span class="gender-copy"><strong><?= sm_text('Groom', 'বর'); ?></strong><small><?= sm_text('Search male profiles', 'বরের প্রোফাইল খুঁজুন'); ?></small></span>
+                                <span class="gender-selected-badge"><i class="fa-solid fa-check"></i> <?= sm_text('Selected', 'নির্বাচিত'); ?></span>
                             </label>
                         </div>
                     </div>
@@ -978,51 +1072,51 @@ include 'includes/header.php';
                     <div class="filter-section filter-essential">
                         <div class="filter-section-heading">
                             <div>
-                                <span class="filter-section-kicker">ESSENTIAL FILTERS</span>
-                                <strong>Refine the basics</strong>
+                                <span class="filter-section-kicker"><?= sm_text('ESSENTIAL FILTERS', 'প্রাথমিক ফিল্টার'); ?></span>
+                                <strong><?= sm_text('Refine the basics', 'মৌলিক তথ্য দিয়ে খোঁজ নির্দিষ্ট করুন'); ?></strong>
                             </div>
-                            <span class="filter-section-note">All optional</span>
+                            <span class="filter-section-note"><?= sm_text('All optional', 'সবগুলো ঐচ্ছিক'); ?></span>
                         </div>
                         <div class="filter-grid filter-grid-essential">
                         <div class="filter-group">
-                            <label class="filter-label">Division</label>
+                            <label class="filter-label"><?= sm_text('Division', 'বিভাগ'); ?></label>
                             <select name="division_id" id="searchDivision" class="filter-control">
-                                <option value="">Any Division</option>
+                                <option value=""><?= sm_text('Any Division', 'সব বিভাগ'); ?></option>
                                 <?php foreach ($divisions as $division): ?>
                                     <option value="<?= (int) $division['id']; ?>" <?= $division_id === (int) $division['id'] ? 'selected' : ''; ?>>
-                                        <?= htmlspecialchars($division['name_en']); ?>
+                                        <?= htmlspecialchars((($current_language ?? 'bn') === 'en') ? $division['name_en'] : (($division['name_bn'] ?? '') ?: $division['name_en'])); ?>
                                     </option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
                         <div class="filter-group">
-                            <label class="filter-label">District</label>
+                            <label class="filter-label"><?= sm_text('District', 'জেলা'); ?></label>
                             <select name="district_id" id="searchDistrict" class="filter-control" data-selected="<?= $district_id; ?>">
-                                <option value="">Any District</option>
+                                <option value=""><?= sm_text('Any District', 'সব জেলা'); ?></option>
                             </select>
                         </div>
                         <div class="filter-group">
-                            <label class="filter-label">Upazila</label>
+                            <label class="filter-label"><?= sm_text('Upazila', 'উপজেলা'); ?></label>
                             <select name="upazila_id" id="searchUpazila" class="filter-control" data-selected="<?= $upazila_id; ?>">
-                                <option value="">Any Upazila</option>
+                                <option value=""><?= sm_text('Any Upazila', 'সব উপজেলা'); ?></option>
                             </select>
                         </div>
                         <div class="filter-group">
-                            <label class="filter-label">Religion</label>
+                            <label class="filter-label"><?= sm_text('Religion', 'ধর্ম') ?></label>
                             <select name="religion" class="filter-control">
-                                <option value="">Any Religion</option>
+                                <option value=""><?= sm_text('Any Religion', 'সব ধর্ম'); ?></option>
                                 <?php foreach (['Islam', 'Hinduism', 'Christianity', 'Buddhism', 'Other'] as $value): ?>
-                                    <option value="<?= htmlspecialchars($value); ?>" <?= $religion === $value ? 'selected' : ''; ?>><?= htmlspecialchars($value); ?></option>
+                                    <option value="<?= htmlspecialchars($value); ?>" <?= $religion === $value ? 'selected' : ''; ?>><?= htmlspecialchars(sm_search_display_value((string) $value)); ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
                         <div class="filter-group">
-                            <label class="filter-label">Profession</label>
+                            <label class="filter-label"><?= sm_text('Profession', 'পেশা') ?></label>
                             <select name="profession" class="filter-control">
-                                <option value="">Any Profession</option>
+                                <option value=""><?= sm_text('Any Profession', 'সব পেশা'); ?></option>
                                 <?php foreach ($user_professions as $value): ?>
                                     <?php if (in_array($value, ['Government Service', 'Private Service', 'Lecturer', 'Professor', 'Engineer', 'Software Engineer', 'IT Professional', 'Dentist', 'BDS', 'DVM'], true) || $value !== ''): ?>
-                                        <option value="<?= htmlspecialchars($value); ?>" <?= $profession === $value ? 'selected' : ''; ?>><?= htmlspecialchars($value); ?></option>
+                                        <option value="<?= htmlspecialchars($value); ?>" <?= $profession === $value ? 'selected' : ''; ?>><?= htmlspecialchars(sm_search_display_value((string) $value)); ?></option>
                                     <?php endif; ?>
                                 <?php endforeach; ?>
                             </select>
@@ -1033,146 +1127,146 @@ include 'includes/header.php';
                     <div class="filter-advanced-wrap">
                         <button type="button" class="more-filters-toggle" id="moreFiltersToggle"
                                 aria-expanded="false" aria-controls="advancedSearchFilters">
-                            <span><i class="fa-solid fa-sliders"></i> More Filters</span>
+                            <span><i class="fa-solid fa-sliders"></i> <?= sm_text('More Filters', 'আরও ফিল্টার'); ?></span>
                             <i class="fa-solid fa-chevron-down more-filters-chevron"></i>
                         </button>
 
                         <div class="filter-section filter-advanced" id="advancedSearchFilters" hidden>
                             <div class="filter-section-heading">
                                 <div>
-                                    <span class="filter-section-kicker">MORE FILTERS</span>
-                                    <strong>Fine-tune your preferences</strong>
+                                    <span class="filter-section-kicker"><?= sm_text('MORE FILTERS', 'অতিরিক্ত ফিল্টার'); ?></span>
+                                    <strong><?= sm_text('Fine-tune your preferences', 'পছন্দ অনুযায়ী আরও নির্দিষ্ট করুন'); ?></strong>
                                 </div>
                             </div>
                             <div class="filter-grid filter-grid-advanced">
                         <div class="filter-group">
-                            <label class="filter-label">Family Type</label>
+                            <label class="filter-label"><?= sm_text('Family Type', 'পারিবারিক ধরন'); ?></label>
                             <select name="family_type" class="filter-control">
-                                <option value="">Any</option>
+                                <option value=""><?= sm_text('Any', 'যেকোনো'); ?></option>
                                 <?php foreach ($family_types as $value): ?>
-                                    <option value="<?= htmlspecialchars($value); ?>" <?= $family_type === $value ? 'selected' : ''; ?>><?= htmlspecialchars($value); ?></option>
+                                    <option value="<?= htmlspecialchars($value); ?>" <?= $family_type === $value ? 'selected' : ''; ?>><?= htmlspecialchars(sm_search_display_value((string) $value)); ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
                         <div class="filter-group">
-                            <label class="filter-label">Family Status</label>
+                            <label class="filter-label"><?= sm_text('Family Status', 'পারিবারিক অবস্থা'); ?></label>
                             <select name="family_status" class="filter-control">
-                                <option value="">Any</option>
+                                <option value=""><?= sm_text('Any', 'যেকোনো'); ?></option>
                                 <?php foreach ($family_statuses as $value): ?>
-                                    <option value="<?= htmlspecialchars($value); ?>" <?= $family_status === $value ? 'selected' : ''; ?>><?= htmlspecialchars($value); ?></option>
+                                    <option value="<?= htmlspecialchars($value); ?>" <?= $family_status === $value ? 'selected' : ''; ?>><?= htmlspecialchars(sm_search_display_value((string) $value)); ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
                         <div class="filter-group">
-                            <label class="filter-label">Complexion</label>
+                            <label class="filter-label"><?= sm_text('Complexion', 'গায়ের বর্ণ'); ?></label>
                             <select name="complexion" class="filter-control">
-                                <option value="">Any</option>
+                                <option value=""><?= sm_text('Any', 'যেকোনো'); ?></option>
                                 <?php foreach ($complexions as $value): ?>
-                                    <option value="<?= htmlspecialchars($value); ?>" <?= $complexion === $value ? 'selected' : ''; ?>><?= htmlspecialchars($value); ?></option>
+                                    <option value="<?= htmlspecialchars($value); ?>" <?= $complexion === $value ? 'selected' : ''; ?>><?= htmlspecialchars(sm_search_display_value((string) $value)); ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
                         <div class="filter-group range-pair">
-                            <label class="filter-label">Height (cm)</label>
+                            <label class="filter-label"><?= sm_text('Height (cm)', 'উচ্চতা (সেমি)'); ?></label>
                             <div class="range-inputs">
-                                <input type="number" name="min_height" min="120" max="250" step="1" value="<?= $min_height !== null ? htmlspecialchars($min_height) : ''; ?>" placeholder="Min">
+                                <input type="number" name="min_height" min="120" max="250" step="1" value="<?= $min_height !== null ? htmlspecialchars($min_height) : ''; ?>" placeholder="<?= sm_text('Min', 'সর্বনিম্ন'); ?>">
                                 <span>–</span>
-                                <input type="number" name="max_height" min="120" max="250" step="1" value="<?= $max_height !== null ? htmlspecialchars($max_height) : ''; ?>" placeholder="Max">
+                                <input type="number" name="max_height" min="120" max="250" step="1" value="<?= $max_height !== null ? htmlspecialchars($max_height) : ''; ?>" placeholder="<?= sm_text('Max', 'সর্বোচ্চ'); ?>">
                             </div>
                         </div>
                         <div class="filter-group range-pair">
-                            <label class="filter-label">Weight (kg)</label>
+                            <label class="filter-label"><?= sm_text('Weight (kg)', 'ওজন (কেজি)'); ?></label>
                             <div class="range-inputs">
-                                <input type="number" name="min_weight" min="25" max="250" step="1" value="<?= $min_weight !== null ? htmlspecialchars($min_weight) : ''; ?>" placeholder="Min">
+                                <input type="number" name="min_weight" min="25" max="250" step="1" value="<?= $min_weight !== null ? htmlspecialchars($min_weight) : ''; ?>" placeholder="<?= sm_text('Min', 'সর্বনিম্ন'); ?>">
                                 <span>–</span>
-                                <input type="number" name="max_weight" min="25" max="250" step="1" value="<?= $max_weight !== null ? htmlspecialchars($max_weight) : ''; ?>" placeholder="Max">
+                                <input type="number" name="max_weight" min="25" max="250" step="1" value="<?= $max_weight !== null ? htmlspecialchars($max_weight) : ''; ?>" placeholder="<?= sm_text('Max', 'সর্বোচ্চ'); ?>">
                             </div>
                         </div>
                         <div class="filter-group range-pair">
-                            <label class="filter-label">Monthly Income</label>
+                            <label class="filter-label"><?= sm_text('Monthly Income', 'মাসিক আয়'); ?></label>
                             <div class="range-inputs">
-                                <input type="number" name="min_salary" min="0" step="1000" value="<?= $min_salary !== null ? htmlspecialchars($min_salary) : ''; ?>" placeholder="Min">
+                                <input type="number" name="min_salary" min="0" step="1000" value="<?= $min_salary !== null ? htmlspecialchars($min_salary) : ''; ?>" placeholder="<?= sm_text('Min', 'সর্বনিম্ন'); ?>">
                                 <span>–</span>
-                                <input type="number" name="max_salary" min="0" step="1000" value="<?= $max_salary !== null ? htmlspecialchars($max_salary) : ''; ?>" placeholder="Max">
+                                <input type="number" name="max_salary" min="0" step="1000" value="<?= $max_salary !== null ? htmlspecialchars($max_salary) : ''; ?>" placeholder="<?= sm_text('Max', 'সর্বোচ্চ'); ?>">
                             </div>
                         </div>
                         <div class="filter-group">
-                            <label class="filter-label">Prayer</label>
+                            <label class="filter-label"><?= sm_text('Prayer', 'নামাজ'); ?></label>
                             <select name="prayer_status" class="filter-control">
-                                <option value="">Any</option>
+                                <option value=""><?= sm_text('Any', 'যেকোনো'); ?></option>
                                 <?php foreach ($prayer_statuses as $value): ?>
-                                    <option value="<?= htmlspecialchars($value); ?>" <?= $prayer_status === $value ? 'selected' : ''; ?>><?= htmlspecialchars($value); ?></option>
+                                    <option value="<?= htmlspecialchars($value); ?>" <?= $prayer_status === $value ? 'selected' : ''; ?>><?= htmlspecialchars(sm_search_display_value((string) $value)); ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
                         <div class="filter-group">
-                            <label class="filter-label">Smoking</label>
+                            <label class="filter-label"><?= sm_text('Smoking', 'ধূমপান'); ?></label>
                             <select name="smoking_status" class="filter-control">
-                                <option value="">Any</option>
+                                <option value=""><?= sm_text('Any', 'যেকোনো'); ?></option>
                                 <?php foreach ($smoking_statuses as $value): ?>
-                                    <option value="<?= htmlspecialchars($value); ?>" <?= $smoking_status === $value ? 'selected' : ''; ?>><?= htmlspecialchars($value); ?></option>
+                                    <option value="<?= htmlspecialchars($value); ?>" <?= $smoking_status === $value ? 'selected' : ''; ?>><?= htmlspecialchars(sm_search_display_value((string) $value)); ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
                         <div class="filter-group">
-                            <label class="filter-label">Father's Profession</label>
+                            <label class="filter-label"><?= sm_text("Father's Profession", 'বাবার পেশা'); ?></label>
                             <select name="father_profession" class="filter-control">
-                                <option value="">Any</option>
+                                <option value=""><?= sm_text('Any', 'যেকোনো'); ?></option>
                                 <?php foreach ($father_professions as $value): ?>
-                                    <option value="<?= htmlspecialchars($value); ?>" <?= $father_profession === $value ? 'selected' : ''; ?>><?= htmlspecialchars($value); ?></option>
+                                    <option value="<?= htmlspecialchars($value); ?>" <?= $father_profession === $value ? 'selected' : ''; ?>><?= htmlspecialchars(sm_search_display_value((string) $value)); ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
                         <div class="filter-group">
-                            <label class="filter-label">Mother's Profession</label>
+                            <label class="filter-label"><?= sm_text("Mother's Profession", 'মায়ের পেশা'); ?></label>
                             <select name="mother_profession" class="filter-control">
-                                <option value="">Any</option>
+                                <option value=""><?= sm_text('Any', 'যেকোনো'); ?></option>
                                 <?php foreach ($mother_professions as $value): ?>
-                                    <option value="<?= htmlspecialchars($value); ?>" <?= $mother_profession === $value ? 'selected' : ''; ?>><?= htmlspecialchars($value); ?></option>
+                                    <option value="<?= htmlspecialchars($value); ?>" <?= $mother_profession === $value ? 'selected' : ''; ?>><?= htmlspecialchars(sm_search_display_value((string) $value)); ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
                         <div class="filter-group">
-                            <label class="filter-label">Mahram Maintenance</label>
+                            <label class="filter-label"><?= sm_text('Mahram Maintenance', 'মাহরাম মেনে চলা'); ?></label>
                             <select name="mahram_maintained" class="filter-control">
-                                <option value="">Any</option>
-                                <option value="1" <?= $mahram_maintained === '1' ? 'selected' : ''; ?>>Maintained</option>
-                                <option value="0" <?= $mahram_maintained === '0' ? 'selected' : ''; ?>>Not Maintained</option>
+                                <option value=""><?= sm_text('Any', 'যেকোনো'); ?></option>
+                                <option value="1" <?= $mahram_maintained === '1' ? 'selected' : ''; ?>><?= sm_text('Maintained', 'মেনে চলেন'); ?></option>
+                                <option value="0" <?= $mahram_maintained === '0' ? 'selected' : ''; ?>><?= sm_text('Not Maintained', 'মেনে চলেন না'); ?></option>
                             </select>
                         </div>
                         <div class="filter-group">
-                            <label class="filter-label">Marital Status</label>
+                            <label class="filter-label"><?= sm_text('Marital Status', 'বৈবাহিক অবস্থা'); ?></label>
                             <select name="marital_status" class="filter-control">
-                                <option value="">Any Marital Status</option>
+                                <option value=""><?= sm_text('Any Marital Status', 'সব বৈবাহিক অবস্থা'); ?></option>
                                 <?php foreach ($marital_statuses as $value): ?>
-                                    <option value="<?= htmlspecialchars($value); ?>" <?= $marital_status === $value ? 'selected' : ''; ?>><?= htmlspecialchars($value); ?></option>
+                                    <option value="<?= htmlspecialchars($value); ?>" <?= $marital_status === $value ? 'selected' : ''; ?>><?= htmlspecialchars(sm_search_display_value((string) $value)); ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
                         <div class="filter-group">
-                            <label class="filter-label">Education</label>
+                            <label class="filter-label"><?= sm_text('Education', 'শিক্ষা') ?></label>
                             <select name="education" class="filter-control">
-                                <option value="">Any Education</option>
+                                <option value=""><?= sm_text('Any Education', 'সব শিক্ষাগত যোগ্যতা'); ?></option>
                                 <?php foreach ($education_levels as $value): ?>
-                                    <option value="<?= htmlspecialchars($value); ?>" <?= $education === $value ? 'selected' : ''; ?>><?= htmlspecialchars($value); ?></option>
+                                    <option value="<?= htmlspecialchars($value); ?>" <?= $education === $value ? 'selected' : ''; ?>><?= htmlspecialchars(sm_search_display_value((string) $value)); ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
                         <div class="filter-group">
-                            <label class="filter-label">Madhhab / Manhaj</label>
+                            <label class="filter-label"><?= sm_text('Madhhab / Manhaj', 'মাযহাব / মানহাজ'); ?></label>
                             <select name="madhhab" class="filter-control">
-                                <option value="">Any</option>
+                                <option value=""><?= sm_text('Any', 'যেকোনো'); ?></option>
                                 <?php foreach ($madhhabs as $value): ?>
-                                    <option value="<?= htmlspecialchars($value); ?>" <?= $madhhab === $value ? 'selected' : ''; ?>><?= htmlspecialchars($value); ?></option>
+                                    <option value="<?= htmlspecialchars($value); ?>" <?= $madhhab === $value ? 'selected' : ''; ?>><?= htmlspecialchars(sm_search_display_value((string) $value)); ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
                         <div class="filter-group">
-                            <label class="filter-label">Blood Group</label>
+                            <label class="filter-label"><?= sm_text('Blood Group', 'রক্তের গ্রুপ'); ?></label>
                             <select name="blood_group" class="filter-control">
-                                <option value="">Any</option>
+                                <option value=""><?= sm_text('Any', 'যেকোনো'); ?></option>
                                 <?php foreach ($blood_groups as $value): ?>
-                                    <option value="<?= htmlspecialchars($value); ?>" <?= $blood_group === $value ? 'selected' : ''; ?>><?= htmlspecialchars($value); ?></option>
+                                    <option value="<?= htmlspecialchars($value); ?>" <?= $blood_group === $value ? 'selected' : ''; ?>><?= htmlspecialchars(sm_search_display_value((string) $value)); ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
@@ -1182,11 +1276,11 @@ include 'includes/header.php';
 
                     <div class="search-actions">
                         <button type="button" class="clear-search" id="clearSearchFilters">
-                            <i class="fa-solid fa-rotate-left"></i> Clear filters
+                            <i class="fa-solid fa-rotate-left"></i> <?= sm_text('Clear filters', 'ফিল্টার মুছুন'); ?>
                         </button>
                         <button type="submit" class="search-button">
                             <i class="fa-solid fa-magnifying-glass"></i>
-                            Search Profile
+                            <?= sm_text('Search Profile', 'প্রোফাইল খুঁজুন'); ?>
                         </button>
                     </div>
                 </form>
@@ -1194,12 +1288,12 @@ include 'includes/header.php';
                 <!-- Results -->
                 <div class="results-header" id="matching-profiles">
                     <div>
-                        <span class="section-kicker">MATCHING PROFILES</span>
+                        <span class="section-kicker"><?= sm_text('MATCHING PROFILES', 'মিলে যাওয়া প্রোফাইল'); ?></span>
                         <h3>
                             <?php if ($search_submitted && $target_gender !== ''): ?>
-                                <?= number_format($total_results); ?> <?= $target_gender === 'Female' ? 'Bride' : 'Groom'; ?> profiles found
+                                <?= sm_text(sm_search_localize_digits(number_format($total_results)) . ($target_gender === 'Female' ? ' bride profiles found' : ' groom profiles found'), 'মোট ' . sm_search_localize_digits(number_format($total_results)) . 'টি ' . ($target_gender === 'Female' ? 'কনের প্রোফাইল' : 'বরের প্রোফাইল') . ' পাওয়া গেছে'); ?>
                             <?php else: ?>
-                                Choose a search target to discover profiles
+                                <?= sm_text('Choose a search target to discover profiles', 'প্রোফাইল খুঁজতে প্রথমে বর অথবা কনে নির্বাচন করুন'); ?>
                             <?php endif; ?>
                         </h3>
                     </div>
@@ -1208,27 +1302,27 @@ include 'includes/header.php';
                 <?php if (!$search_submitted): ?>
                     <div class="empty-results" id="matching-results-grid">
                         <div class="empty-results-icon"><i class="fa-solid fa-magnifying-glass"></i></div>
-                        <h4>Start with Bride or Groom</h4>
-                        <p>Pick the mandatory search type above, then use as many optional filters as you need.</p>
+                        <h4><?= sm_text('Start with Bride or Groom', 'বর অথবা কনে নির্বাচন করে শুরু করুন'); ?></h4>
+                        <p><?= sm_text('Pick the mandatory search type above, then use as many optional filters as you need.', 'প্রথমে উপরে বর বা কনে নির্বাচন করুন, এরপর প্রয়োজনমতো ফিল্টার ব্যবহার করুন।'); ?></p>
                     </div>
                 <?php elseif ($search_submitted && $target_gender === ''): ?>
                     <div class="empty-results warning-empty" id="matching-results-grid">
                         <div class="empty-results-icon"><i class="fa-solid fa-circle-exclamation"></i></div>
-                        <h4>Please choose Bride or Groom</h4>
-                        <p>The search target is mandatory before other filters can be applied.</p>
+                        <h4><?= sm_text('Please choose Bride or Groom', 'অনুগ্রহ করে বর অথবা কনে নির্বাচন করুন'); ?></h4>
+                        <p><?= sm_text('The search target is mandatory before other filters can be applied.', 'অন্যান্য ফিল্টার ব্যবহারের আগে বর অথবা কনে নির্বাচন করতে হবে।'); ?></p>
                     </div>
                 <?php elseif (empty($results)): ?>
                     <div class="empty-results" id="matching-results-grid">
                         <div class="empty-results-icon"><i class="fa-regular fa-face-frown"></i></div>
-                        <h4>No matching profiles yet</h4>
-                        <p>Try removing one or two filters to broaden your search.</p>
+                        <h4><?= sm_text('No matching profiles yet', 'এখনো কোনো মিলে যাওয়া প্রোফাইল পাওয়া যায়নি'); ?></h4>
+                        <p><?= sm_text('Try removing one or two filters to broaden your search.', 'আরও বেশি ফলাফল পেতে একটি বা দুটি ফিল্টার সরিয়ে দেখুন।'); ?></p>
                     </div>
                 <?php else: ?>
                     <div class="profile-results-grid" id="matching-results-grid">
                         <?php foreach ($results as $profile): ?>
                             <?php
                                 $name = trim(($profile['first_name'] ?? '') . ' ' . ($profile['last_name'] ?? ''));
-                                $name = $name !== '' ? $name : 'Smart Matrimony Member';
+                                $name = $name !== '' ? $name : sm_text('Smart Matrimony Member', 'স্মার্ট ম্যাট্রিমনির সদস্য');
                                 $age = '';
                                 if (!empty($profile['date_of_birth'])) {
                                     try {
@@ -1254,7 +1348,7 @@ include 'includes/header.php';
                             <article class="profile-card">
                                 <div class="profile-card-photo">
                                     <?php if ($photo_visible): ?>
-                                        <img src="<?= BASE_URL; ?>uploads/profile/<?= htmlspecialchars($photo); ?>" alt="Profile photo">
+                                        <img src="<?= BASE_URL; ?>uploads/profile/<?= htmlspecialchars($photo); ?>" alt="<?= sm_text('Profile photo', 'প্রোফাইলের ছবি'); ?>">
                                     <?php elseif ($photo !== ''): ?>
                                         <div class="profile-photo-placeholder private-photo gender-placeholder">
                                             <i class="fa-solid <?= $gender_icon; ?>"></i>
@@ -1265,7 +1359,7 @@ include 'includes/header.php';
                                     <?php endif; ?>
 
                                     <?php if (($profile['verification_status'] ?? '') === 'Verified'): ?>
-                                        <span class="verified-badge"><i class="fa-solid fa-circle-check"></i> Verified</span>
+                                        <span class="verified-badge"><i class="fa-solid fa-circle-check"></i> <?= sm_text('Verified', 'যাচাইকৃত'); ?></span>
                                     <?php endif; ?>
                                 </div>
 
@@ -1307,26 +1401,26 @@ include 'includes/header.php';
                                             <h4><?= htmlspecialchars($name); ?></h4>
                                             <span class="profile-card-id"><i class="fa-solid fa-id-card"></i> <?= htmlspecialchars($target_public_id); ?></span>
                                             <?php $target_completion = sm_get_profile_completion($conn, $target_id); ?>
-                                            <span class="profile-card-completion" title="Profile completion <?= (int) ($target_completion['percentage'] ?? 0); ?>%">
-                                                <i class="fa-solid fa-chart-simple"></i> Profile <?= (int) ($target_completion['percentage'] ?? 0); ?>%
+                                            <span class="profile-card-completion" title="<?= sm_text('Profile completion', 'প্রোফাইল সম্পন্ন'); ?> <?= htmlspecialchars(sm_search_localize_digits((int) ($target_completion['percentage'] ?? 0)), ENT_QUOTES, 'UTF-8'); ?>%">
+                                                <i class="fa-solid fa-chart-simple"></i> <?= sm_text('Profile', 'প্রোফাইল'); ?> <?= htmlspecialchars(sm_search_localize_digits((int) ($target_completion['percentage'] ?? 0)), ENT_QUOTES, 'UTF-8'); ?>%
                                             </span>
                                             <p>
-                                                <?= $age !== '' ? (int) $age . ' yrs' : 'Age not provided'; ?>
-                                                <?php if (!empty($profile['religion'])): ?> · <?= htmlspecialchars($profile['religion']); ?><?php endif; ?>
+                                                <?= $age !== '' ? sm_text((int) $age . ' years', sm_search_localize_digits((int) $age) . ' বছর') : sm_text('Age not provided', 'বয়স দেওয়া হয়নি'); ?>
+                                                <?php if (!empty($profile['religion'])): ?> · <?= htmlspecialchars(sm_search_display_value((string)$profile['religion'])); ?><?php endif; ?>
                                             </p>
                                             <?php $match_score = $dashboard_match_scores[$target_id] ?? null; ?>
                                             <?php if ($match_score !== null): ?>
                                                 <div class="profile-match-wrap">
-                                                    <span class="profile-match-badge" title="Mutual compatibility score">
-                                                        <i class="fa-solid fa-heart"></i> <?= (int) $match_score; ?>% Match
+                                                    <span class="profile-match-badge" title="<?= sm_text('Mutual compatibility score', 'পারস্পরিক সামঞ্জস্যের স্কোর'); ?>">
+                                                        <i class="fa-solid fa-heart"></i> <?= htmlspecialchars(sm_search_localize_digits((int) $match_score), ENT_QUOTES, 'UTF-8'); ?>% <?= sm_text('Match', 'মিল'); ?>
                                                     </span>
-                                                    <button type="button" class="profile-match-details-button" data-match-details="<?= htmlspecialchars(json_encode($dashboard_match_details[$target_id] ?? null, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), ENT_QUOTES, 'UTF-8'); ?>" aria-label="View match details">
-                                                        View Match Details
+                                                    <button type="button" class="profile-match-details-button" data-match-details="<?= htmlspecialchars(json_encode($dashboard_match_details[$target_id] ?? null, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), ENT_QUOTES, 'UTF-8'); ?>" aria-label="<?= sm_text('View match details', 'মিলের বিস্তারিত দেখুন'); ?>">
+                                                        <?= sm_text('View Match Details', 'মিলের বিস্তারিত'); ?>
                                                     </button>
                                                 </div>
                                             <?php else: ?>
-                                                <span class="profile-match-badge is-unavailable" title="Add partner preferences to calculate a compatibility score">
-                                                    <i class="fa-regular fa-heart"></i> Match —
+                                                <span class="profile-match-badge is-unavailable" title="<?= sm_text('Add partner preferences to calculate a compatibility score', 'সামঞ্জস্যের স্কোর পেতে সঙ্গী সম্পর্কে আপনার পছন্দ যোগ করুন'); ?>">
+                                                    <i class="fa-regular fa-heart"></i> <?= sm_text('Match —', 'মিল —'); ?>
                                                 </span>
                                             <?php endif; ?>
                                         </div>
@@ -1336,15 +1430,15 @@ include 'includes/header.php';
                                             <input type="hidden" name="bookmark_user_id" value="<?= $target_id; ?>">
                                             <input type="hidden" name="bookmark_action" value="<?= $is_bookmarked ? 'remove' : 'add'; ?>">
                                             <input type="hidden" name="return_query" value="<?= htmlspecialchars($_SERVER['QUERY_STRING'] ?? '', ENT_QUOTES, 'UTF-8'); ?>">
-                                            <button type="submit" class="bookmark-button <?= $is_bookmarked ? 'is-bookmarked' : ''; ?>" title="<?= $is_bookmarked ? 'Remove bookmark' : 'Bookmark profile'; ?>">
+                                            <button type="submit" class="bookmark-button <?= $is_bookmarked ? 'is-bookmarked' : ''; ?>" title="<?= $is_bookmarked ? sm_text('Remove bookmark', 'বুকমার্ক সরান') : sm_text('Bookmark profile', 'প্রোফাইল বুকমার্ক করুন'); ?>">
                                                 <i class="fa-<?= $is_bookmarked ? 'solid' : 'regular'; ?> fa-bookmark"></i>
                                             </button>
                                         </form>
                                     </div>
 
                                     <div class="profile-facts">
-                                        <?php if (!empty($profile['profession'])): ?><span><i class="fa-solid fa-briefcase"></i><?= htmlspecialchars($profile['profession']); ?></span><?php endif; ?>
-                                        <?php if (!empty($profile['highest_education'])): ?><span><i class="fa-solid fa-graduation-cap"></i><?= htmlspecialchars($profile['highest_education']); ?></span><?php endif; ?>
+                                        <?php if (!empty($profile['profession'])): ?><span><i class="fa-solid fa-briefcase"></i><?= htmlspecialchars(sm_search_display_value((string) $profile['profession'])); ?></span><?php endif; ?>
+                                        <?php if (!empty($profile['highest_education'])): ?><span><i class="fa-solid fa-graduation-cap"></i><?= htmlspecialchars(sm_search_display_value((string) $profile['highest_education'])); ?></span><?php endif; ?>
                                         <?php if (!empty($profile['height_cm']) || !empty($profile['weight_kg'])): ?>
                                             <?php
                                                 $height_ft = null;
@@ -1363,33 +1457,33 @@ include 'includes/header.php';
                                                     $weight_display = rtrim(rtrim(number_format((float) $profile['weight_kg'], 2, '.', ''), '0'), '.');
                                                 }
                                             ?>
-                                            <span><i class="fa-solid fa-ruler-combined"></i><?= $height_ft !== null ? $height_ft . ' ft ' . $height_in . ' inch' : 'Height —'; ?><?= $weight_display !== null ? ' · ' . htmlspecialchars($weight_display) . ' kg' : ''; ?></span>
+                                            <span><i class="fa-solid fa-ruler-combined"></i><?= $height_ft !== null ? sm_text($height_ft . ' ft ' . $height_in . ' inch', sm_search_localize_digits($height_ft) . ' ফুট ' . sm_search_localize_digits($height_in) . ' ইঞ্চি') : sm_text('Height —', 'উচ্চতা —'); ?><?= $weight_display !== null ? ' · ' . sm_text(htmlspecialchars($weight_display) . ' kg', htmlspecialchars(sm_search_localize_digits($weight_display), ENT_QUOTES, 'UTF-8') . ' কেজি') : ''; ?></span>
                                         <?php endif; ?>
-                                        <?php if (!empty($profile['complexion'])): ?><span><i class="fa-solid fa-user"></i><?= htmlspecialchars($profile['complexion']); ?></span><?php endif; ?>
-                                        <?php if (!empty($profile['family_type']) || !empty($profile['family_status'])): ?><span><i class="fa-solid fa-house-user"></i><?= htmlspecialchars(trim(($profile['family_type'] ?? '') . ' · ' . ($profile['family_status'] ?? ''), ' ·')); ?></span><?php endif; ?>
-                                        <?php if (!empty($profile['prayer_status'])): ?><span><i class="fa-solid fa-mosque"></i><?= htmlspecialchars($profile['prayer_status']); ?></span><?php endif; ?>
-                                        <?php if (!empty($profile['smoking_status'])): ?><span><i class="fa-solid fa-ban-smoking"></i><?= htmlspecialchars($profile['smoking_status']); ?></span><?php endif; ?>
-                                        <?php if (!empty($profile['blood_group'])): ?><span><i class="fa-solid fa-droplet"></i><?= htmlspecialchars($profile['blood_group']); ?></span><?php endif; ?>
-                                        <?php if (!empty($profile['district_name']) || !empty($profile['district'])): ?><span><i class="fa-solid fa-location-dot"></i><?= htmlspecialchars($profile['district_name'] ?? $profile['district'] ?? ''); ?></span><?php endif; ?>
+                                        <?php if (!empty($profile['complexion'])): ?><span><i class="fa-solid fa-user"></i><?= htmlspecialchars(sm_search_display_value((string) $profile['complexion'])); ?></span><?php endif; ?>
+                                        <?php if (!empty($profile['family_type']) || !empty($profile['family_status'])): ?><span><i class="fa-solid fa-house-user"></i><?= htmlspecialchars(sm_search_display_value((string) ($profile['family_type'] ?? '')) . ((!empty($profile['family_type']) && !empty($profile['family_status'])) ? ' · ' : '') . sm_search_display_value((string) ($profile['family_status'] ?? ''))); ?></span><?php endif; ?>
+                                        <?php if (!empty($profile['prayer_status'])): ?><span><i class="fa-solid fa-mosque"></i><?= htmlspecialchars(sm_search_display_value((string) $profile['prayer_status'])); ?></span><?php endif; ?>
+                                        <?php if (!empty($profile['smoking_status'])): ?><span><i class="fa-solid fa-ban-smoking"></i><?= htmlspecialchars(sm_search_display_value((string) $profile['smoking_status'])); ?></span><?php endif; ?>
+                                        <?php if (!empty($profile['blood_group'])): ?><span><i class="fa-solid fa-droplet"></i><?= htmlspecialchars(sm_search_display_value((string) $profile['blood_group'])); ?></span><?php endif; ?>
+                                        <?php if (!empty($profile['district_name']) || !empty($profile['district'])): ?><span><i class="fa-solid fa-location-dot"></i><?= htmlspecialchars((($current_language ?? 'bn') === 'en') ? ($profile['district_name'] ?? $profile['district'] ?? '') : (($profile['district_name_bn'] ?? '') ?: ($profile['district'] ?? $profile['district_name'] ?? ''))); ?></span><?php endif; ?>
                                     </div>
 
                                     <div class="profile-card-actions">
                                         <a class="view-profile-button" href="profile/view_profile.php?<?= http_build_query(['user_id' => $target_id, 'return_url' => $profile_return_url]); ?>">
-                                            View Details Profile
+                                            <?= sm_text('View Details Profile', 'প্রোফাইলের বিস্তারিত দেখুন'); ?>
                                             <i class="fa-solid fa-arrow-right"></i>
                                         </a>
                                         <?php if ($same_gender): ?>
-                                            <span class="interaction-state unavailable" title="Interest can only be sent to the opposite gender"><i class="fa-solid fa-ban"></i> Interest Unavailable</span>
+                                            <span class="interaction-state unavailable" title="<?= sm_text('Interest can only be sent to the opposite gender', 'শুধু বিপরীত লিঙ্গের প্রোফাইলে আগ্রহ জানানো যাবে'); ?>"><i class="fa-solid fa-ban"></i> <?= sm_text('Interest Unavailable', 'আগ্রহ জানানো যাবে না'); ?></span>
                                         <?php elseif ($interaction_status === 'Accepted' && $interaction_direction && $interaction_id > 0): ?>
-                                            <a class="interaction-state accepted" href="<?= BASE_URL; ?>matching/my_matches.php"><i class="fa-solid fa-heart-circle-check"></i> Matched</a>
+                                            <a class="interaction-state accepted" href="<?= BASE_URL; ?>matching/my_matches.php"><i class="fa-solid fa-heart-circle-check"></i> <?= sm_text('Matched', 'মিল হয়েছে'); ?></a>
                                         <?php elseif ($interaction_status === 'Pending' && $interaction_direction === 'sent'): ?>
-                                            <a class="interaction-state pending" href="<?= BASE_URL; ?>matching/my_matches.php"><i class="fa-solid fa-clock"></i> Interest Sent</a>
+                                            <a class="interaction-state pending" href="<?= BASE_URL; ?>matching/my_matches.php"><i class="fa-solid fa-clock"></i> <?= sm_text('Interest Sent', 'আগ্রহ পাঠানো হয়েছে'); ?></a>
                                         <?php elseif ($interaction_status === 'Pending' && $interaction_direction === 'received'): ?>
-                                            <a class="interaction-state received" href="<?= BASE_URL; ?>matching/my_matches.php"><i class="fa-solid fa-envelope"></i> Respond</a>
+                                            <a class="interaction-state received" href="<?= BASE_URL; ?>matching/my_matches.php"><i class="fa-solid fa-envelope"></i> <?= sm_text('Respond', 'উত্তর দিন'); ?></a>
                                         <?php elseif ($can_send_interest): ?>
-                                            <a class="interest-button" href="<?= BASE_URL; ?>matching/send_interest.php?user_id=<?= $target_id; ?>"><i class="fa-solid fa-heart"></i> Send Interest</a>
+                                            <a class="interest-button" href="<?= BASE_URL; ?>matching/send_interest.php?user_id=<?= $target_id; ?>"><i class="fa-solid fa-heart"></i> <?= sm_text('Send Interest', 'আগ্রহ জানান'); ?></a>
                                         <?php else: ?>
-                                            <span class="interaction-state unavailable"><i class="fa-solid fa-ban"></i> Interest Unavailable</span>
+                                            <span class="interaction-state unavailable"><i class="fa-solid fa-ban"></i> <?= sm_text('Interest Unavailable', 'আগ্রহ জানানো যাবে না'); ?></span>
                                         <?php endif; ?>
                                     </div>
                                 </div>
@@ -1398,7 +1492,7 @@ include 'includes/header.php';
                     </div>
 
                     <?php if ($total_pages > 1): ?>
-                        <nav class="dashboard-pagination" aria-label="Profile pagination">
+                        <nav class="dashboard-pagination" aria-label="<?= sm_text('Profile pagination', 'প্রোফাইলের পৃষ্ঠা পরিবর্তন'); ?>">
                             <?php
                                 $query = $_GET;
                                 unset($query['page']);
@@ -1413,7 +1507,7 @@ include 'includes/header.php';
                             <?php endif; ?>
 
                             <?php for ($p = max(1, $page - 2); $p <= min($total_pages, $page + 2); $p++): ?>
-                                <a href="<?= htmlspecialchars($build_page_url($p)); ?>" class="page-number <?= $p === $page ? 'active' : ''; ?>"><?= $p; ?></a>
+                                <a href="<?= htmlspecialchars($build_page_url($p)); ?>" class="page-number <?= $p === $page ? 'active' : ''; ?>"><?= htmlspecialchars(sm_search_localize_digits($p), ENT_QUOTES, 'UTF-8'); ?></a>
                             <?php endfor; ?>
 
                             <?php if ($page < $total_pages): ?>
@@ -1430,27 +1524,27 @@ include 'includes/header.php';
             <div class="dashboard-container">
                 <div class="section-heading service-section-heading">
                     <div class="service-heading-copy">
-                        <span class="section-kicker">WEDDING PLANNING</span>
-                        <h2>Wedding Services</h2>
-                        <p>Choose a service to explore its available packages, providers, prices and booking options.</p>
+                        <span class="section-kicker"><?= sm_text('WEDDING PLANNING', 'বিয়ের আয়োজন'); ?></span>
+                        <h2><?= sm_text('Wedding Services', 'বিয়ের সেবা') ?></h2>
+                        <p><?= sm_text('Choose a service to explore its available packages, providers, prices and booking options.', 'প্যাকেজ, সেবাদাতা, মূল্য ও বুকিংয়ের বিকল্প দেখতে একটি সেবা নির্বাচন করুন।'); ?></p>
                     </div>
                     <div class="service-heading-actions">
                         <a class="service-budget-action" href="<?= BASE_URL; ?>services/budget_finder.php">
                             <span class="service-budget-action-icon"><i class="fa-solid fa-wallet"></i></span>
                             <span class="service-budget-action-copy">
-                                <strong>Find by Budget</strong>
-                                <small>Plan services within your budget</small>
+                                <strong><?= sm_text('Find by Budget', 'বাজেট অনুযায়ী খুঁজুন'); ?></strong>
+                                <small><?= sm_text('Plan services within your budget', 'নিজের বাজেট অনুযায়ী সেবা পরিকল্পনা করুন'); ?></small>
                             </span>
                             <i class="fa-solid fa-arrow-right service-budget-action-arrow"></i>
                         </a>
-                        <div class="service-overview-stats" aria-label="Wedding service overview">
+                        <div class="service-overview-stats" aria-label="<?= sm_text('Wedding service overview', 'বিয়ের সেবার সারসংক্ষেপ'); ?>">
                         <div class="service-overview-stat">
                             <span class="service-overview-icon"><i class="fa-solid fa-layer-group"></i></span>
-                            <span><strong><?= count($services); ?></strong><small>Total Services</small></span>
+                            <span><strong><?= htmlspecialchars(sm_search_localize_digits(count($services)), ENT_QUOTES, 'UTF-8'); ?></strong><small><?= sm_text('Total Services', 'মোট সেবা'); ?></small></span>
                         </div>
                         <div class="service-overview-stat">
                             <span class="service-overview-icon package-stat-icon"><i class="fa-solid fa-box-open"></i></span>
-                            <span><strong><?= $total_service_packages; ?></strong><small>Total Packages</small></span>
+                            <span><strong><?= htmlspecialchars(sm_search_localize_digits($total_service_packages), ENT_QUOTES, 'UTF-8'); ?></strong><small><?= sm_text('Total Packages', 'মোট প্যাকেজ'); ?></small></span>
                         </div>
                         </div>
                     </div>
@@ -1458,36 +1552,17 @@ include 'includes/header.php';
 
                 <div class="service-category-grid">
                     <?php foreach ($services as $service): ?>
-                        <?php
-                            $icons = [
-                                'Photography' => 'fa-camera-retro',
-                                'Catering' => 'fa-utensils',
-                                'Decoration' => 'fa-wand-magic-sparkles',
-                                'Car Rental' => 'fa-car-side',
-                                'Makeup Artist' => 'fa-wand-magic',
-                                'Wedding Planner' => 'fa-calendar-check',
-                                'Convention Center' => 'fa-building',
-                                'Resort / Lawn' => 'fa-tree-city',
-                                'Mehendi Artist' => 'fa-hand-sparkles',
-                                'Wedding Flowers' => 'fa-seedling',
-                                'Basor Ghor Decoration' => 'fa-bed',
-                                'Wedding Dress' => 'fa-shirt',
-                                'Groom Dress' => 'fa-user-tie',
-                                'Bridal Accessories' => 'fa-gem',
-                                'Sound & Lighting' => 'fa-lightbulb',
-                                'Invitation & Printing' => 'fa-envelope-open-text'
-                            ];
-                        ?>
+
                         <a class="service-category-card" href="<?= BASE_URL; ?>services/service_details.php?service_id=<?= (int) $service['service_id']; ?>">
                             <div class="service-icon">
-                                <i class="fa-solid <?= htmlspecialchars($icons[$service['service_name']] ?? 'fa-heart'); ?>"></i>
+                                <i class="fa-solid <?= htmlspecialchars((string)($service['icon_class'] ?? '') !== '' ? (string)$service['icon_class'] : 'fa-heart', ENT_QUOTES, 'UTF-8'); ?>"></i>
                             </div>
                             <div>
-                                <h3><?= htmlspecialchars($service['service_name']); ?></h3>
-                                <p><?= htmlspecialchars($service['description'] ?? 'Wedding-related service'); ?></p>
+                                <h3><?= htmlspecialchars(sm_text((string)$service['service_name'], (string)(($service['service_name_bn'] ?? '') !== '' ? $service['service_name_bn'] : sm_display_service_name((string)$service['service_name']))), ENT_QUOTES, 'UTF-8'); ?></h3>
+                                <p><?= htmlspecialchars(sm_text((string)($service['description'] ?? 'Wedding-related service'), (string)(($service['description_bn'] ?? '') !== '' ? $service['description_bn'] : 'বিয়ে-সংক্রান্ত সেবা')), ENT_QUOTES, 'UTF-8'); ?></p>
                             </div>
                             <span class="service-status">
-                                <?= (int) $service['provider_count']; ?> <?= (int) $service['provider_count'] === 1 ? 'package' : 'packages'; ?>
+                                <?= sm_text(sm_search_localize_digits(number_format((int)$service['provider_count'])) . ((int)$service['provider_count'] === 1 ? ' package' : ' packages'), sm_search_localize_digits(number_format((int)$service['provider_count'])) . 'টি প্যাকেজ'); ?>
                             </span>
                             <i class="service-arrow fa-solid fa-arrow-right"></i>
                         </a>
@@ -1501,23 +1576,23 @@ include 'includes/header.php';
     </main>
 </div>
 
-<div class="match-details-modal" id="matchDetailsModal" aria-hidden="true">
+<div class="match-details-modal" id="matchDetailsModal" aria-hidden="true" data-language="<?= htmlspecialchars($current_language, ENT_QUOTES, 'UTF-8'); ?>">
     <div class="match-details-backdrop" data-match-close></div>
     <section class="match-details-dialog" role="dialog" aria-modal="true" aria-labelledby="matchDetailsTitle">
-        <button type="button" class="match-details-close" data-match-close aria-label="Close match details"><i class="fa-solid fa-xmark"></i></button>
+        <button type="button" class="match-details-close" data-match-close aria-label="<?= sm_text('Close match details', 'মিলের বিস্তারিত বন্ধ করুন'); ?>"><i class="fa-solid fa-xmark"></i></button>
         <div class="match-details-head">
             <span class="match-details-icon"><i class="fa-solid fa-heart"></i></span>
             <div>
-                <span class="section-kicker">COMPATIBILITY BREAKDOWN</span>
-                <h3 id="matchDetailsTitle">Match Details</h3>
-                <p>See how the compatibility score was calculated.</p>
+                <span class="section-kicker"><?= sm_text('COMPATIBILITY BREAKDOWN', 'সামঞ্জস্যের বিশ্লেষণ'); ?></span>
+                <h3 id="matchDetailsTitle"><?= sm_text('Match Details', 'মিলের বিস্তারিত'); ?></h3>
+                <p><?= sm_text('See how the compatibility score was calculated.', 'সামঞ্জস্যের স্কোর কীভাবে হিসাব করা হয়েছে তা দেখুন।'); ?></p>
             </div>
         </div>
         <div class="match-details-overview">
-            <div><strong id="matchDetailsOverall">—%</strong><span>Overall Match</span></div>
+            <div><strong id="matchDetailsOverall">—%</strong><span><?= sm_text('Overall Match', 'সামগ্রিক মিল'); ?></span></div>
         </div>
         <div class="match-details-list" id="matchDetailsList"></div>
-        <p class="match-details-note">Scores are calculated from the current mutual compatibility rules. Missing information is not treated as a mismatch.</p>
+        <p class="match-details-note"><?= sm_text('Scores are calculated from the current mutual compatibility rules. Missing information is not treated as a mismatch.', 'বর্তমান পারস্পরিক সামঞ্জস্যের নিয়ম অনুযায়ী স্কোর হিসাব করা হয়। কোনো তথ্য না থাকলেই সেটিকে অমিল হিসেবে ধরা হয় না।'); ?></p>
     </section>
 </div>
 
@@ -1565,51 +1640,51 @@ include 'includes/header.php';
 
     function loadDistricts(divisionId, selectedDistrict) {
         if (!divisionId) {
-            district.innerHTML = '<option value="">Any District</option>';
-            upazila.innerHTML = '<option value="">Any Upazila</option>';
+            district.innerHTML = '<option value=""><?= sm_text('Any District', 'সব জেলা'); ?></option>';
+            upazila.innerHTML = '<option value=""><?= sm_text('Any Upazila', 'সব উপজেলা'); ?></option>';
             return Promise.resolve();
         }
 
-        district.innerHTML = '<option value="">Loading districts...</option>';
-        upazila.innerHTML = '<option value="">Any Upazila</option>';
+        district.innerHTML = '<option value="">' + <?= json_encode(sm_text('Loading districts...', 'জেলা লোড হচ্ছে...')); ?> + '</option>';
+        upazila.innerHTML = '<option value=""><?= sm_text('Any Upazila', 'সব উপজেলা'); ?></option>';
 
         return fetch('ajax/get_districts.php?division_id=' + encodeURIComponent(divisionId))
             .then(response => response.text())
             .then(html => {
-                district.innerHTML = html.replace('<option value="">Select District</option>', '<option value="">Any District</option>');
+                district.innerHTML = html.replace('<option value="">Select District</option>', '<option value=""><?= sm_text('Any District', 'সব জেলা'); ?></option>');
                 if (selectedDistrict) {
                     district.value = String(selectedDistrict);
                 }
             })
             .catch(() => {
-                district.innerHTML = '<option value="">Could not load districts</option>';
+                district.innerHTML = '<option value="">' + <?= json_encode(sm_text('Could not load districts', 'জেলা লোড করা যায়নি')); ?> + '</option>';
             });
     }
 
     function loadUpazilas(districtId, selectedUpazila) {
         if (!districtId) {
-            upazila.innerHTML = '<option value="">Any Upazila</option>';
+            upazila.innerHTML = '<option value=""><?= sm_text('Any Upazila', 'সব উপজেলা'); ?></option>';
             return;
         }
 
-        upazila.innerHTML = '<option value="">Loading upazilas...</option>';
+        upazila.innerHTML = '<option value="">' + <?= json_encode(sm_text('Loading upazilas...', 'উপজেলা লোড হচ্ছে...')); ?> + '</option>';
 
         fetch('ajax/get_upazilas.php?district_id=' + encodeURIComponent(districtId))
             .then(response => response.text())
             .then(html => {
-                upazila.innerHTML = html.replace('<option value="">Select Upazila</option>', '<option value="">Any Upazila</option>');
+                upazila.innerHTML = html.replace('<option value="">Select Upazila</option>', '<option value=""><?= sm_text('Any Upazila', 'সব উপজেলা'); ?></option>');
                 if (selectedUpazila) {
                     upazila.value = String(selectedUpazila);
                 }
             })
             .catch(() => {
-                upazila.innerHTML = '<option value="">Could not load upazilas</option>';
+                upazila.innerHTML = '<option value="">' + <?= json_encode(sm_text('Could not load upazilas', 'উপজেলা লোড করা যায়নি')); ?> + '</option>';
             });
     }
 
     division.addEventListener('change', function () {
         loadDistricts(this.value, '').then(function () {
-            upazila.innerHTML = '<option value="">Any Upazila</option>';
+            upazila.innerHTML = '<option value=""><?= sm_text('Any Upazila', 'সব উপজেলা'); ?></option>';
         });
     });
 
@@ -1829,8 +1904,8 @@ include 'includes/header.php';
                 }
             });
 
-            if (district) district.innerHTML = '<option value="">Any District</option>';
-            if (upazila) upazila.innerHTML = '<option value="">Any Upazila</option>';
+            if (district) district.innerHTML = '<option value=""><?= sm_text('Any District', 'সব জেলা'); ?></option>';
+            if (upazila) upazila.innerHTML = '<option value=""><?= sm_text('Any Upazila', 'সব উপজেলা'); ?></option>';
 
             if (division) division.value = '';
             if (district) district.value = '';
@@ -1867,5 +1942,32 @@ include 'includes/header.php';
 
 })();
 </script>
+
+<?php if ($show_language_prompt): ?>
+<script>
+(function () {
+    if (!window.Swal) return;
+    Swal.fire({
+        title: 'Choose your language / ভাষা নির্বাচন করুন',
+        text: 'Select the language you want to use throughout Smart Matrimony.',
+        icon: 'info',
+        confirmButtonText: 'বাংলা',
+        denyButtonText: 'English',
+        showDenyButton: true,
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        reverseButtons: false,
+        confirmButtonColor: '#1d756e',
+        denyButtonColor: '#475569'
+    }).then(function (result) {
+        if (result.isConfirmed) {
+            window.location.href = <?= json_encode(BASE_URL . 'set_language.php?language=bn&redirect=dashboard.php'); ?>;
+        } else if (result.isDenied) {
+            window.location.href = <?= json_encode(BASE_URL . 'set_language.php?language=en&redirect=dashboard.php'); ?>;
+        }
+    });
+})();
+</script>
+<?php endif; ?>
 
 <?php include 'includes/footer.php'; ?>

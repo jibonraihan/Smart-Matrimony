@@ -76,6 +76,39 @@ function manager_clean_image_name(string $name): string {
     return preg_replace('/[^A-Za-z0-9._-]/', '_', basename($name));
 }
 
+/** Generate package codes from the current Admin-managed service prefix.
+ * The sequence upsert is atomic and works without database triggers.
+ */
+function manager_next_package_code(mysqli $conn, int $service_id): string {
+    $stmt = mysqli_prepare($conn, 'SELECT service_prefix FROM services WHERE service_id=? LIMIT 1');
+    if (!$stmt) throw new RuntimeException('Could not read the service package prefix.');
+    mysqli_stmt_bind_param($stmt, 'i', $service_id);
+    mysqli_stmt_execute($stmt);
+    $service = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
+    mysqli_stmt_close($stmt);
+
+    $prefix = strtoupper(trim((string)($service['service_prefix'] ?? '')));
+    if ($prefix === '' || !preg_match('/^[A-Z0-9]{2,5}$/', $prefix)) {
+        throw new RuntimeException('This service does not have a valid package prefix. Please ask Admin to check Manage Services.');
+    }
+
+    $stmt = mysqli_prepare($conn, 'INSERT INTO service_package_sequences (service_id, last_number) VALUES (?, LAST_INSERT_ID(1)) ON DUPLICATE KEY UPDATE last_number=LAST_INSERT_ID(last_number + 1)');
+    if (!$stmt) throw new RuntimeException('Could not prepare the package sequence.');
+    mysqli_stmt_bind_param($stmt, 'i', $service_id);
+    if (!mysqli_stmt_execute($stmt)) {
+        $error = mysqli_stmt_error($stmt);
+        mysqli_stmt_close($stmt);
+        throw new RuntimeException('Could not allocate a package number: ' . $error);
+    }
+    mysqli_stmt_close($stmt);
+
+    $result = mysqli_query($conn, 'SELECT LAST_INSERT_ID() AS next_number');
+    $row = $result ? mysqli_fetch_assoc($result) : null;
+    $number = (int)($row['next_number'] ?? 0);
+    if ($number < 1) throw new RuntimeException('Could not generate the next package number.');
+    return $prefix . '-' . str_pad((string)$number, 3, '0', STR_PAD_LEFT);
+}
+
 function manager_remove_image(?string $filename, string $upload_dir): void {
     if (!$filename) return;
     $safe = basename($filename);
@@ -258,6 +291,7 @@ function manager_render_service_coverage(array $rows): string {
 function manager_catalog_package_payload(array $p): array {
     return [
         'provider_id' => (int)($p['provider_id'] ?? 0),
+        'package_code' => (string)($p['package_code'] ?? ''),
         'service_id' => (int)($p['service_id'] ?? 0),
         'service_name' => (string)($p['service_name'] ?? ''),
         'provider_name' => (string)($p['provider_name'] ?? ''),
@@ -307,6 +341,7 @@ function manager_render_catalog_card(array $p, int $manager_id, string $upload_w
         . '<div class="package-thumb">' . $image . '</div>'
         . '<div class="package-info">'
         . '<span>' . htmlspecialchars((string)$p['service_name']) . '</span>'
+        . (!empty($p['package_code']) ? '<span class="package-code-badge">' . htmlspecialchars((string)$p['package_code'], ENT_QUOTES, 'UTF-8') . '</span>' : '')
         . '<h3>' . htmlspecialchars((string)($p['package_name'] ?: $p['provider_name'])) . '</h3>'
         . '<p>' . htmlspecialchars((string)$p['provider_name']) . ($p['location'] ? ' · ' . htmlspecialchars((string)$p['location']) : '') . '</p>'
         . (!empty($p['package_details']) ? '<small class="package-details-preview">' . htmlspecialchars(mb_strimwidth(trim((string)$p['package_details']), 0, 180, '…', 'UTF-8')) . '</small>' : '')
@@ -490,8 +525,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $message = 'Package updated successfully.';
                 } else {
                     $image = $upload['name'] ?? null;
-                    $stmt = mysqli_prepare($conn, 'INSERT INTO service_providers (service_id, provider_name, package_name, package_details, price, discount_percent, contact_number, location, manager_id, original_manager_id, status, image) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)');
-                    mysqli_stmt_bind_param($stmt, 'isssddssiiss', $service_id, $provider_name, $package_name, $package_details, $price, $discount_percent, $contact_number, $location, $manager_id, $manager_id, $status, $image);
+                    $package_code = manager_next_package_code($conn, $service_id);
+                    $stmt = mysqli_prepare($conn, 'INSERT INTO service_providers (package_code, service_id, provider_name, package_name, package_details, price, discount_percent, contact_number, location, manager_id, original_manager_id, status, image) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)');
+                    mysqli_stmt_bind_param($stmt, 'sisssddssiiss', $package_code, $service_id, $provider_name, $package_name, $package_details, $price, $discount_percent, $contact_number, $location, $manager_id, $manager_id, $status, $image);
                     mysqli_stmt_execute($stmt);
                     $new_provider_id = mysqli_insert_id($conn);
                     mysqli_stmt_close($stmt);
@@ -971,6 +1007,7 @@ include '../includes/header.php';
             <button type="button" class="manager-primary-btn js-open-package-modal"><i class="fa-solid fa-plus"></i> Add Package</button>
             <a href="#bookings" class="manager-secondary-btn js-bookings-jump"><i class="fa-solid fa-calendar-check"></i> Customer Bookings</a>
             <a href="#reviews" class="manager-secondary-btn"><i class="fa-solid fa-star"></i> Customer Reviews <b class="manager-review-count-badge"><?= (int)$review_counts['All']; ?></b></a>
+            <a href="<?= htmlspecialchars($manager_url('reports.php')); ?>" class="manager-secondary-btn"><i class="fa-solid fa-file-pdf"></i> PDF Reports</a>
         </div>
 
         <?php if ($message): ?><div class="manager-alert <?= $email_failed_notice ? 'warning' : 'success'; ?>"><i class="fa-solid <?= $email_failed_notice ? 'fa-triangle-exclamation' : 'fa-circle-check'; ?>"></i><?= htmlspecialchars($message); ?></div><?php endif; ?>
