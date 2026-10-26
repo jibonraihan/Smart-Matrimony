@@ -21,6 +21,49 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
   if (!hash_equals($csrf, (string) ($_POST['csrf'] ?? ''))) {
     $error = 'Security check failed. Please refresh the page and try again.';
+  } elseif ($action === 'save_global_admin_message') {
+    $broadcast_text = trim((string) ($_POST['global_admin_message'] ?? ''));
+    $broadcast_length = function_exists('mb_strlen') ? mb_strlen($broadcast_text, 'UTF-8') : strlen($broadcast_text);
+    if ($broadcast_text === '') {
+      $error = 'Please write a message before saving.';
+    } elseif ($broadcast_length > 2000) {
+      $error = 'The message must be 2000 characters or fewer.';
+    } else {
+      $save_broadcast = @mysqli_prepare($conn, 'UPDATE admin_global_message SET message_text=?, updated_by=? WHERE message_id=1');
+      if ($save_broadcast) {
+        mysqli_stmt_bind_param($save_broadcast, 'si', $broadcast_text, $admin_id);
+        if (mysqli_stmt_execute($save_broadcast) && mysqli_stmt_affected_rows($save_broadcast) >= 0) {
+          $message = 'Message to all saved successfully. Use the small switch to show or hide it for users.';
+        } else {
+          $error = 'Unable to save the message. Please run the admin_global_message migration SQL first.';
+        }
+        mysqli_stmt_close($save_broadcast);
+      } else {
+        $error = 'The message table is not ready. Please run the admin_global_message migration SQL first.';
+      }
+    }
+  } elseif ($action === 'toggle_global_admin_message') {
+    $current_broadcast_result = @mysqli_query($conn, 'SELECT message_text, is_enabled FROM admin_global_message WHERE message_id=1 LIMIT 1');
+    $current_broadcast = $current_broadcast_result ? mysqli_fetch_assoc($current_broadcast_result) : null;
+    if (!$current_broadcast) {
+      $error = 'The message table is not ready. Please run the admin_global_message migration SQL first.';
+    } elseif (trim((string) ($current_broadcast['message_text'] ?? '')) === '') {
+      $error = 'Write and save a message before turning it ON.';
+    } else {
+      $new_broadcast_state = ((int) ($current_broadcast['is_enabled'] ?? 0) === 1) ? 0 : 1;
+      $toggle_broadcast = @mysqli_prepare($conn, 'UPDATE admin_global_message SET is_enabled=?, updated_by=? WHERE message_id=1');
+      if ($toggle_broadcast) {
+        mysqli_stmt_bind_param($toggle_broadcast, 'ii', $new_broadcast_state, $admin_id);
+        if (mysqli_stmt_execute($toggle_broadcast)) {
+          $message = $new_broadcast_state ? 'Message to all is now ON for users.' : 'Message to all is now OFF for users.';
+        } else {
+          $error = 'Unable to update the Message to all status.';
+        }
+        mysqli_stmt_close($toggle_broadcast);
+      } else {
+        $error = 'Unable to update the Message to all status.';
+      }
+    }
   } elseif ($action === 'set_maintenance_mode') {
     $requested_state = ($_POST['maintenance_state'] ?? '') === 'on';
 
@@ -159,6 +202,13 @@ $admin_public_id = 'SM-' . str_pad((string) $admin_id, 6, '0', STR_PAD_LEFT);
 
 $support_total = scalar($conn, "SELECT COUNT(*) FROM site_messages");
 $support_new = scalar($conn, "SELECT COUNT(*) FROM site_messages WHERE status='New'");
+$global_admin_broadcast = null;
+$global_admin_broadcast_result = @mysqli_query($conn, 'SELECT message_text, is_enabled FROM admin_global_message WHERE message_id=1 LIMIT 1');
+if ($global_admin_broadcast_result) {
+  $global_admin_broadcast = mysqli_fetch_assoc($global_admin_broadcast_result) ?: null;
+}
+$global_admin_broadcast_text = (string) ($global_admin_broadcast['message_text'] ?? '');
+$global_admin_broadcast_enabled = (int) ($global_admin_broadcast['is_enabled'] ?? 0) === 1;
 
 
 $stats = [
@@ -248,7 +298,7 @@ $admin_header_subtitle = 'System overview and administrative modules.';
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Admin Control Center | Smart Matrimony</title>
-  <link rel="stylesheet" href="../assets/css/admin.css?v=20261003.1">
+  <link rel="stylesheet" href="../assets/css/admin.css?v=20261026.1">
 </head>
 <body>
 <?php require __DIR__ . '/admin_header.php';
@@ -283,7 +333,7 @@ $admin_header_subtitle = 'System overview and administrative modules.';
     </div>
   </section>
 
-  <section class="admin-support-quick" aria-label="Support and Feedback quick access">
+  <section class="admin-support-quick" aria-label="Support, feedback and global user message">
     <a class="admin-support-quick-card" href="operations.php" aria-label="Open Support and Feedback Operations">
       <span class="admin-support-quick-icon" aria-hidden="true">✉</span>
       <span class="admin-support-quick-copy">
@@ -292,7 +342,38 @@ $admin_header_subtitle = 'System overview and administrative modules.';
       </span>
       <span class="admin-support-quick-arrow" aria-hidden="true">→</span>
     </a>
+    <div class="admin-broadcast-actions">
+      <button type="button" class="admin-broadcast-open" data-global-broadcast-open>
+        <span aria-hidden="true">✉</span> Message to all
+      </button>
+      <form method="post" class="admin-broadcast-toggle-form" aria-label="Toggle Message to all visibility">
+        <input type="hidden" name="csrf" value="<?=htmlspecialchars($csrf, ENT_QUOTES, 'UTF-8')?>">
+        <input type="hidden" name="action" value="toggle_global_admin_message">
+        <button type="submit" class="admin-broadcast-switch <?= $global_admin_broadcast_enabled ? 'is-on' : 'is-off' ?>" aria-label="Turn Message to all <?= $global_admin_broadcast_enabled ? 'OFF' : 'ON' ?>" title="Message to all is <?= $global_admin_broadcast_enabled ? 'ON' : 'OFF' ?>">
+          <span class="admin-broadcast-switch-dot" aria-hidden="true"></span>
+        </button>
+      </form>
+      <span class="admin-broadcast-state <?= $global_admin_broadcast_enabled ? 'is-on' : 'is-off' ?>"><?= $global_admin_broadcast_enabled ? 'ON' : 'OFF' ?></span>
+    </div>
   </section>
+
+  <div class="admin-broadcast-modal" data-global-broadcast-modal hidden>
+    <button type="button" class="admin-broadcast-backdrop" data-global-broadcast-close aria-label="Close Message to all"></button>
+    <section class="admin-broadcast-dialog" role="dialog" aria-modal="true" aria-labelledby="global-broadcast-title">
+      <div class="admin-broadcast-dialog-head">
+        <div><span class="eyebrow">GLOBAL USER MESSAGE</span><h2 id="global-broadcast-title">Message to all</h2></div>
+        <button type="button" class="admin-broadcast-close" data-global-broadcast-close aria-label="Close">×</button>
+      </div>
+      <p class="admin-broadcast-help">This message appears in a small floating box on every user's dashboard after each login, while the switch is ON.</p>
+      <form method="post" class="admin-broadcast-form">
+        <input type="hidden" name="csrf" value="<?=htmlspecialchars($csrf, ENT_QUOTES, 'UTF-8')?>">
+        <input type="hidden" name="action" value="save_global_admin_message">
+        <label for="global_admin_message">Message for all users</label>
+        <textarea id="global_admin_message" name="global_admin_message" rows="5" maxlength="2000" required placeholder="Write your message here..."><?=htmlspecialchars($global_admin_broadcast_text, ENT_QUOTES, 'UTF-8')?></textarea>
+        <div class="admin-broadcast-form-foot"><small>Maximum 2000 characters. Save the message, then use the small switch to turn visibility ON/OFF.</small><button type="submit" class="admin-broadcast-save">Save message</button></div>
+      </form>
+    </section>
+  </div>
 
   <section class="maintenance-control panel" aria-labelledby="maintenance-control-title">
     <div class="maintenance-control-copy">
@@ -467,6 +548,30 @@ $admin_header_subtitle = 'System overview and administrative modules.';
       preview.innerHTML = '<img src="' + url + '" alt="Selected profile image preview">';
     });
   }
+})();
+</script>
+
+<script>
+(function () {
+  const modal = document.querySelector('[data-global-broadcast-modal]');
+  if (!modal) return;
+  const openButton = document.querySelector('[data-global-broadcast-open]');
+  const closeButtons = modal.querySelectorAll('[data-global-broadcast-close]');
+  function openModal() {
+    modal.hidden = false;
+    document.body.classList.add('admin-modal-open');
+    const field = modal.querySelector('textarea');
+    if (field) field.focus();
+  }
+  function closeModal() {
+    modal.hidden = true;
+    document.body.classList.remove('admin-modal-open');
+  }
+  if (openButton) openButton.addEventListener('click', openModal);
+  closeButtons.forEach(function (button) { button.addEventListener('click', closeModal); });
+  document.addEventListener('keydown', function (event) {
+    if (event.key === 'Escape' && !modal.hidden) closeModal();
+  });
 })();
 </script>
 

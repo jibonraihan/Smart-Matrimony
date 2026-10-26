@@ -45,6 +45,20 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
     $st=mysqli_prepare($conn,"UPDATE bookings SET booking_status=? WHERE booking_id=? AND user_id=?");
     if($st){mysqli_stmt_bind_param($st,'sii',$status,$booking_id,$uid);if(mysqli_stmt_execute($st))$message='Service booking updated successfully.';else$error='Unable to update service booking.';mysqli_stmt_close($st);}else$error='Unable to prepare booking control.';
    }
+  } elseif($action==='send_user_message'){
+   $user_message=trim((string)($_POST['user_message']??''));
+   if($user_message===''){
+    $error='Please write a message before sending.';
+   } elseif(mb_strlen($user_message,'UTF-8')>5000){
+    $error='Message is too long. Please keep it under 5000 characters.';
+   } else {
+    $st=mysqli_prepare($conn,"INSERT INTO admin_messages (admin_id,user_id,message,status) SELECT ?,user_id,?,'Unread' FROM users WHERE user_id=? AND role<>'Admin' LIMIT 1");
+    if($st){
+     mysqli_stmt_bind_param($st,'isi',$admin_id,$user_message,$uid);
+     if(mysqli_stmt_execute($st) && mysqli_stmt_affected_rows($st)===1){$message='Message sent to the user successfully.';}else{$error='Unable to send the message. Please try again.';}
+     mysqli_stmt_close($st);
+    } else {$error='Unable to prepare the message. Please try again.';}
+   }
   } elseif($action==='delete_user'){
    $confirm=trim((string)($_POST['confirm_text']??''));
    if($confirm!=='DELETE'){
@@ -317,6 +331,17 @@ $booking_records=[]; $st=mysqli_prepare($conn,"SELECT b.booking_id,b.total_price
     </div>
   </div></div>
 </section>
-<section class="danger-panel"><div><span class="eyebrow">DANGER ZONE</span><h2>Permanently remove account</h2><p>This permanently deletes the account and all user-owned records covered by the database cascade rules. Manager-owned packages/bookings are not deleted; their owner reference is cleared by the database.</p></div><button type="button" class="btn-danger big" id="open-delete">Remove Account Permanently</button></section>
+<style>
+.detail-final-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:flex-end}
+.btn-user-message{display:inline-flex;align-items:center;justify-content:center;gap:9px;padding:12px 18px;border:0;border-radius:11px;background:linear-gradient(135deg,#0e8b83,#08736d);color:#fff;font-weight:900;text-decoration:none;cursor:pointer;box-shadow:0 8px 18px rgba(8,115,109,.18);white-space:nowrap}
+.btn-user-message:hover{background:linear-gradient(135deg,#087b74,#075f5a);transform:translateY(-1px)}
+.user-message-modal{position:fixed;inset:0;background:rgba(15,35,35,.55);display:none;align-items:center;justify-content:center;padding:20px;z-index:110}
+.user-message-modal.show{display:flex}
+.user-message-card{width:min(520px,100%);background:#fff;border:1px solid #e0eeec;border-radius:22px;padding:26px;box-shadow:0 25px 80px rgba(0,0,0,.22)}
+.user-message-card h2{margin:6px 0 8px;color:#123f3d}.user-message-card p{color:#718887;margin:0 0 16px}.user-message-card label{display:grid;gap:8px;font-weight:800;color:#365c5a}.user-message-card textarea{width:100%;min-height:150px;resize:vertical;border:1px solid #d6e6e4;border-radius:12px;padding:12px;font:inherit;line-height:1.5}.user-message-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:16px;flex-wrap:wrap}
+@media(max-width:650px){.detail-final-actions{width:100%;justify-content:stretch}.detail-final-actions>button{flex:1;white-space:normal}.user-message-card{padding:20px}}
+</style>
+<section class="danger-panel"><div><span class="eyebrow">DANGER ZONE</span><h2>Permanently remove account</h2><p>This permanently deletes the account and all user-owned records covered by the database cascade rules. Manager-owned packages/bookings are not deleted; their owner reference is cleared by the database.</p></div><div class="detail-final-actions"><button type="button" class="btn-user-message" id="open-user-message"><span aria-hidden="true">✉</span> Message User</button><button type="button" class="btn-danger big" id="open-delete">Remove Account Permanently</button></div></section>
+<div class="user-message-modal" id="user-message-modal" aria-hidden="true"><div class="user-message-card" role="dialog" aria-modal="true" aria-labelledby="user-message-title"><span class="eyebrow">DIRECT USER NOTIFICATION</span><h2 id="user-message-title">Message <?=h(trim(($user['first_name']??'').' '.($user['last_name']??'')))?></h2><p>This message will appear in the user's Notifications page under the Admin filter.</p><form method="post"><input type="hidden" name="csrf" value="<?=h($csrf)?>"><input type="hidden" name="action" value="send_user_message"><input type="hidden" name="user_id" value="<?=$uid?>"><label for="user-message-text">Your message<textarea id="user-message-text" name="user_message" maxlength="5000" required placeholder="Write a message to this user..."></textarea></label><div class="user-message-actions"><button type="button" class="btn-light" id="close-user-message">Cancel</button><button type="submit" class="btn-user-message">Send Message</button></div></form></div></div>
 <div class="delete-modal" id="delete-modal" aria-hidden="true"><div class="delete-card"><div class="warning-icon">!</div><h2>Permanently delete this account?</h2><p>This cannot be undone. Type <strong>DELETE</strong> to confirm.</p><form method="post"><input type="hidden" name="csrf" value="<?=h($csrf)?>"><input type="hidden" name="action" value="delete_user"><input type="hidden" name="user_id" value="<?=$uid?>"><input name="confirm_text" autocomplete="off" placeholder="Type DELETE" required><div><button type="button" class="btn-light" id="close-delete">Cancel</button><button class="btn-danger" type="submit">Yes, permanently delete</button></div></form></div></div>
-</main><script>document.querySelectorAll('form.activity-action-form').forEach(f=>f.addEventListener('submit',()=>sessionStorage.setItem('userDetailsScroll',String(window.scrollY))));window.addEventListener('load',()=>{const y=sessionStorage.getItem('userDetailsScroll');if(y!==null){sessionStorage.removeItem('userDetailsScroll');requestAnimationFrame(()=>window.scrollTo(0,Number(y)));}});const m=document.getElementById('delete-modal');document.getElementById('open-delete').onclick=()=>{m.classList.add('show');m.setAttribute('aria-hidden','false')};document.getElementById('close-delete').onclick=()=>{m.classList.remove('show');m.setAttribute('aria-hidden','true')};m.addEventListener('click',e=>{if(e.target===m){m.classList.remove('show');m.setAttribute('aria-hidden','true')}});</script></body></html>
+</main><script>document.querySelectorAll('form.activity-action-form').forEach(f=>f.addEventListener('submit',()=>sessionStorage.setItem('userDetailsScroll',String(window.scrollY))));window.addEventListener('load',()=>{const y=sessionStorage.getItem('userDetailsScroll');if(y!==null){sessionStorage.removeItem('userDetailsScroll');requestAnimationFrame(()=>window.scrollTo(0,Number(y)));}});const m=document.getElementById('delete-modal');document.getElementById('open-delete').onclick=()=>{m.classList.add('show');m.setAttribute('aria-hidden','false')};document.getElementById('close-delete').onclick=()=>{m.classList.remove('show');m.setAttribute('aria-hidden','true')};m.addEventListener('click',e=>{if(e.target===m){m.classList.remove('show');m.setAttribute('aria-hidden','true')}});const um=document.getElementById('user-message-modal');document.getElementById('open-user-message').onclick=()=>{um.classList.add('show');um.setAttribute('aria-hidden','false');document.getElementById('user-message-text').focus()};document.getElementById('close-user-message').onclick=()=>{um.classList.remove('show');um.setAttribute('aria-hidden','true')};um.addEventListener('click',e=>{if(e.target===um){um.classList.remove('show');um.setAttribute('aria-hidden','true')}});</script></body></html>

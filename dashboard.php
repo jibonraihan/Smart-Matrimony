@@ -115,6 +115,18 @@ if (empty($_SESSION['matching_csrf'])) {
 }
 $matching_csrf = $_SESSION['matching_csrf'];
 
+// Optional global Admin broadcast. Dismissal is stored only for this login session.
+$admin_broadcast_for_user = null;
+if (empty($_SESSION['admin_broadcast_dismissed'])) {
+    $admin_broadcast_result = @mysqli_query($conn, 'SELECT message_text FROM admin_global_message WHERE message_id=1 AND is_enabled=1 LIMIT 1');
+    if ($admin_broadcast_result) {
+        $admin_broadcast_row = mysqli_fetch_assoc($admin_broadcast_result);
+        if ($admin_broadcast_row && trim((string) ($admin_broadcast_row['message_text'] ?? '')) !== '') {
+            $admin_broadcast_for_user = trim((string) $admin_broadcast_row['message_text']);
+        }
+    }
+}
+
 
 /* Dashboard bookmark action: normal POST + redirect, no AJAX endpoint. */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['dashboard_bookmark_action'])) {
@@ -268,13 +280,15 @@ $booking_package_row = mysqli_fetch_assoc(mysqli_stmt_get_result($booking_packag
 $booking_package_count = (int) ($booking_package_row['total'] ?? 0);
 mysqli_stmt_close($booking_package_stmt);
 
-/* Notifications badge: keep only the unread count on the main dashboard. */
+/* Notifications badge: count unread messages from both authenticator and admin. */
 $authenticator_unread_count = 0;
-$message_count_stmt = mysqli_prepare($conn, "SELECT COUNT(*) AS total FROM authenticator_messages WHERE user_id=? AND status='Unread'");
+$message_count_stmt = mysqli_prepare($conn, "SELECT (SELECT COUNT(*) FROM authenticator_messages WHERE user_id=? AND status='Unread') + (SELECT COUNT(*) FROM admin_messages am INNER JOIN users a ON a.user_id=am.admin_id WHERE am.user_id=? AND am.status='Unread' AND a.role='Admin') AS total");
 if ($message_count_stmt) {
-    mysqli_stmt_bind_param($message_count_stmt, 'i', $user_id); mysqli_stmt_execute($message_count_stmt);
+    mysqli_stmt_bind_param($message_count_stmt, 'ii', $user_id, $user_id);
+    mysqli_stmt_execute($message_count_stmt);
     $message_count_row = mysqli_fetch_assoc(mysqli_stmt_get_result($message_count_stmt));
-    $authenticator_unread_count = (int) ($message_count_row['total'] ?? 0); mysqli_stmt_close($message_count_stmt);
+    $authenticator_unread_count = (int) ($message_count_row['total'] ?? 0);
+    mysqli_stmt_close($message_count_stmt);
 }
 
 /* Current active matches */
@@ -1966,6 +1980,47 @@ include 'includes/header.php';
             window.location.href = <?= json_encode(BASE_URL . 'set_language.php?language=en&redirect=dashboard.php'); ?>;
         }
     });
+})();
+</script>
+<?php endif; ?>
+
+<?php if ($admin_broadcast_for_user !== null): ?>
+<aside class="sm-admin-broadcast" data-admin-broadcast role="status" aria-labelledby="sm-admin-broadcast-title">
+  <div class="sm-admin-broadcast-head">
+    <span class="sm-admin-broadcast-mark" aria-hidden="true">✉</span>
+    <div class="sm-admin-broadcast-heading">
+      <strong id="sm-admin-broadcast-title">এডমিনের বার্তা</strong>
+      <small>Message from Admin</small>
+    </div>
+    <button type="button" class="sm-admin-broadcast-close" data-admin-broadcast-dismiss aria-label="Close admin message" title="Close">×</button>
+  </div>
+  <div class="sm-admin-broadcast-body"><?= nl2br(htmlspecialchars($admin_broadcast_for_user, ENT_QUOTES, 'UTF-8')) ?></div>
+</aside>
+<style>
+.sm-admin-broadcast{position:fixed;right:max(18px,env(safe-area-inset-right));bottom:max(18px,env(safe-area-inset-bottom));z-index:9998;width:min(340px,calc(100vw - 28px));max-height:min(280px,calc(100vh - 36px));overflow:auto;box-sizing:border-box;padding:15px 16px 16px;border:1px solid #d5e7e4;border-radius:17px;background:rgba(255,255,255,.98);box-shadow:0 16px 48px rgba(17,55,58,.20);color:#233f43;animation:smAdminBroadcastIn .24s ease-out;font-family:inherit}
+.sm-admin-broadcast-head{display:flex;align-items:center;gap:10px;padding-bottom:12px;border-bottom:1px solid #e6efed}
+.sm-admin-broadcast-mark{display:flex;align-items:center;justify-content:center;flex:0 0 34px;width:34px;height:34px;border-radius:10px;background:#e8f6f3;color:#0a8178;font-size:17px}
+.sm-admin-broadcast-heading{display:flex;flex:1;min-width:0;flex-direction:column;gap:2px}
+.sm-admin-broadcast-heading strong{color:#0a514d;font-size:14px;font-weight:800;line-height:1.3}
+.sm-admin-broadcast-heading small{color:#708582;font-size:10.5px;line-height:1.3}
+.sm-admin-broadcast-close{display:flex;align-items:center;justify-content:center;flex:0 0 30px;width:30px;height:30px;border:1px solid #e0e9e8;border-radius:9px;background:#f7faf9;color:#596e6d;font-size:22px;line-height:1;cursor:pointer}
+.sm-admin-broadcast-close:hover{background:#eaf5f3;color:#0a514d}
+.sm-admin-broadcast-body{padding-top:12px;color:#344f51;font-size:13px;line-height:1.65;overflow-wrap:anywhere;white-space:normal}
+@keyframes smAdminBroadcastIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:480px){.sm-admin-broadcast{right:10px;bottom:max(10px,env(safe-area-inset-bottom));width:min(310px,calc(100vw - 20px));padding:13px 14px 14px}.sm-admin-broadcast-body{font-size:12.5px;line-height:1.6}}
+@media(prefers-reduced-motion:reduce){.sm-admin-broadcast{animation:none}}
+</style>
+<script>
+(function(){
+  var box=document.querySelector('[data-admin-broadcast]');
+  var close=box&&box.querySelector('[data-admin-broadcast-dismiss]');
+  if(!box||!close)return;
+  close.addEventListener('click',function(){
+    box.remove();
+    var data=new URLSearchParams();
+    data.set('csrf_token',<?= json_encode($matching_csrf) ?>);
+    fetch('ajax/dismiss_admin_broadcast.php',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8','X-Requested-With':'XMLHttpRequest'},body:data.toString(),keepalive:true}).catch(function(){});
+  });
 })();
 </script>
 <?php endif; ?>

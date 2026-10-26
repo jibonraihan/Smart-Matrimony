@@ -37,6 +37,36 @@ $display_name = trim(($current_user['first_name'] ?? '') . ' ' . ($current_user[
 $display_name = $display_name !== '' ? $display_name : 'Member';
 $own_profile_link = 'profile/view_profile.php?user_id=' . $user_id;
 
+// Keep notification interface feedback in the currently selected language.
+function notification_localized_message(string $message): string {
+    if (($GLOBALS['current_language'] ?? 'bn') === 'en') return $message;
+    $translations = [
+        'Your notifications are currently OFF. You can turn them back on in Settings.' => 'আপনার নোটিফিকেশন বর্তমানে বন্ধ। সেটিংস থেকে আবার চালু করতে পারবেন।',
+        'Your session expired. Please refresh the page and try again.' => 'আপনার সেশনের মেয়াদ শেষ হয়েছে। পৃষ্ঠাটি রিফ্রেশ করে আবার চেষ্টা করুন।',
+        'Notification marked as read.' => 'নোটিফিকেশনটি পঠিত হিসেবে চিহ্নিত করা হয়েছে।',
+        'Unable to update the notification right now.' => 'এই মুহূর্তে নোটিফিকেশনটি হালনাগাদ করা যাচ্ছে না।',
+        'Notification deleted.' => 'নোটিফিকেশন মুছে ফেলা হয়েছে।',
+        'Unable to delete the selected notifications right now.' => 'নির্বাচিত নোটিফিকেশনগুলো এই মুহূর্তে মুছে ফেলা যাচ্ছে না।',
+        'All notifications marked as read.' => 'সব নোটিফিকেশন পঠিত হিসেবে চিহ্নিত করা হয়েছে।',
+        'Unable to update the notifications right now.' => 'এই মুহূর্তে নোটিফিকেশনগুলো হালনাগাদ করা যাচ্ছে না।',
+        'This notification action is not available.' => 'এই নোটিফিকেশন কাজটি করা যাচ্ছে না.',
+    ];
+    if (isset($translations[$message])) return $translations[$message];
+    if (preg_match('/^(\d+) notifications deleted\.$/', $message, $matches)) return $matches[1] . 'টি নোটিফিকেশন মুছে ফেলা হয়েছে।';
+    return $message;
+}
+function notification_date(string $value): string {
+    $timestamp = strtotime($value);
+    if (!$timestamp) return $value;
+    $formatted = date('d M Y, h:i A', $timestamp);
+    if (($GLOBALS['current_language'] ?? 'bn') === 'bn') {
+        $months = ['Jan'=>'জানু','Feb'=>'ফেব্রু','Mar'=>'মার্চ','Apr'=>'এপ্রি','May'=>'মে','Jun'=>'জুন','Jul'=>'জুল','Aug'=>'আগ','Sep'=>'সেপ্টে','Oct'=>'অক্টো','Nov'=>'নভে','Dec'=>'ডিসে'];
+        $formatted = strtr($formatted, $months);
+        $formatted = str_replace([' AM',' PM'], [' পূর্বাহ্ণ',' অপরাহ্ণ'], $formatted);
+    }
+    return $formatted;
+}
+
 $cart_count = 0;
 $cart_stmt = mysqli_prepare($conn, 'SELECT COALESCE(SUM(quantity),0) AS total FROM service_cart_items WHERE user_id = ?');
 if ($cart_stmt) { mysqli_stmt_bind_param($cart_stmt, 'i', $user_id); mysqli_stmt_execute($cart_stmt); $row=mysqli_fetch_assoc(mysqli_stmt_get_result($cart_stmt)); $cart_count=(int)($row['total']??0); mysqli_stmt_close($cart_stmt); }
@@ -104,7 +134,7 @@ if($stmt_al){mysqli_stmt_bind_param($stmt_al,'i',$user_id);mysqli_stmt_execute($
 $total_unread_count=$notifications_enabled ? ($authenticator_unread_count+$admin_unread_count) : 0;
 include 'includes/header.php';
 ?>
-<link rel="stylesheet" href="<?= BASE_URL; ?>assets/css/notifications.css?v=1">
+<link rel="stylesheet" href="<?= BASE_URL; ?>assets/css/notifications.css?v=2">
 <div class="dashboard-page">
 
     <!-- ===================== TOP BAR ===================== -->
@@ -146,7 +176,7 @@ include 'includes/header.php';
 
                 <?php if ($notifications_enabled): ?>
                 <div class="notifications-toolbar">
-                    <div class="notifications-filter-tabs" role="tablist" aria-label="Notification sources">
+                    <div class="notifications-filter-tabs" role="tablist" aria-label="<?= sm_text('Notification sources', 'নোটিফিকেশনের ধরন') ?>">
                         <button type="button" class="notification-filter is-active" data-notification-filter="all"><?= sm_text('All', 'সব') ?></button>
                         <button type="button" class="notification-filter" data-notification-filter="authenticator"><?= sm_text('Authenticator', 'ভেরিফিকেশন কর্মকর্তা') ?></button>
                         <button type="button" class="notification-filter" data-notification-filter="admin"><?= sm_text('Admin', 'অ্যাডমিন') ?></button>
@@ -159,7 +189,7 @@ include 'includes/header.php';
                             <div id="notification-delete-inputs"></div>
                             <button type="submit" class="notification-delete-selected" id="notification-delete-selected" disabled><i class="fa-regular fa-trash-can"></i> <?= sm_text('Delete selected', 'নির্বাচিতগুলো মুছুন') ?></button>
                         </form>
-                    <?php if ($authenticator_unread_count > 0): ?>
+                    <?php if ($total_unread_count > 0): ?>
                         <form method="post" class="notifications-inline-form">
                             <input type="hidden" name="notification_csrf" value="<?= htmlspecialchars($notification_csrf); ?>">
                             <input type="hidden" name="notification_action" value="mark_all_read">
@@ -169,7 +199,7 @@ include 'includes/header.php';
                 </div>
 
                 <?php if ($notification_flash !== ''): ?>
-                    <div class="notification-flash" role="status"><i class="fa-solid fa-circle-info"></i><span><?= htmlspecialchars($notification_flash); ?></span></div>
+                    <div class="notification-flash" role="status"><i class="fa-solid fa-circle-info"></i><span><?= htmlspecialchars(notification_localized_message($notification_flash), ENT_QUOTES, 'UTF-8'); ?></span></div>
                 <?php endif; ?>
 
                 <section class="notification-source-section" data-notification-source="authenticator" aria-labelledby="authenticatorNotificationsTitle">
@@ -187,10 +217,10 @@ include 'includes/header.php';
                         <div class="notification-list">
                             <?php foreach ($authenticator_messages as $auth_message): $message_unread = ($auth_message['status'] ?? '') === 'Unread'; $sender_name = trim(($auth_message['sender_first_name'] ?? '') . ' ' . ($auth_message['sender_last_name'] ?? '')) ?: sm_text('Authenticator', 'ভেরিফিকেশন কর্মকর্তা'); ?>
                                 <article class="notification-card <?= $message_unread ? 'is-unread' : ''; ?>" data-notification-card="authenticator">
-                                    <label class="notification-select-box" title="নোটিফিকেশন নির্বাচন করুন"><input type="checkbox" class="notification-checkbox" value="authenticator:<?= (int) $auth_message['message_id']; ?>" data-notification-checkbox><span></span></label>
+                                    <label class="notification-select-box" title="<?= sm_text('Select notification', 'নোটিফিকেশন নির্বাচন করুন') ?>"><input type="checkbox" class="notification-checkbox" value="authenticator:<?= (int) $auth_message['message_id']; ?>" data-notification-checkbox><span></span></label>
                                     <div class="notification-card-icon"><i class="fa-solid <?= $message_unread ? 'fa-envelope' : 'fa-envelope-open'; ?>"></i></div>
                                     <div class="notification-card-content">
-                                        <div class="notification-card-topline"><div><strong><?= htmlspecialchars($sender_name); ?></strong><?php if ($message_unread): ?><span class="notification-new-pill"><?= sm_text('NEW', 'নতুন') ?></span><?php endif; ?></div><time><?= htmlspecialchars(date('d M Y, h:i A', strtotime($auth_message['created_at']))); ?></time></div>
+                                        <div class="notification-card-topline"><div><strong><?= htmlspecialchars($sender_name); ?></strong><?php if ($message_unread): ?><span class="notification-new-pill"><?= sm_text('NEW', 'নতুন') ?></span><?php endif; ?></div><time><?= htmlspecialchars(notification_date((string)$auth_message['created_at']), ENT_QUOTES, 'UTF-8'); ?></time></div>
                                         <p><?= nl2br(htmlspecialchars($auth_message['message'])); ?></p>
                                         <div class="notification-card-actions">
                                             <?php if ($message_unread): ?>
@@ -217,9 +247,9 @@ include 'includes/header.php';
                         <div class="notification-list">
                             <?php foreach ($admin_messages as $admin_message): $message_unread=($admin_message['status']??'')==='Unread'; $sender_name=trim(($admin_message['sender_first_name']??'').' '.($admin_message['sender_last_name']??''))?:sm_text('Admin', 'অ্যাডমিন'); $selection_value='admin:'.(int)$admin_message['message_id']; ?>
                                 <article class="notification-card <?= $message_unread?'is-unread':''; ?>" data-notification-card="admin">
-                                    <label class="notification-select-box" title="নোটিফিকেশন নির্বাচন করুন"><input type="checkbox" class="notification-checkbox" value="<?= htmlspecialchars($selection_value); ?>" data-notification-checkbox><span></span></label>
+                                    <label class="notification-select-box" title="<?= sm_text('Select notification', 'নোটিফিকেশন নির্বাচন করুন') ?>"><input type="checkbox" class="notification-checkbox" value="<?= htmlspecialchars($selection_value); ?>" data-notification-checkbox><span></span></label>
                                     <div class="notification-card-icon"><i class="fa-solid <?= $message_unread?'fa-envelope':'fa-envelope-open'; ?>"></i></div>
-                                    <div class="notification-card-content"><div class="notification-card-topline"><div><strong><?= htmlspecialchars($sender_name); ?></strong><?php if($message_unread): ?><span class="notification-new-pill"><?= sm_text('NEW', 'নতুন') ?></span><?php endif; ?></div><time><?= htmlspecialchars(date('d M Y, h:i A',strtotime($admin_message['created_at']))); ?></time></div><p><?= nl2br(htmlspecialchars($admin_message['message'])); ?></p><div class="notification-card-actions"><?php if($message_unread): ?><form method="post" class="notifications-inline-form"><input type="hidden" name="notification_csrf" value="<?= htmlspecialchars($notification_csrf); ?>"><input type="hidden" name="notification_action" value="mark_read"><input type="hidden" name="message_id" value="<?= (int)$admin_message['message_id']; ?>"><input type="hidden" name="message_source" value="admin"><button type="submit" class="notification-mark-read"><i class="fa-solid fa-check"></i> <?= sm_text('Mark as read', 'পঠিত হিসেবে চিহ্নিত করুন') ?></button></form><?php else: ?><span class="notification-read-label"><i class="fa-solid fa-check-double"></i> <?= sm_text('Read', 'পঠিত') ?></span><?php endif; ?></div></div>
+                                    <div class="notification-card-content"><div class="notification-card-topline"><div><strong><?= htmlspecialchars($sender_name); ?></strong><?php if($message_unread): ?><span class="notification-new-pill"><?= sm_text('NEW', 'নতুন') ?></span><?php endif; ?></div><time><?= htmlspecialchars(notification_date((string)$admin_message['created_at']), ENT_QUOTES, 'UTF-8'); ?></time></div><p><?= nl2br(htmlspecialchars($admin_message['message'])); ?></p><div class="notification-card-actions"><?php if($message_unread): ?><form method="post" class="notifications-inline-form"><input type="hidden" name="notification_csrf" value="<?= htmlspecialchars($notification_csrf); ?>"><input type="hidden" name="notification_action" value="mark_read"><input type="hidden" name="message_id" value="<?= (int)$admin_message['message_id']; ?>"><input type="hidden" name="message_source" value="admin"><button type="submit" class="notification-mark-read"><i class="fa-solid fa-check"></i> <?= sm_text('Mark as read', 'পঠিত হিসেবে চিহ্নিত করুন') ?></button></form><?php else: ?><span class="notification-read-label"><i class="fa-solid fa-check-double"></i> <?= sm_text('Read', 'পঠিত') ?></span><?php endif; ?></div></div>
                                 </article>
                             <?php endforeach; ?>
                         </div>
@@ -244,14 +274,35 @@ include 'includes/header.php';
     const deleteButton = document.getElementById('notification-delete-selected');
     const deleteForm = document.getElementById('notification-delete-form');
     const deleteInputs = document.getElementById('notification-delete-inputs');
+    const filterButtons = Array.from(document.querySelectorAll('[data-notification-filter]'));
+    const sourceSections = Array.from(document.querySelectorAll('[data-notification-source]'));
     const getCheckboxes = () => Array.from(document.querySelectorAll('[data-notification-checkbox]'));
+
+    // Filter notification sources without changing or removing their data.
+    filterButtons.forEach(button => {
+        button.addEventListener('click', function(){
+            const filter = this.getAttribute('data-notification-filter') || 'all';
+            filterButtons.forEach(tab => {
+                const active = tab === this;
+                tab.classList.toggle('is-active', active);
+                tab.setAttribute('aria-selected', active ? 'true' : 'false');
+            });
+            sourceSections.forEach(section => {
+                const show = filter === 'all' || section.getAttribute('data-notification-source') === filter;
+                section.hidden = !show;
+                // Enforce filtering even if site CSS overrides the browser's [hidden] rule.
+                section.style.setProperty('display', show ? '' : 'none', 'important');
+            });
+        });
+    });
+
     function syncSelection(){
         const boxes=getCheckboxes();
         const selected=boxes.filter(b=>b.checked);
         if(deleteButton) deleteButton.disabled=selected.length===0;
         if(selectAll){
             selectAll.disabled=boxes.length===0;
-            selectAll.innerHTML = selected.length===boxes.length && boxes.length ? '<i class=\"fa-solid fa-check-double\"></i> Deselect all' : '<i class=\"fa-regular fa-square-check\"></i> Select all';
+            selectAll.innerHTML = selected.length===boxes.length && boxes.length ? '<i class=\"fa-solid fa-check-double\"></i> <?= sm_text('Deselect all', 'নির্বাচন বাতিল করুন') ?>' : '<i class=\"fa-regular fa-square-check\"></i> <?= sm_text('Select all', 'সব নির্বাচন করুন') ?>';
         }
     }
     document.addEventListener('change',function(e){ if(e.target.matches('[data-notification-checkbox]')) syncSelection(); });
@@ -261,7 +312,7 @@ include 'includes/header.php';
         if(!selected.length){ e.preventDefault(); return; }
         deleteInputs.innerHTML='';
         selected.forEach(b=>{ const input=document.createElement('input'); input.type='hidden'; input.name='message_ids[]'; input.value=b.value; deleteInputs.appendChild(input); });
-        if(!window.confirm(selected.length===1 ? 'Delete this notification?' : 'Delete the selected notifications?')) e.preventDefault();
+        if(!window.confirm(selected.length===1 ? <?= json_encode(sm_text('Delete this notification?', 'এই নোটিফিকেশনটি মুছে ফেলবেন?'), JSON_UNESCAPED_UNICODE) ?> : <?= json_encode(sm_text('Delete the selected notifications?', 'নির্বাচিত নোটিফিকেশনগুলো মুছে ফেলবেন?'), JSON_UNESCAPED_UNICODE) ?>)) e.preventDefault();
     }); }
     syncSelection();
 })();
