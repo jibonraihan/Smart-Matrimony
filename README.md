@@ -1,202 +1,115 @@
-```{=html}
 <p align="center">
-```
-
-`<img src="assets/images/logo/logo.png" alt="Smart Matrimony Logo" width="180">`{=html}
-
-```{=html}
+  <img src="assets/images/logo/logo.png" alt="Smart Matrimony Logo" width="180">
 </p>
-```
 
-```{=html}
-<h1 align="center">
-```
+<h1 align="center">💍 Smart Matrimony</h1>
 
-Smart Matrimony
+<p align="center"><strong>Matrimony \\\&amp; Wedding Services Management System</strong></p>
 
-```{=html}
-</h1>
-```
-
-```{=html}
 <p align="center">
-```
-
-`<strong>`{=html}Matrimony \& Wedding Services Management
-Platform`</strong>`{=html}
-
-```{=html}
+  A PHP and MySQL web application for partner discovery, profile management, and wedding service exploration.
 </p>
-```
 
-```{=html}
 <p align="center">
-```
-
-A PHP and MySQL web application for creating matrimony profiles,
-discovering compatible partners, and exploring wedding-related services.
-
-```{=html}
+  <img src="https://img.shields.io/badge/PHP-Backend-777BB4?logo=php\\\&logoColor=white" alt="PHP">
+  <img src="https://img.shields.io/badge/MySQL-Database-4479A1?logo=mysql\\\&logoColor=white" alt="MySQL">
+  <img src="https://img.shields.io/badge/Bootstrap-Responsive%20UI-7952B3?logo=bootstrap\\\&logoColor=white" alt="Bootstrap">
 </p>
-```
-
-```{=html}
-<p align="center">
-```
-
-`<img src="https://img.shields.io/badge/PHP-Backend-777BB4?logo=php\\\&logoColor=white" alt="PHP">`{=html}
-`<img src="https://img.shields.io/badge/MySQL-Database-4479A1?logo=mysql\\\&logoColor=white" alt="MySQL">`{=html}
-`<img src="https://img.shields.io/badge/Bootstrap-Responsive%20UI-7952B3?logo=bootstrap\\\&logoColor=white" alt="Bootstrap">`{=html}
-`<img src="https://img.shields.io/badge/Project-Educational-0F766E" alt="Educational Project">`{=html}
-
-```{=html}
-</p>
-```
 
 \---
 
-## Table of Contents
+## 📖 About the Project
 
-* [About the Project](#about-the-project)
-* [Key Features](#key-features)
-* [Technology Stack](#technology-stack)
-* [Screenshots](#screenshots)
-* [Project Structure](#project-structure)
-* [Getting Started](#getting-started)
-* [Database](#database)
-* [Configuration Notes](#configuration-notes)
-* [Developer](#developer)
-* [License](#license)
+**Smart Matrimony** is a web-based matrimony and wedding services management system developed using **PHP** and **MySQL**.
 
-\---
+Users can register, create and manage their profiles, discover potential partners through search tools, bookmark profiles, communicate with other users, and explore wedding-related services and packages. The project also includes role-specific dashboards for administration, service management, and profile verification.
 
-## About the Project
+The interface supports Bengali and English in relevant parts of the application.
 
-**Smart Matrimony** is a web-based matrimony and wedding services
-management system built with **PHP** and **MySQL**. It brings partner
-discovery and wedding-service exploration together in one platform.
-
-Users can register, build their profiles, discover potential matches
-through search tools, save profiles, and communicate with other users.
-The platform also includes wedding-service and package browsing,
-supported by separate management areas for administrative and
-service-related tasks.
-
-The interface is designed for a responsive experience and supports
-Bengali and English text in relevant parts of the application.
-
-## Key Features
+## ✨ Key Features
 
 ### Matrimony \& Profiles
 
 * User registration and login
 * Multi-step profile creation and profile management
-* Partner discovery with search filters
+* Partner search with filters
 * Profile matching and match-percentage display
-* Bookmarking and managing interests
-* User-to-user messaging
+* Bookmarks and interests
+* User messaging
 * Profile verification workflow
 
 ### Wedding Services
 
-* Browse wedding-related services and packages
+* Browse wedding services and packages
 * View package details and pricing
-* Search packages using budget-related filters
+* Find packages using budget-related filters
 * Add packages to the cart
 * Contact service providers or managers
 
-### Dashboards \& Supporting Features
+### Dashboards \& Additional Features
 
 * Admin dashboard
 * Manager dashboard for service and package management
-* Authenticator dashboard for profile verification tasks
+* Authenticator dashboard for verification tasks
 * Bengali and English interface text in supported areas
 * Biodata viewing and PDF export where available
 * Privacy controls for supported profile information and media
 
-> Feature availability can depend on application configuration and the
-> account role.
+\---
 
-## Technology Stack
+## 🛠️ Technology Stack
 
-Technology   Role
+|Technology|Purpose|
+|-|-|
+|PHP|Backend application logic|
+|MySQL|Relational database|
+|HTML5|Page structure|
+|CSS3|Styling and responsive layouts|
+|JavaScript|Client-side interactions|
+|Bootstrap|Responsive UI components|
+|XAMPP|Local development environment|
 
 \---
 
-PHP          Server-side application logic
-MySQL        Relational database
-HTML5        Page structure
-CSS3         Styling and responsive layouts
-JavaScript   Client-side interactions
-Bootstrap    UI components and responsive layout
-XAMPP        Suggested local development environment
+## 📸 Screenshots
 
-## Screenshots
+### 🔐 Login Page
 
-The following screenshots are stored in the repository under
-`screenshots/`.
-
-### Login Page
-
-```{=html}
 <p align="center">
-```
-
-`<img src="screenshots/login.png" alt="Smart Matrimony login page" width="850">`{=html}
-
-```{=html}
+  <img src="screenshots/login.png" alt="Smart Matrimony Login Page" width="850">
 </p>
-```
 
-### Registration Page
+### 📝 Registration Page
 
-```{=html}
 <p align="center">
-```
-
-`<img src="screenshots/register.png" alt="Smart Matrimony registration page" width="850">`{=html}
-
-```{=html}
+  <img src="screenshots/register.png" alt="Smart Matrimony Registration Page" width="850">
 </p>
-```
 
-### Dashboard
+### 🏠 Dashboard
 
-```{=html}
 <p align="center">
-```
-
-`<img src="screenshots/dashboard.png" alt="Smart Matrimony dashboard" width="850">`{=html}
-
-```{=html}
+  <img src="screenshots/dashboard.png" alt="Smart Matrimony Dashboard" width="850">
 </p>
-```
 
-### Services Page
+### 💍 Wedding Services
 
-```{=html}
 <p align="center">
-```
-
-`<img src="screenshots/services.png" alt="Smart Matrimony wedding services page" width="850">`{=html}
-
-```{=html}
+  <img src="screenshots/services.png" alt="Smart Matrimony Services Page" width="850">
 </p>
-```
 
-## Project Structure
+\---
 
-The project contains the following main directories and files:
+## 📂 Project Structure
 
-``` text
+```text
 smart\\\_matrimony/
 ├── admin/
+├── ajax/
 ├── assets/
 │   ├── css/
 │   ├── images/
 │   └── js/
 ├── auth/
-├── ajax/
 ├── booking/
 ├── chat/
 ├── config/
@@ -218,116 +131,97 @@ smart\\\_matrimony/
 └── dashboard.php
 ```
 
-> This is a high-level overview. The exact directories and files may
-> vary slightly by project version.
+\---
 
-## Getting Started
+## 🚀 Installation \& Setup
 
 ### Prerequisites
 
-Install a local PHP/MySQL environment such as
-[XAMPP](https://www.apachefriends.org/), including: - Apache - MySQL or
-MariaDB - A PHP version compatible with the project
+* [XAMPP](https://www.apachefriends.org/) or another PHP/MySQL environment
+* Apache
+* MySQL or MariaDB
+* A PHP version compatible with the project
 
-### 1\. Clone the repository
+### 1\. Clone the Repository
 
-``` bash
+```bash
 git clone https://github.com/jibonraihan/Smart-Matrimony.git
 ```
 
-### 2\. Place the project in the web root
+### 2\. Move the Project into XAMPP
 
-For a standard XAMPP installation, place the project folder in:
+Place the project folder inside:
 
-``` text
+```text
 C:\\\\xampp\\\\htdocs\\\\smart\\\_matrimony\\\\
 ```
-
-The folder name should match the URL you use locally.
 
 ### 3\. Start Apache and MySQL
 
 Open the XAMPP Control Panel and start **Apache** and **MySQL**.
 
-### 4\. Create and import the database
+### 4\. Create and Import the Database
 
-1. Open phpMyAdmin at `http://localhost/phpmyadmin/`.
-2. Create a database named `smart\\\_matrimony` (or use the database name
-expected by your configuration).
+1. Open phpMyAdmin: `http://localhost/phpmyadmin/`
+2. Create a database named `smart\\\_matrimony` (or use the name configured in the project).
 3. Select the database and open the **Import** tab.
-4. Import `database/smart\\\_matrimony.sql`.
+4. Import this file: `database/smart\\\_matrimony.sql`
 
-**Important:** `database/smart\\\_matrimony.sql` contains the database
-structure only; it does not include application records or sample user
-data.
+**Note:** The SQL file contains the database structure only. It does not contain user accounts, profiles, service packages, or other application data.
 
-### 5\. Configure database access
+### 5\. Configure the Database Connection
 
-Open the project's database configuration file (commonly
-`config/db.php`) and verify the database host, name, username, and
-password match your local MySQL setup.
+Open the project's database configuration file (commonly `config/db.php`) and make sure the host, database name, username, and password match your local MySQL configuration.
 
-Do not commit production credentials or private secrets to a public
-repository.
+Do not commit production credentials or other secrets to a public repository.
 
-### 6\. Open the application
+### 6\. Open the Application
 
 Visit:
 
-``` text
+```text
 http://localhost/smart\\\_matrimony/
 ```
 
-If the project is installed in a differently named folder, update the
-URL accordingly.
-
-## Database
-
-The schema file is located at:
-
-``` text
-database/smart\\\_matrimony.sql
-```
-
-It defines the database structure. Because it contains no application
-data, a fresh installation will not automatically include user accounts,
-profiles, or service packages.
-
-## Configuration Notes
-
-* Ensure the `uploads/` directory and any application-managed upload
-folders have the permissions required by your local environment.
-* Configure the database connection before using the application.
-* Third-party sign-in providers, if used, may require provider
-credentials and valid callback URLs.
-* For deployment, use HTTPS and keep credentials outside public source
-control.
-
-## Developer
-
-**Jibon Raihan**
-
-GitHub: [jibonraihan](https://github.com/jibonraihan)
-
-Repository:
-[Smart-Matrimony](https://github.com/jibonraihan/Smart-Matrimony)
-
-## License
-
-This project was developed for educational purposes. No separate
-open-source license is specified in this README.
+If you use a different project folder name, update the URL accordingly.
 
 \---
 
-```{=html}
-<p align="center">
-```
+## 🗃️ Database Schema
 
-Made with care using PHP, MySQL, HTML, CSS, and JavaScript.
+The database schema is available at:
 
-```{=html}
-</p>
-```
+`database/smart\\\_matrimony.sql`
+
+This file defines the database structure and intentionally contains no application records.
+
+\---
+
+## ⚙️ Configuration Notes
+
+* Make sure the database connection is configured before using the application.
+* Ensure `uploads/` and any application-managed upload directories are writable where required.
+* Third-party sign-in providers may require provider credentials and valid callback URLs.
+* For production deployment, use HTTPS and keep credentials outside source control.
+
+\---
+
+## 👨‍💻 Developer
+
+**Jibon Raihan**
+
+* GitHub: [jibonraihan](https://github.com/jibonraihan)
+* Repository: [Smart-Matrimony](https://github.com/jibonraihan/Smart-Matrimony)
+
+\---
+
+## 📄 License
+
+This project was developed for educational purposes. No separate open-source license is specified in this README.
+
+\---
+
+<p align="center">Made with ❤️ using PHP \\\&amp; MySQL</p>
 
 
 
