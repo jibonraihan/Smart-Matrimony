@@ -4,7 +4,7 @@
 
 <h1 align="center">💍 Smart Matrimony</h1>
 
-<p align="center"><strong>Matrimony \\\&amp; Wedding Services Management System</strong></p>
+<p align="center"><strong>Matrimony &amp; Wedding Services Management System</strong></p>
 
 <p align="center">
   A PHP and MySQL web application for partner discovery, profile management, and wedding service exploration.
