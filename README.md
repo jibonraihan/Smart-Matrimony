@@ -153,7 +153,7 @@ git clone https://github.com/jibonraihan/Smart-Matrimony.git
 Place the project folder inside:
 
 ```text
-C:\\\\xampp\\\\htdocs\\\\smart\\\_matrimony\\\\
+C:\xampp\htdocs\smart_matrimony
 ```
 
 ### 3\. Start Apache and MySQL
@@ -163,9 +163,9 @@ Open the XAMPP Control Panel and start **Apache** and **MySQL**.
 ### 4\. Create and Import the Database
 
 1. Open phpMyAdmin: `http://localhost/phpmyadmin/`
-2. Create a database named `smart\\\_matrimony` (or use the name configured in the project).
+2. Create a database named `smart_matrimony` (or use the name configured in the project).
 3. Select the database and open the **Import** tab.
-4. Import this file: `database/smart\\\_matrimony.sql`
+4. Import this file: `database/smart_matrimony.sql`
 
 **Note:** The SQL file contains the database structure only. It does not contain user accounts, profiles, service packages, or other application data.
 
@@ -180,7 +180,7 @@ Do not commit production credentials or other secrets to a public repository.
 Visit:
 
 ```text
-http://localhost/smart\\\_matrimony/
+http://localhost/smart_matrimony/
 ```
 
 If you use a different project folder name, update the URL accordingly.
@@ -191,7 +191,7 @@ If you use a different project folder name, update the URL accordingly.
 
 The database schema is available at:
 
-`database/smart\\\_matrimony.sql`
+`database/smart_matrimony.sql`
 
 This file defines the database structure and intentionally contains no application records.
 
