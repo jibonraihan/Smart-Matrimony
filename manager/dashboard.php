@@ -1325,4 +1325,5 @@ include '../includes/header.php';
 <script src="<?= BASE_URL; ?>assets/js/manager-bookings.js?v=4"></script>
 <script src="<?= BASE_URL; ?>assets/js/manager-catalog.js?v=1"></script>
 <script src="<?= BASE_URL; ?>assets/js/manager-reviews.js?v=1"></script>
+<script src="<?= BASE_URL; ?>assets/js/package-image-preview.js?v=2"></script>
 <?php include '../includes/footer.php'; ?>

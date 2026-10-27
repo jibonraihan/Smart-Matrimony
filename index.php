@@ -1379,7 +1379,7 @@ include 'includes/navbar.php';
                         <div><i class="fa-solid fa-circle-check"></i><span><?= sm_text('Multiple profile factors considered', 'প্রোফাইলের একাধিক বিষয় বিবেচনা'); ?></span></div>
                         <div><i class="fa-solid fa-circle-check"></i><span><?= sm_text('Clear match details for informed decisions', 'সঠিক সিদ্ধান্তের জন্য ম্যাচের বিস্তারিত'); ?></span></div>
                     </div>
-                    <a href="<?= BASE_URL; ?>register.php" class="section-cta"><i class="fa-solid fa-user-plus"></i> Start Exploring</a>
+                    <a href="<?= BASE_URL; ?>register.php" class="section-cta"><i class="fa-solid fa-user-plus"></i> <?= sm_text('Start Exploring', 'এক্সপ্লোর শুরু করুন'); ?></a>
                 </div>
                 <div class="col-lg-6" data-aos="fade-left">
                     <div class="matching-visual">
@@ -1434,7 +1434,7 @@ include 'includes/navbar.php';
                     <p class="premium-section-text"><?= sm_text('Add the details that help others understand you — from education and profession to lifestyle and partner preferences.', 'শিক্ষা ও পেশা থেকে জীবনধারা ও সঙ্গীর পছন্দ—আপনাকে বুঝতে সাহায্য করে এমন তথ্য যোগ করুন।'); ?></p>
                     <div class="profile-benefit-list">
                         <div><span>01</span><div><strong><?= sm_text('Tell your story', 'নিজের কথা জানান'); ?></strong><p><?= sm_text('Share meaningful information about your background and lifestyle.', 'নিজের পটভূমি ও জীবনধারা সম্পর্কে গুরুত্বপূর্ণ তথ্য দিন।'); ?></p></div></div>
-                        <div><span>02</span><div><strong><?= sm_text('Set clear preferences', 'স্পষ্ট পছন্দ নির্ধারণ করুন'); ?></strong><p><?= sm_text('Describe the qualities and details you value in a partner.', 'সঙ্গীর মধ্যে যে গুণাবলি ও বিষয়গুলো মূল্য দেন তা জানান।'); ?></p></div></div>
+                        <div><span>02</span><div><strong><?= sm_text('Set clear preferences', 'পছন্দ স্পষ্টভাবে নির্ধারণ করুন'); ?></strong><p><?= sm_text('Describe the qualities and details you value in a partner.', 'সঙ্গীর মধ্যে যে গুণাবলি ও বিষয়গুলো মূল্য দেন তা জানান।'); ?></p></div></div>
                         <div><span>03</span><div><strong><?= sm_text('Keep it respectful', 'সম্মান বজায় রাখুন'); ?></strong><p><?= sm_text('Choose the information you are comfortable making visible.', 'যে তথ্য প্রকাশ করতে স্বাচ্ছন্দ্যবোধ করেন তা বেছে নিন।'); ?></p></div></div>
                     </div>
                 </div>
@@ -1912,4 +1912,5 @@ document.querySelectorAll('[data-login-required]').forEach(function (button) {
 })();
 </script>
 
+<script src="<?= BASE_URL; ?>assets/js/package-image-preview.js?v=2"></script>
 <?php include 'includes/footer.php'; ?>

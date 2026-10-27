@@ -537,6 +537,18 @@ include '../includes/navbar.php';
 window.SMART_BUDGET_FINDER = <?= json_encode([
     'baseUrl' => BASE_URL,
     'loggedIn' => $user_logged_in,
+    'language' => (($current_language ?? ($_SESSION['sm_language'] ?? 'bn')) === 'en') ? 'en' : 'bn',
+    'guestCartPopup' => (($current_language ?? ($_SESSION['sm_language'] ?? 'bn')) === 'en') ? [
+        'title' => 'Login Required',
+        'message' => 'Please log in or register to access all available services.',
+        'login' => 'Login / Register',
+        'continue' => 'Continue Browsing'
+    ] : [
+        'title' => 'লগইন প্রয়োজন',
+        'message' => 'সকল সেবা ব্যবহার করতে লগইন করুন অথবা নিবন্ধন করুন।',
+        'login' => 'লগইন / নিবন্ধন',
+        'continue' => 'ব্রাউজিং চালিয়ে যান'
+    ],
     'budget' => $budget,
     'tolerance' => BUDGET_FINDER_TOLERANCE,
     'csrf' => $csrf,
@@ -560,4 +572,5 @@ window.addEventListener('load', function () {
 </script>
 <?php endif; ?>
 
+<script src="<?= BASE_URL; ?>assets/js/package-image-preview.js?v=2"></script>
 <?php include '../includes/footer.php'; ?>

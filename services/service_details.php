@@ -482,4 +482,5 @@ include '../includes/header.php';
     </script>
 </div>
 
+<script src="<?= BASE_URL; ?>assets/js/package-image-preview.js?v=2"></script>
 <?php include '../includes/footer.php'; ?>

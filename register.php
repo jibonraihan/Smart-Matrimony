@@ -811,7 +811,7 @@ include 'includes/navbar.php';
 
                 <div class="stats-item">
                     <i class="fa-solid fa-lock"></i>
-                    <h4><?= sm_text('Secure', 'নিরাপদ'); ?></h4>
+                    <h4>Secure</h4>
                     <p><?= sm_text('Protected', 'সুরক্ষিত'); ?></p>
                 </div>
 

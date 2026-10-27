@@ -257,8 +257,8 @@ include 'includes/navbar.php';
                         <div class="login-profile-card login-profile-card-main">
                             <div class="match-avatar"><i class="fa-solid fa-user"></i></div>
                             <div class="match-card-copy">
-                                <strong>Profile Match</strong>
-                                <span>Compatible connection</span>
+                                <strong><?= sm_text('Profile Match', 'প্রোফাইলের মিল'); ?></strong>
+                                <span><?= sm_text('Compatible connection', 'সামঞ্জস্যপূর্ণ সম্পর্ক'); ?></span>
                             </div>
                             <div class="match-score">96%</div>
                             <div class="match-progress"><span></span></div>
@@ -272,9 +272,9 @@ include 'includes/navbar.php';
                     </div>
 
                     <div class="login-trust-row">
-                        <div><i class="fa-solid fa-shield-halved"></i><span>Secure &amp; Private</span></div>
-                        <div><i class="fa-solid fa-heart"></i><span>Respectful Community</span></div>
-                        <div><i class="fa-solid fa-users"></i><span>Family Friendly</span></div>
+                        <div><i class="fa-solid fa-shield-halved"></i><span><?= sm_text('Secure &amp; Private', 'নিরাপদ ও ব্যক্তিগত'); ?></span></div>
+                        <div><i class="fa-solid fa-heart"></i><span><?= sm_text('Respectful Community', 'সম্মানজনক কমিউনিটি'); ?></span></div>
+                        <div><i class="fa-solid fa-users"></i><span><?= sm_text('Family Friendly', 'পরিবারবান্ধব'); ?></span></div>
                     </div>
 
                     <div class="login-stats login-stats-compact">
@@ -285,25 +285,25 @@ include 'includes/navbar.php';
                         <div class="stat-box">
                             <i class="fa-solid fa-users"></i>
                             <h4><?= number_format($member_count); ?>+</h4>
-                            <span>Happy Members</span>
+                            <span><?= sm_text('Happy Members', 'সদস্য সংখ্যা'); ?></span>
                         </div>
 
                         <div class="stat-box">
                             <i class="fa-solid fa-shield-halved"></i>
                             <h4>100%</h4>
-                            <span>Verified Profiles</span>
+                            <span><?= sm_text('Verified Profiles', 'যাচাইকৃত প্রোফাইল'); ?></span>
                         </div>
 
                         <div class="stat-box">
                             <i class="fa-solid fa-lock"></i>
                             <h4>Secure</h4>
-                            <span>Data Protection</span>
+                            <span><?= sm_text('Data Protection', 'তথ্য সুরক্ষা'); ?></span>
                         </div>
 
                         <div class="stat-box">
                             <i class="fa-solid fa-headset"></i>
                             <h4>24/7</h4>
-                            <span>Support</span>
+                            <span><?= sm_text('Support', 'সহায়তা'); ?></span>
                         </div>
                     </div>
 
@@ -533,8 +533,7 @@ include 'includes/navbar.php';
 
                         <p class="social-note">
 
-                            Use your verified Google or Facebook account
-                            to sign in.
+                            <?= sm_text('Use your verified Google or Facebook account to sign in.', 'সাইন ইন করতে আপনার যাচাইকৃত Google অথবা Facebook অ্যাকাউন্ট ব্যবহার করুন।'); ?>
 
                         </p>
 

@@ -358,21 +358,32 @@
 
     document.querySelectorAll('.budget-guest-cart-btn').forEach((button) => {
         button.addEventListener('click', () => {
-            const message = 'Registration or Login to Smart Martimony to Access all available services';
+            // Use the actual rendered page language as the source of truth.
+            // SMART_BUDGET_FINDER may contain stale/mismatched language config on some sessions.
+            const pageLanguage = String(document.documentElement.lang || config.language || 'bn').toLowerCase();
+            const isEnglish = pageLanguage === 'en' || pageLanguage.startsWith('en-');
+            const popup = {
+                title: isEnglish ? 'Login Required' : 'লগইন প্রয়োজন',
+                message: isEnglish
+                    ? 'Please log in or register to access all available services.'
+                    : 'সকল সেবা ব্যবহার করতে লগইন করুন অথবা নিবন্ধন করুন।',
+                login: isEnglish ? 'Login / Register' : 'লগইন / নিবন্ধন',
+                continue: isEnglish ? 'Continue Browsing' : 'ব্রাউজিং চালিয়ে যান'
+            };
             if (window.Swal) {
                 window.Swal.fire({
                     icon: 'info',
-                    title: 'Login Required',
-                    text: message,
-                    confirmButtonText: 'Login / Register',
+                    title: popup.title,
+                    text: popup.message,
+                    confirmButtonText: popup.login,
                     showCancelButton: true,
-                    cancelButtonText: 'Continue Browsing',
+                    cancelButtonText: popup.continue,
                     confirmButtonColor: '#0f766e'
                 }).then((result) => {
                     if (result.isConfirmed) window.location.href = (config.baseUrl || '../') + 'login.php';
                 });
             } else {
-                window.alert(message);
+                window.alert(popup.message);
             }
         });
     });
